@@ -1,31 +1,51 @@
 import fs from 'fs';
 import path from 'path';
 
-// Firebase Firestore Client & Storage Engine
-class FirebaseStorage {
+class FirebaseService {
   constructor() {
-    this.merchants = new Map();
-    this.invoices = new Map();
-    this.webhookLogs = [];
-    this.configPath = path.join(process.cwd(), 'firebase-config.json');
-    this.isFirebaseActive = false;
-    this.projectId = null;
-    this.firebaseCredentials = null;
+    this.projectId = 'panzzpay';
+    this.serviceAccount = null;
+    this.isFirebaseConfigured = false;
+    this.inMemoryMerchants = new Map();
+    this.inMemoryInvoices = new Map();
+    this.inMemoryLogs = [];
 
-    // Seed Master Super Admin Account
+    this.loadFirebaseConfig();
     this.seedSuperAdmin();
-    // Initialize Firebase Configuration
-    this.initFirebaseConfig();
   }
 
-  seedSuperAdmin() {
-    const ownerEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@panzzpay.com';
+  loadFirebaseConfig() {
+    try {
+      const envJson = process.env.FIREBASE_CONFIG_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      const configPath = path.join(process.cwd(), 'firebase-config.json');
+
+      if (envJson) {
+        this.serviceAccount = typeof envJson === 'string' ? JSON.parse(envJson) : envJson;
+      } else if (fs.existsSync(configPath)) {
+        const raw = fs.readFileSync(configPath, 'utf8');
+        this.serviceAccount = JSON.parse(raw);
+      }
+
+      if (this.serviceAccount && this.serviceAccount.project_id) {
+        this.projectId = this.serviceAccount.project_id;
+        this.isFirebaseConfigured = true;
+        console.log(`🔥 [FIREBASE CONNECTED] Loaded Service Account Credentials for Project ID: ${this.projectId}`);
+      } else {
+        console.warn('⚠️ firebase-config.json not found. Operating in local storage mode.');
+      }
+    } catch (e) {
+      console.warn('⚠️ Firebase config loading error:', e.message);
+    }
+  }
+
+  async seedSuperAdmin() {
+    const ownerEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@panzzpay.com').toLowerCase();
     const ownerPassword = process.env.SUPER_ADMIN_PASSWORD || 'adminpanzzpay123';
 
     const superAdmin = {
       id: 'SUPERADMIN-001',
       name: 'PanzzPay Super Admin (Pemilik Platform)',
-      email: ownerEmail.toLowerCase(),
+      email: ownerEmail,
       password: ownerPassword,
       role: 'superadmin',
       api_key: 'pz_admin_master_key_99999',
@@ -33,78 +53,90 @@ class FirebaseStorage {
       status: 'ACTIVE',
       created_at: new Date().toISOString()
     };
-    this.merchants.set(superAdmin.id, superAdmin);
+
+    this.inMemoryMerchants.set(superAdmin.id, superAdmin);
+    await this.syncToFirebase('merchants', superAdmin.id, superAdmin);
   }
 
-  initFirebaseConfig() {
-    const envJson = process.env.FIREBASE_CONFIG_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if (envJson) {
-      try {
-        const json = typeof envJson === 'string' ? JSON.parse(envJson) : envJson;
-        if (json.project_id) {
-          this.projectId = json.project_id;
-          this.firebaseCredentials = json;
-          this.isFirebaseActive = true;
-          console.log(`🔥 Firebase Firestore Loaded from FIREBASE_CONFIG_JSON Env Variable! Project ID: ${this.projectId}`);
-          return;
-        }
-      } catch (e) {
-        console.warn('⚠️ Error parsing FIREBASE_CONFIG_JSON env variable:', e.message);
-      }
-    }
+  // Helper method to sync document to Cloud Firestore
+  async syncToFirebase(collectionName, docId, data) {
+    if (!this.isFirebaseConfigured) return;
 
-    if (fs.existsSync(this.configPath)) {
-      try {
-        const raw = fs.readFileSync(this.configPath, 'utf8');
-        const json = JSON.parse(raw);
-        if (json.project_id) {
-          this.projectId = json.project_id;
-          this.firebaseCredentials = json;
-          this.isFirebaseActive = true;
-          console.log(`🔥 Firebase Firestore Loaded from local firebase-config.json file! Project ID: ${this.projectId}`);
-          return;
+    try {
+      // Lazy load firebase-admin if available
+      const adminModule = await import('firebase-admin').catch(() => null);
+      if (adminModule && adminModule.default) {
+        const admin = adminModule.default;
+        if (!admin.apps.length && this.serviceAccount) {
+          admin.initializeApp({
+            credential: admin.credential.cert(this.serviceAccount),
+            projectId: this.projectId
+          });
         }
-      } catch (e) {
-        console.warn('⚠️ Error parsing local firebase-config.json file:', e.message);
-      }
-    }
+        const db = admin.firestore();
+        const auth = admin.auth();
 
-    console.log('ℹ️ Firebase config not found. Running in Local Storage Mode (Ready to sync with Firebase).');
+        await db.collection(collectionName).doc(docId).set(data, { merge: true });
+        console.log(`🔥 [FIRESTORE SYNC] Saved to collection '${collectionName}' -> Doc ID: ${docId}`);
+
+        if (collectionName === 'merchants' && data.email && data.password) {
+          try {
+            await auth.getUserByEmail(data.email);
+          } catch (authErr) {
+            if (authErr.code === 'auth/user-not-found') {
+              await auth.createUser({
+                uid: data.id,
+                email: data.email,
+                password: data.password,
+                displayName: data.name
+              });
+              console.log(`👤 [FIREBASE AUTH USER CREATED] Email: ${data.email}`);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`⚠️ Firebase Sync Note (${collectionName}/${docId}):`, e.message);
+    }
   }
 
-  // --- MERCHANT & SUPERADMIN OPERATIONS ---
+  // --- MERCHANT OPERATIONS ---
   async saveMerchant(merchant) {
     if (!merchant.role) merchant.role = 'merchant';
     if (!merchant.status) merchant.status = 'UNVERIFIED';
-    this.merchants.set(merchant.id, merchant);
+
+    this.inMemoryMerchants.set(merchant.id, merchant);
+    await this.syncToFirebase('merchants', merchant.id, merchant);
     return merchant;
   }
 
   async getAllMerchants() {
-    return Array.from(this.merchants.values());
+    return Array.from(this.inMemoryMerchants.values());
   }
 
   async getMerchantById(id) {
-    return this.merchants.get(id) || null;
+    return this.inMemoryMerchants.get(id) || null;
   }
 
   async getMerchantByApiKey(apiKey) {
-    for (const m of this.merchants.values()) {
+    for (const m of this.inMemoryMerchants.values()) {
       if (m.api_key === apiKey) return m;
     }
     return null;
   }
 
   async getMerchantByWebhookToken(token) {
-    for (const m of this.merchants.values()) {
+    for (const m of this.inMemoryMerchants.values()) {
       if (m.webhook_token === token) return m;
     }
     return null;
   }
 
   async getMerchantByEmail(email) {
-    for (const m of this.merchants.values()) {
-      if (m.email.toLowerCase() === email.toLowerCase()) return m;
+    if (!email) return null;
+    const cleanEmail = email.toLowerCase();
+    for (const m of this.inMemoryMerchants.values()) {
+      if (m.email.toLowerCase() === cleanEmail) return m;
     }
     return null;
   }
@@ -120,35 +152,37 @@ class FirebaseStorage {
 
     merchant.status = 'ACTIVE';
     merchant.otp_code = null;
-    this.merchants.set(merchant.id, merchant);
+
+    await this.saveMerchant(merchant);
     return { ok: true, message: 'Verifikasi email berhasil! Akun Anda sekarang aktif.', merchant };
   }
 
   async toggleMerchantStatus(merchantId, status) {
-    const merchant = this.merchants.get(merchantId);
+    const merchant = await this.getMerchantById(merchantId);
     if (!merchant) return null;
     merchant.status = status;
-    this.merchants.set(merchantId, merchant);
+    await this.saveMerchant(merchant);
     return merchant;
   }
 
   // --- INVOICE OPERATIONS ---
   async saveInvoice(invoice) {
-    this.invoices.set(invoice.id, invoice);
+    this.inMemoryInvoices.set(invoice.id, invoice);
+    await this.syncToFirebase('invoices', invoice.id, invoice);
     return invoice;
   }
 
   async getInvoice(id) {
-    return this.invoices.get(id) || null;
+    return this.inMemoryInvoices.get(id) || null;
   }
 
   async getAllInvoices() {
-    return Array.from(this.invoices.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return Array.from(this.inMemoryInvoices.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
   async getInvoicesByMerchant(merchantId) {
     const list = [];
-    for (const inv of this.invoices.values()) {
+    for (const inv of this.inMemoryInvoices.values()) {
       if (!merchantId || inv.merchant_id === merchantId) {
         list.push(inv);
       }
@@ -157,29 +191,30 @@ class FirebaseStorage {
   }
 
   async updateInvoiceStatus(id, status, details = {}) {
-    const inv = this.invoices.get(id);
+    const inv = await this.getInvoice(id);
     if (!inv) return null;
     inv.status = status;
     Object.assign(inv, details);
-    this.invoices.set(id, inv);
+    await this.saveInvoice(inv);
     return inv;
   }
 
   // --- WEBHOOK LOG OPERATIONS ---
   async saveWebhookLog(logEntry) {
-    this.webhookLogs.unshift(logEntry);
-    if (this.webhookLogs.length > 200) this.webhookLogs.pop();
+    this.inMemoryLogs.unshift(logEntry);
+    if (this.inMemoryLogs.length > 200) this.inMemoryLogs.pop();
+    await this.syncToFirebase('webhook_logs', logEntry.id, logEntry);
     return logEntry;
   }
 
   async getAllWebhookLogs() {
-    return this.webhookLogs;
+    return this.inMemoryLogs;
   }
 
   async getWebhookLogsByMerchant(merchantId) {
-    if (!merchantId) return this.webhookLogs;
-    return this.webhookLogs.filter(l => l.merchant_id === merchantId);
+    if (!merchantId) return this.inMemoryLogs;
+    return this.inMemoryLogs.filter(l => l.merchant_id === merchantId);
   }
 }
 
-export const db = new FirebaseStorage();
+export const db = new FirebaseService();

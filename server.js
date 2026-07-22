@@ -716,13 +716,13 @@ app.get('/api/app/check-update', async (req, res) => {
     console.log('GitHub Releases API check fallback:', err.message);
   }
 
-  // Fallback to local server static URL if GitHub API is unreachable
+  // Fallback to latest GitHub Releases direct asset URL if GitHub API is unreachable
   return res.json({
     ok: true,
-    versionCode: 2,
+    versionCode: 3,
     versionName: "2.1",
-    downloadUrl: `${baseUrl}/downloads/panzzpay-forwarder.apk`,
-    releaseNotes: "• Fitur In-App Auto Update bawaan aplikasi\n• Peningkatan kestabilan webhook listener\n• Optimasi performa dan perbaikan bug",
+    downloadUrl: "https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk",
+    releaseNotes: "• Tampilan baru Cyber-Dark Mode\n• Fitur Tes Webhook Notifikasi Pembayaran (ShopeePay, DANA, BCA, dll.)\n• Pemunculan Notifikasi Sistem Status Bar HP\n• Peningkatan kestabilan webhook listener",
     forceUpdate: false
   });
 });

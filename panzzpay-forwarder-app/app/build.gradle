@@ -15,10 +15,23 @@ android {
         versionName "2.1"
     }
 
+    signingConfigs {
+        release {
+            storeFile file('panzzpay-release.keystore')
+            storePassword 'panzzpay123'
+            keyAlias 'panzzpay'
+            keyPassword 'panzzpay123'
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {

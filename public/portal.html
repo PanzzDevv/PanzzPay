@@ -655,6 +655,11 @@
       const merchantNameTitle = document.getElementById('merchantNameTitle');
       const displayApiKey = document.getElementById('displayApiKey');
       const displayWebhookUrl = document.getElementById('displayWebhookUrl');
+      const displayQrisPayload = document.getElementById('displayQrisPayload');
+      const badgeQrisStatus = document.getElementById('badgeQrisStatus');
+      const btnSaveQrisPayload = document.getElementById('btnSaveQrisPayload');
+      const btnUploadQrisImage = document.getElementById('btnUploadQrisImage');
+      const qrisFileInput = document.getElementById('qrisFileInput');
       const btnLogout = document.getElementById('btnLogout');
       const btnCopyApiKey = document.getElementById('btnCopyApiKey');
       const btnCopyWebhookUrl = document.getElementById('btnCopyWebhookUrl');
@@ -981,12 +986,6 @@
         navigator.clipboard.writeText(displayWebhookUrl.value);
         alert('Webhook Target URL berhasil disalin!');
       });
-
-      const displayQrisPayload = document.getElementById('displayQrisPayload');
-      const badgeQrisStatus = document.getElementById('badgeQrisStatus');
-      const btnSaveQrisPayload = document.getElementById('btnSaveQrisPayload');
-      const btnUploadQrisImage = document.getElementById('btnUploadQrisImage');
-      const qrisFileInput = document.getElementById('qrisFileInput');
 
       if (btnUploadQrisImage && qrisFileInput) {
         btnUploadQrisImage.addEventListener('click', () => qrisFileInput.click());

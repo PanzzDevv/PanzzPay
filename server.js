@@ -382,6 +382,15 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
+// GET FIREBASE CLIENT CONFIGURATION
+app.get('/api/auth/config', (req, res) => {
+  res.json({
+    projectId: process.env.FIREBASE_PROJECT_ID || db.projectId || 'panzzpay',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || `${process.env.FIREBASE_PROJECT_ID || db.projectId || 'panzzpay'}.firebaseapp.com`,
+    apiKey: process.env.FIREBASE_API_KEY || ''
+  });
+});
+
 // -------------------------------------------------------------
 // 2. SUPER ADMIN ENDPOINTS
 // -------------------------------------------------------------

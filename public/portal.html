@@ -608,16 +608,25 @@
         tabRegisterBtn.classList.remove('active');
       });
 
-      // Initialize Firebase Web Auth Client
-      if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-        try {
-          firebase.initializeApp({
-            authDomain: "panzzpay.firebaseapp.com",
-            projectId: "panzzpay"
-          });
-        } catch (e) {
-          console.warn('Firebase client init note:', e);
-        }
+      // Initialize Firebase Web Auth Client dynamically from backend configuration
+      if (typeof firebase !== 'undefined') {
+        fetch('/api/auth/config')
+          .then(r => r.json())
+          .then(config => {
+            if (config.apiKey && !firebase.apps.length) {
+              try {
+                firebase.initializeApp({
+                  apiKey: config.apiKey,
+                  authDomain: config.authDomain,
+                  projectId: config.projectId
+                });
+                console.log("🔥 [FIREBASE WEB SDK INITIALIZED] Real Google Popup Auth active!");
+              } catch (e) {
+                console.warn('Firebase client init note:', e);
+              }
+            }
+          })
+          .catch(err => console.warn('Gagal memuat konfigurasi Firebase:', err));
       }
 
       const googleModalOverlay = document.getElementById('googleModalOverlay');

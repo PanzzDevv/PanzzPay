@@ -19,7 +19,7 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
-        <span>PanzzPay <span style="color: var(--accent-rose); font-weight: 700; font-size: 0.85em;">Donasi</span></span>
+        <span>PanzzPay <span style="color: var(--brand-blue); font-weight: 700; font-size: 0.85em;">Donasi</span></span>
       </a>
     </div>
 
@@ -63,7 +63,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>Dashboard Utama</span>
         </a>
-        <a href="/apps.html" class="drawer-item" style="color: var(--accent-emerald); font-weight: 700;">
+        <a href="/apps.html" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
           <span>Aplikasi & Ekosistem 📱</span>
         </a>
@@ -89,7 +89,7 @@
         </a>
       </nav>
 
-      <!-- DRAWER FOOTER: DAFTAR / LOGIN VIBRANT BUTTON -->
+      <!-- DRAWER FOOTER -->
       <div id="drawerAuthContainer" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--bento-border);">
         <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
@@ -107,91 +107,58 @@
     <div class="bento-grid">
 
       <!-- HERO DONATION CARD (COL 12) -->
-      <section class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%); border: 1px solid rgba(225, 29, 72, 0.2);">
+      <section class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
         <div>
-          <span class="bento-hero-badge" style="background: rgba(225, 29, 72, 0.08); border-color: rgba(225, 29, 72, 0.25); color: var(--accent-rose);">QRIS DONASI TERHUBUNG FIREBASE FIRESTORE</span>
+          <span class="bento-hero-badge">QRIS OFFICIAL PANZZPAY GATEWAY</span>
           <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 0.6rem;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             <span>Dukung Pengembang PanzzPay Gateway</span>
           </h1>
           <p style="color: var(--text-secondary); max-width: 900px; font-size: 0.92rem; line-height: 1.6;">
-            Setiap donasi yang Anda hasilkan atau bayar otomatis tersinkronisasi dan tersimpan langsung di database <strong>Firebase Cloud Firestore</strong> PanzzPay secara realtime.
+            Gunakan barcode QRIS di bawah untuk memberikan dukungan donasi secara manual. Bebas tentukan nominal langsung saat melakukan scan di aplikasi m-Banking atau E-Wallet Anda.
           </p>
         </div>
       </section>
 
-      <!-- STATIC QRIS DISPLAY CARD (COL 6) -->
-      <section class="bento-card col-6">
-        <div>
+      <!-- STATIC / MANUAL QRIS DISPLAY CARD (COL 12 CENTERED) -->
+      <section class="bento-card col-12" style="text-align: center;">
+        <div style="max-width: 480px; margin: 0 auto; width: 100%;">
           <div class="bento-header-sm">
-            <h2 class="bento-title" style="color: var(--accent-rose);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              <span>Kode QRIS Donasi Statis</span>
+            <h2 class="bento-title" style="justify-content: center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span>Kode QRIS Donasi Manual</span>
             </h2>
-            <p class="bento-subtitle">Mendukung semua pembayaran QRIS Bank & E-Wallet di Indonesia.</p>
+            <p class="bento-subtitle">Scan dari aplikasi ShopeePay, DANA, GoPay, OVO, m-BCA, BRImo, Mandiri dll.</p>
           </div>
 
-          <div class="qr-display-box" style="background: #ffffff; border: 1px solid var(--bento-border);">
+          <div class="qr-display-box" style="background: #ffffff; border: 1.5px solid var(--bento-border); padding: 1.75rem 1rem;">
             <div class="qr-img-frame" style="padding: 1.25rem; max-width: 280px; width: 100%;">
-              <img id="donationQrImg" src="/assets/images/qris-donasi.jpg" alt="QRIS Donasi PanzzPay" style="width: 100%; height: auto; display: block; border-radius: 8px;" onerror="this.onerror=null; this.src='/assets/images/qris-donasi.svg';">
+              <img id="donationQrImg" src="/assets/images/qris-donasi.jpg" alt="QRIS Donasi PanzzPay" style="width: 100%; height: auto; display: block; border-radius: 8px;" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PANZZPAY_DONASI_MANUAL';">
             </div>
 
-            <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-top: 0.75rem;">
+            <div class="amount-title" style="margin-top: 0.75rem; font-size: 1.3rem;">
               Nominal Donasi Bebas
             </div>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
-              (Masukkan jumlah sesuka Anda saat scan QRIS)
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+              (Ketikkan jumlah donasi bebas sesuka Anda saat scan QRIS)
             </p>
+
+            <div style="display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+              <span class="badge badge-paid">ShopeePay</span>
+              <span class="badge badge-paid">DANA</span>
+              <span class="badge badge-paid">GoPay</span>
+              <span class="badge badge-paid">OVO</span>
+              <span class="badge badge-paid">m-BCA</span>
+              <span class="badge badge-paid">BRImo</span>
+              <span class="badge badge-paid">QRIS All Payment</span>
+            </div>
           </div>
 
-          <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <a href="/assets/images/qris-donasi.jpg" download="qris-donasi.jpg" class="btn btn-dark" style="flex: 1; text-decoration: none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <div style="margin-top: 1.5rem;">
+            <a href="/assets/images/qris-donasi.jpg" download="qris-donasi.jpg" class="btn btn-primary" style="width: 100%; text-decoration: none;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               <span>Download Gambar QRIS</span>
             </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- DYNAMIC DONATION GENERATOR CARD (COL 6) -->
-      <section class="bento-card col-6">
-        <div>
-          <div class="bento-header-sm">
-            <h2 class="bento-title" style="color: var(--accent-indigo);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-              <span>Buat QRIS Donasi Spesifik</span>
-            </h2>
-            <p class="bento-subtitle">Nominal unik tersimpan otomatis di Cloud Firestore.</p>
-          </div>
-
-          <form id="donationForm">
-            <div class="form-group">
-              <label class="form-label" for="donNominal">Nominal Donasi (Rp)</label>
-              <input type="number" id="donNominal" class="form-control" placeholder="Contoh: 10000" min="1000" value="10000" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Preset Nominal Cepat:</label>
-              <div class="donation-presets">
-                <button type="button" class="preset-btn" onclick="setDonationPreset(5000)">Rp 5rb</button>
-                <button type="button" class="preset-btn active" onclick="setDonationPreset(10000)">Rp 10rb</button>
-                <button type="button" class="preset-btn" onclick="setDonationPreset(25000)">Rp 25rb</button>
-                <button type="button" class="preset-btn" onclick="setDonationPreset(50000)">Rp 50rb</button>
-                <button type="button" class="preset-btn" onclick="setDonationPreset(100000)">Rp 100rb</button>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">
-              <span>Generate QRIS Donasi Nominal</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            </button>
-          </form>
-
-          <div id="donResultBox" style="display: none; margin-top: 1.25rem; background: #ffffff; border: 1.5px solid var(--accent-rose); border-radius: var(--radius-inner); padding: 1.25rem; text-align: center;">
-            <div style="font-size: 0.78rem; color: var(--accent-rose); font-weight: 800; text-transform: uppercase;">QRIS DYNAMIC TERHUBUNG FIRESTORE:</div>
-            <div id="donAmountDisplay" style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin: 0.3rem 0;"></div>
-            <img id="donQrImage" src="" alt="QRIS Donasi" style="width: 180px; height: 180px; display: block; margin: 0.5rem auto; border-radius: 8px;">
-            <p style="font-size: 0.78rem; color: var(--text-muted);">Invoice ID tersimpan di Firestore: <code id="donInvoiceId"></code></p>
           </div>
         </div>
       </section>
@@ -199,36 +166,6 @@
     </div>
   </main>
 
-  <script>
-    function setDonationPreset(val) {
-      document.getElementById('donNominal').value = val;
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-    }
-
-    document.getElementById('donationForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const amount = parseInt(document.getElementById('donNominal').value, 10);
-      try {
-        const res = await fetch('/api/qris/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base_amount: amount, auto_unique: true })
-        });
-        const data = await res.json();
-        if (data.ok && data.invoice) {
-          document.getElementById('donAmountDisplay').textContent = 'Rp ' + data.invoice.total_amount.toLocaleString('id-ID');
-          document.getElementById('donQrImage').src = data.invoice.qr_png_data_url;
-          document.getElementById('donInvoiceId').textContent = data.invoice.id;
-          document.getElementById('donResultBox').style.display = 'block';
-        } else {
-          alert('Gagal generate: ' + (data.message || 'Error'));
-        }
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
-    });
-  </script>
   <script src="/app.js"></script>
 </body>
 </html>

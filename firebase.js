@@ -350,42 +350,81 @@ class FirebaseService {
   }
 
   async getAllInvoices() {
-    let list = Array.from(this.inMemoryInvoices.values());
-    const firestore = await this.getFirestoreDB();
-    if (firestore) {
-      try {
-        const snap = await firestore.collection('invoices').get();
-        snap.forEach(doc => {
-          const data = doc.data();
-          this.inMemoryInvoices.set(data.id, data);
-        });
-        list = Array.from(this.inMemoryInvoices.values());
-      } catch (e) {}
+    const getCached = () => Array.from(this.inMemoryInvoices.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const cachedList = getCached();
+
+    const refreshPromise = (async () => {
+      const firestore = await this.getFirestoreDB();
+      if (firestore) {
+        try {
+          const snap = await firestore.collection('invoices').orderBy('created_at', 'desc').limit(100).get();
+          snap.forEach(doc => {
+            const data = doc.data();
+            this.inMemoryInvoices.set(data.id, data);
+          });
+        } catch (e) {
+          try {
+            const snap = await firestore.collection('invoices').limit(100).get();
+            snap.forEach(doc => {
+              const data = doc.data();
+              this.inMemoryInvoices.set(data.id, data);
+            });
+          } catch(e2) {}
+        }
+      }
+    })();
+
+    if (cachedList.length === 0) {
+      await refreshPromise;
+      return getCached();
     }
-    return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return cachedList;
   }
 
   async getInvoicesByMerchant(merchantId) {
-    const firestore = await this.getFirestoreDB();
-    if (firestore) {
-      try {
-        let query = firestore.collection('invoices');
-        if (merchantId) query = query.where('merchant_id', '==', merchantId);
-        const snap = await query.get();
-        snap.forEach(doc => {
-          const data = doc.data();
-          this.inMemoryInvoices.set(data.id, data);
-        });
-      } catch (e) {}
-    }
-
-    const list = [];
-    for (const inv of this.inMemoryInvoices.values()) {
-      if (!merchantId || inv.merchant_id === merchantId) {
-        list.push(inv);
+    const getCached = () => {
+      const list = [];
+      for (const inv of this.inMemoryInvoices.values()) {
+        if (!merchantId || inv.merchant_id === merchantId) {
+          list.push(inv);
+        }
       }
+      return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    };
+
+    const cachedList = getCached();
+
+    const refreshPromise = (async () => {
+      const firestore = await this.getFirestoreDB();
+      if (firestore) {
+        try {
+          let query = firestore.collection('invoices');
+          if (merchantId) query = query.where('merchant_id', '==', merchantId);
+          query = query.orderBy('created_at', 'desc').limit(100);
+          const snap = await query.get();
+          snap.forEach(doc => {
+            const data = doc.data();
+            this.inMemoryInvoices.set(data.id, data);
+          });
+        } catch (e) {
+          try {
+            let query = firestore.collection('invoices');
+            if (merchantId) query = query.where('merchant_id', '==', merchantId);
+            const snap = await query.limit(100).get();
+            snap.forEach(doc => {
+              const data = doc.data();
+              this.inMemoryInvoices.set(data.id, data);
+            });
+          } catch(e2) {}
+        }
+      }
+    })();
+
+    if (cachedList.length === 0) {
+      await refreshPromise;
+      return getCached();
     }
-    return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return cachedList;
   }
 
   async updateInvoiceStatus(id, status, details = {}) {

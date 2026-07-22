@@ -677,7 +677,14 @@
 
         // Fetch fresh profile in the background to sync local storage with Firestore
         if (parsed.email) {
-          fetch('/api/auth/check-status?email=' + encodeURIComponent(parsed.email))
+          const queryParams = new URLSearchParams({
+            email: parsed.email,
+            merchant_id: parsed.id || '',
+            api_key: parsed.api_key || '',
+            webhook_token: parsed.webhook_token || '',
+            qris_payload: parsed.qris_payload || ''
+          });
+          fetch('/api/auth/check-status?' + queryParams.toString())
             .then(r => r.json())
             .then(data => {
               if (data.ok && data.merchant) {
@@ -1109,7 +1116,16 @@
             // Sync merchant profile (QRIS Payload) from Firestore in the background
             if (merchant.email) {
               try {
-                const res = await fetch('/api/auth/check-status?email=' + encodeURIComponent(merchant.email));
+                // Read fresh merchant state from local storage to get latest QRIS payload
+                const localData = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
+                const queryParams = new URLSearchParams({
+                  email: merchant.email,
+                  merchant_id: localData.id || merchant.id || '',
+                  api_key: localData.api_key || merchant.api_key || '',
+                  webhook_token: localData.webhook_token || merchant.webhook_token || '',
+                  qris_payload: localData.qris_payload || merchant.qris_payload || ''
+                });
+                const res = await fetch('/api/auth/check-status?' + queryParams.toString());
                 const data = await res.json();
                 if (data.ok && data.merchant) {
                   localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));

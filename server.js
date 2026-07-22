@@ -305,16 +305,17 @@ app.get('/api/auth/check-status', async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     let merchant = await db.getMerchantByEmail(cleanEmail);
 
-    // Auto-recovery fallback for serverless cold start when Firestore auth is invalid
+    // Auto-recovery fallback using client's existing credentials during serverless cold start
     if (!merchant && cleanEmail) {
       merchant = {
-        id: 'MCH-' + Date.now().toString(36).toUpperCase(),
+        id: req.query.merchant_id || ('MCH-' + Date.now().toString(36).toUpperCase()),
         name: cleanEmail.split('@')[0],
         email: cleanEmail,
         role: cleanEmail === 'admin@panzzpay.com' ? 'superadmin' : 'merchant',
         status: 'ACTIVE',
-        api_key: 'pz_live_' + Math.random().toString(36).substring(2, 10),
-        webhook_token: 'pz_wh_' + Math.random().toString(36).substring(2, 10),
+        api_key: req.query.api_key || ('pz_live_' + Math.random().toString(36).substring(2, 10)),
+        webhook_token: req.query.webhook_token || ('pz_wh_' + Math.random().toString(36).substring(2, 10)),
+        qris_payload: req.query.qris_payload || '',
         created_at: new Date().toISOString()
       };
       await db.saveMerchant(merchant);

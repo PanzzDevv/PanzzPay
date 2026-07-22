@@ -43,16 +43,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const merchant = JSON.parse(savedMerchantRaw);
         if (merchant && (merchant.api_key || merchant.email)) {
           container.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-              <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span>📊 BUKA DASHBOARD SAYA</span>
-              </a>
-              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.8rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.8rem;">
-                <span style="font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; max-width: 170px; white-space: nowrap;">👤 ${merchant.name || merchant.email}</span>
-                <button id="btnGlobalLogout" style="background: transparent; border: none; color: var(--accent-rose); font-weight: 800; cursor: pointer; font-size: 0.78rem;">Logout</button>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <!-- USER CARD -->
+              <div style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #dbeafe; border-radius: 16px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);">
+                <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1;">
+                  <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--brand-blue); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);">
+                    ${(merchant.name || merchant.email || 'M').charAt(0).toUpperCase()}
+                  </div>
+                  <div style="display: flex; flex-direction: column; min-width: 0;">
+                    <span style="font-weight: 800; color: var(--text-primary); font-size: 0.85rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                      ${merchant.name || 'Merchant PanzzPay'}
+                    </span>
+                    <span style="font-size: 0.72rem; color: var(--brand-blue); font-weight: 700;">
+                      ${merchant.role === 'SUPER_ADMIN' ? '⚡ SUPER ADMIN' : '✅ MERCHANT AKTIF'}
+                    </span>
+                  </div>
+                </div>
+
+                <button id="btnGlobalLogout" style="background: #fef2f2; border: 1px solid #fecaca; color: #ef4444; font-weight: 800; cursor: pointer; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 9999px; transition: all 0.2s ease; flex-shrink: 0;">
+                  Logout
+                </button>
               </div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+
+              <!-- DASHBOARD BUTTON -->
+              <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.92rem; min-height: 46px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>BUKA DASHBOARD SAYA</span>
+              </a>
+
+              <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; font-weight: 500;">
                 PanzzPay Gateway API v2.0
               </div>
             </div>

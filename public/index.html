@@ -62,6 +62,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>Dashboard Overview</span>
         </a>
+        <a href="/admin.html" class="drawer-item" style="color: var(--accent-indigo); font-weight: 700;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Developer & Admin Portal 🔑</span>
+        </a>
         <a href="#generator-section" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
           <span>QRIS Generator</span>
@@ -142,10 +146,10 @@
             <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">SERVER BASE URL:</span>
             <code id="apiBaseUrl" style="background: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--bento-border); color: var(--accent-indigo); font-family: 'Fira Code', monospace; font-weight: 700; word-break: break-all;">http://localhost:3000</code>
           </div>
-          <button id="btnCopyBaseUrl" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            <span>Salin Base URL</span>
-          </button>
+          <a href="/admin.html" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Buka Developer Portal 🔑</span>
+          </a>
         </div>
       </section>
 
@@ -336,13 +340,13 @@
               <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">PARAMETER (JSON Body):</div>
               <ul style="font-size: 0.8rem; color: var(--text-secondary); list-style: none; padding: 0; margin-bottom: 0.75rem;">
                 <li><code style="color: var(--accent-indigo); font-weight: 700;">base_amount</code> (number, wajib): Harga dasar barang.</li>
-                <li><code style="color: var(--accent-indigo); font-weight: 700;">unique_code</code> (number, opsional): Kode unik 1-999.</li>
-                <li><code style="color: var(--accent-indigo); font-weight: 700;">auto_unique</code> (boolean, opsional): Set true untuk acak otomatis.</li>
+                <li><code style="color: var(--accent-indigo); font-weight: 700;">api_key</code> (string, opsional): API Key unik merchant Anda dari Admin Portal.</li>
               </ul>
 
               <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">CONTOH cURL:</div>
               <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;"><span class="code-keyword">curl</span> -X POST http://localhost:3000/api/qris/generate \
   -H <span class="code-string">'Content-Type: application/json'</span> \
+  -H <span class="code-string">'X-API-KEY: pz_live_your_merchant_key'</span> \
   -d <span class="code-string">'{"base_amount": 20000, "auto_unique": true}'</span></pre>
             </div>
 
@@ -350,7 +354,7 @@
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
                 <span class="badge" style="background: rgba(5, 150, 105, 0.15); color: var(--accent-emerald); border: 1px solid var(--accent-emerald);">POST</span>
-                <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/webhook/callback</code>
+                <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/webhook/callback?token=pz_wh_xxx</code>
               </div>
               <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Menerima lemparan notifikasi HP dan mencocokkan status invoice ke PAID.</p>
 
@@ -360,7 +364,7 @@
 }</pre>
 
               <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">CONTOH cURL:</div>
-              <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;"><span class="code-keyword">curl</span> -X POST http://localhost:3000/api/webhook/callback \
+              <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;"><span class="code-keyword">curl</span> -X POST http://localhost:3000/api/webhook/callback?token=pz_wh_your_token \
   -H <span class="code-string">'Content-Type: application/json'</span> \
   -d <span class="code-string">'{"message": "Pembayaran Rp 10.338 diterima"}'</span></pre>
             </div>
@@ -382,50 +386,6 @@
     <span class="code-string">"status"</span>: <span class="code-string">"PAID"</span>
   }
 }</pre>
-            </div>
-
-          </div>
-
-          <!-- ANDROID FORWARDER SETUP GUIDE & HTTP STATUS CODES -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
-            
-            <!-- Forwarder Setup Guide -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
-              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-emerald); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-                <span>Cara Setting Aplikasi Forwarder HP (Android APK)</span>
-              </h3>
-              <ol style="font-size: 0.82rem; color: var(--text-secondary); padding-left: 1.2rem; line-height: 1.6;">
-                <li>Install aplikasi <strong style="color: var(--text-primary);">PanzzPay Forwarder APK</strong> di Smartphone penerima dana Anda.</li>
-                <li>Aktifkan izin membaca notifikasi (<strong style="color: var(--accent-indigo);">Notification Access Listener</strong>).</li>
-                <li>Masukkan Alamat Target URL Webhook: <code style="color: var(--accent-indigo); font-weight: 700;">http://domain-anda.com/api/webhook/callback</code></li>
-                <li>Pilih metode HTTP: <strong style="color: var(--text-primary);">POST (application/json)</strong>.</li>
-                <li>Setiap kali ada notifikasi transfer masuk di HP Anda, status di website otomatis menjadi LUNAS!</li>
-              </ol>
-            </div>
-
-            <!-- HTTP Status Code Glossary -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
-              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-indigo); margin-bottom: 0.5rem;">
-                Tabel Kode Status HTTP
-              </h3>
-              <div class="table-container">
-                <table class="bento-table" style="font-size: 0.78rem;">
-                  <thead>
-                    <tr>
-                      <th>Kode</th>
-                      <th>Status</th>
-                      <th>Keterangan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td style="color: var(--accent-emerald); font-weight: 800;">200 / 201</td><td>Berhasil</td><td>Koneksi lancar! Request diproses server.</td></tr>
-                    <tr><td style="color: var(--accent-amber); font-weight: 800;">400</td><td>Bad Request</td><td>Input data kurang atau format JSON salah.</td></tr>
-                    <tr><td style="color: var(--accent-rose); font-weight: 800;">404</td><td>Not Found</td><td>Invoice / URL Endpoint tidak ditemukan.</td></tr>
-                    <tr><td style="color: var(--accent-rose); font-weight: 800;">500</td><td>Server Error</td><td>Gangguan pada koneksi server backend.</td></tr>
-                  </tbody>
-                </table>
-              </div>
             </div>
 
           </div>

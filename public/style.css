@@ -531,6 +531,66 @@ header.bento-header {
   color: var(--text-primary);
 }
 
+/* QRIS Display Container & Image Frame */
+.qr-display-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-inner);
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.qr-img-frame {
+  background: #ffffff;
+  padding: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 240px;
+  width: 100%;
+  margin: 0 auto 1rem auto;
+}
+
+.qr-img-frame img, #qrImage {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
+}
+
+.amount-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-top: 0.25rem;
+}
+
+.timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.75rem;
+}
+
 /* RESPONSIVE DESIGN (DESKTOP TO MOBILE BENTO STACK) */
 @media (max-width: 1024px) {
   .col-8, .col-6, .col-4, .col-3 {

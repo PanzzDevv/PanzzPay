@@ -561,9 +561,11 @@ app.post('/api/qris/generate', async (req, res) => {
       unique_code = Math.floor(Math.random() * 899) + 100;
     }
 
+    const merchantPayload = (merchant && merchant.qris_payload) ? merchant.qris_payload : null;
     const defaultStaticPayload = '00020101021126570011ID.DANA.WWW011893600915300000000002150000000000000005204581253033605802ID5911PanzzPayDemo6007JAKARTA6304ABCD';
+    const activePayload = payload_static || merchantPayload || defaultStaticPayload;
 
-    const postParams = { qr: 'png', payload_static: payload_static || defaultStaticPayload };
+    const postParams = { qr: 'png', payload_static: activePayload };
     if (base_amount > 0) postParams.base_amount = base_amount;
     if (unique_code > 0) postParams.unique_code = unique_code;
     if (amount > 0) postParams.amount = amount;
@@ -713,6 +715,31 @@ app.post('/api/merchant/invoices/:id/mark-paid', async (req, res) => {
     });
 
     return res.json({ ok: true, message: `Invoice ${invoice.id} berhasil diubah ke PAID!`, invoice: updated });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+app.post('/api/merchant/qris-payload', async (req, res) => {
+  try {
+    const apiKeyHeader = req.headers['x-api-key'] || req.body.api_key;
+    let { qris_payload } = req.body;
+
+    const merchant = await db.getMerchantByApiKey(apiKeyHeader);
+    if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid' });
+
+    if (!qris_payload || typeof qris_payload !== 'string') {
+      return res.status(400).json({ ok: false, message: 'Payload QRIS tidak boleh kosong' });
+    }
+
+    merchant.qris_payload = qris_payload.trim();
+    await db.saveMerchant(merchant);
+
+    return res.json({
+      ok: true,
+      message: 'QRIS Statis Toko Anda berhasil disimpan!',
+      qris_payload: merchant.qris_payload
+    });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
   }

@@ -371,11 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       generateQRISAction(baseAmount, uniqueCode, autoUnique, payloadStatic);
     });
-
-    // Auto generate initial QRIS on page load!
-    const initialBaseAmount = document.getElementById('baseAmount') ? document.getElementById('baseAmount').value : 10000;
-    const initialPayloadStatic = document.getElementById('payloadStatic') ? document.getElementById('payloadStatic').value : '';
-    generateQRISAction(initialBaseAmount, '', true, initialPayloadStatic);
   }
 
   // --- STATUS POLLING & TIMER ---

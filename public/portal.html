@@ -688,6 +688,10 @@
             .then(r => r.json())
             .then(data => {
               if (data.ok && data.merchant) {
+                const localMerchant = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
+                if (!data.merchant.qris_payload && localMerchant.qris_payload) {
+                  data.merchant.qris_payload = localMerchant.qris_payload;
+                }
                 localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
                 showDashboard(data.merchant);
               }
@@ -1128,6 +1132,10 @@
                 const res = await fetch('/api/auth/check-status?' + queryParams.toString());
                 const data = await res.json();
                 if (data.ok && data.merchant) {
+                  const localMerchant = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
+                  if (!data.merchant.qris_payload && localMerchant.qris_payload) {
+                    data.merchant.qris_payload = localMerchant.qris_payload;
+                  }
                   localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
                   if (document.activeElement !== displayQrisPayload) {
                     displayQrisPayload.value = data.merchant.qris_payload || '';

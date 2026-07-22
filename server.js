@@ -305,6 +305,14 @@ app.get('/api/auth/check-status', async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     let merchant = await db.getMerchantByEmail(cleanEmail);
 
+    if (merchant) {
+      // Sync client-side QRIS payload back to server if server is empty
+      if (!merchant.qris_payload && req.query.qris_payload) {
+        merchant.qris_payload = req.query.qris_payload;
+        await db.saveMerchant(merchant);
+      }
+    }
+
     // Auto-recovery fallback using client's existing credentials during serverless cold start
     if (!merchant && cleanEmail) {
       merchant = {

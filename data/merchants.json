@@ -1,0 +1,24 @@
+[
+  {
+    "id": "SUPERADMIN-001",
+    "name": "PanzzPay Super Admin (Pemilik Platform)",
+    "email": "admin@panzzpay.com",
+    "password": "adminpanzzpay123",
+    "role": "superadmin",
+    "api_key": "pz_admin_master_key_99999",
+    "webhook_token": "pz_wh_admin_master_token_99999",
+    "status": "ACTIVE",
+    "created_at": "2026-07-22T19:33:27.177Z"
+  },
+  {
+    "id": "MCH-TEST-001",
+    "name": "test",
+    "email": "test@merchant.com",
+    "api_key": "pz_live_testkey",
+    "webhook_token": "pz_wh_1784748812624",
+    "qris_payload": "00020101021126570011ID.DANA.WWW",
+    "status": "ACTIVE",
+    "created_at": "2026-07-22T19:33:32.624Z",
+    "role": "merchant"
+  }
+]

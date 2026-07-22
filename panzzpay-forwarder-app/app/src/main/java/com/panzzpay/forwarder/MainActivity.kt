@@ -111,6 +111,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         appendLog("PanzzPay Listener Siap & Running")
+
+        // Cek pembaruan aplikasi otomatis dari server PanzzPay
+        val targetUrl = savedUrl ?: "https://panzzpay.vercel.app/api/webhook/callback"
+        UpdateManager.checkForUpdate(this, targetUrl)
     }
 
     override fun onResume() {

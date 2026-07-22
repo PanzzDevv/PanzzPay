@@ -650,6 +650,24 @@ app.post('/api/webhook/callback', async (req, res) => {
   });
 });
 
+// -------------------------------------------------------------
+// APP AUTO-UPDATE ENDPOINT FOR NATIVE APK
+// -------------------------------------------------------------
+app.get('/api/app/check-update', (req, res) => {
+  const host = req.get('host') || `localhost:${PORT}`;
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const baseUrl = `${protocol}://${host}`;
+
+  res.json({
+    ok: true,
+    versionCode: 2,
+    versionName: "2.1",
+    downloadUrl: `${baseUrl}/downloads/panzzpay-forwarder.apk`,
+    releaseNotes: "• Fitur In-App Auto Update bawaan aplikasi\n• Peningkatan kestabilan webhook listener\n• Optimasi performa dan perbaikan bug",
+    forceUpdate: false
+  });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

@@ -92,11 +92,13 @@ class FirebaseService {
       const envJson = process.env.FIREBASE_CONFIG_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
       const configPath = path.join(__dirname, 'firebase-config.json');
 
-      if (envJson) {
-        this.serviceAccount = typeof envJson === 'string' ? JSON.parse(envJson) : envJson;
-      } else if (fs.existsSync(configPath)) {
+      if (fs.existsSync(configPath)) {
         const raw = fs.readFileSync(configPath, 'utf8');
         this.serviceAccount = JSON.parse(raw);
+        console.log("🔥 Loaded Firebase config from firebase-config.json file.");
+      } else if (envJson) {
+        this.serviceAccount = typeof envJson === 'string' ? JSON.parse(envJson) : envJson;
+        console.log("🔥 Loaded Firebase config from Environment Variable.");
       }
 
       if (this.serviceAccount && this.serviceAccount.project_id) {

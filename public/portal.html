@@ -10,9 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- FIREBASE AUTH SDK FOR REAL GOOGLE SIGN-IN POPUP -->
+  <!-- FIREBASE AUTH & GOOGLE IDENTITY SERVICES FOR OFFICIAL GOOGLE ACCOUNTS POPUP -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <style>
     :root {
@@ -686,10 +687,16 @@
 
       if (btnGoogleAuth) {
         btnGoogleAuth.addEventListener('click', async () => {
-          // Attempt Firebase Auth Real Google Popup first
+          const width = 500;
+          const height = 620;
+          const left = Math.max(0, (window.screen.width - width) / 2);
+          const top = Math.max(0, (window.screen.height - height) / 2);
+
+          // 1. Attempt Firebase Auth Real Google Popup first with select_account prompt
           if (typeof firebase !== 'undefined' && firebase.auth) {
             try {
               const provider = new firebase.auth.GoogleAuthProvider();
+              provider.setCustomParameters({ prompt: 'select_account' });
               const result = await firebase.auth().signInWithPopup(provider);
               if (result && result.user) {
                 processGoogleLogin(
@@ -701,11 +708,28 @@
                 return;
               }
             } catch (err) {
-              console.warn('Firebase Google Auth popup note (fallback to Chooser Modal):', err.message);
+              console.warn('Firebase Google Auth popup note (opening official Google OAuth window):', err.message);
             }
           }
-          // Fallback to Native Google Account Chooser Modal (No browser prompt box!)
-          openGoogleChooserModal();
+
+          // 2. Open Official Google Accounts Chooser Popup Window (accounts.google.com/v3/signin/accountchooser)
+          const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+            client_id: '107260884218638653162-panzzpay.apps.googleusercontent.com',
+            redirect_uri: window.location.origin + '/portal.html',
+            response_type: 'token',
+            scope: 'openid email profile',
+            prompt: 'select_account'
+          });
+
+          const popupWindow = window.open(
+            googleOAuthUrl,
+            'GoogleLoginPopup',
+            `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=1,resizable=yes`
+          );
+
+          if (!popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined') {
+            openGoogleChooserModal();
+          }
         });
       }
 

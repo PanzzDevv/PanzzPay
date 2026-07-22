@@ -45,16 +45,21 @@ class FirebaseService {
 
   async getAdminSDK() {
     if (!this.isFirebaseConfigured) return null;
+    if (this.adminInstance) return this.adminInstance;
+
     try {
       const adminModule = await import('firebase-admin').catch(() => null);
-      if (adminModule && adminModule.default) {
-        const admin = adminModule.default;
-        if (!admin.apps.length && this.serviceAccount) {
+      if (adminModule) {
+        const admin = adminModule.default || adminModule;
+        const apps = admin.apps || (admin.getApps ? admin.getApps() : []);
+
+        if ((!apps || apps.length === 0) && this.serviceAccount) {
           admin.initializeApp({
             credential: admin.credential.cert(this.serviceAccount),
             projectId: this.projectId
           });
         }
+        this.adminInstance = admin;
         return admin;
       }
     } catch (e) {

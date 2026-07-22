@@ -316,6 +316,62 @@
 
     });
   </script>
+  <!-- CUSTOM PANZZPAY GLASSMORPHISM MODAL DIALOG -->
+  <div id="panzzpayModalOverlay" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 24px; padding: 2rem; border: 1px solid rgba(99, 102, 241, 0.25); box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35); text-align: center;">
+      <div id="panzzpayModalIcon" style="width: 56px; height: 56px; margin: 0 auto 1rem; background: rgba(99, 102, 241, 0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4f46e5;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      </div>
+      <span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.25); font-weight: 800; font-size: 0.75rem; margin-bottom: 0.5rem; display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px;">⚡ PANZZPAY GATEWAY</span>
+      <h3 id="panzzpayModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0.3rem 0 0.6rem;">Informasi</h3>
+      <p id="panzzpayModalMessage" style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin-bottom: 1.5rem; word-break: break-word;"></p>
+      <button id="panzzpayModalCloseBtn" style="width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: none; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35); transition: all 0.2s ease;">
+        OK, Mengerti
+      </button>
+    </div>
+  </div>
+
+  <script>
+    window.showPanzzPayModal = function(message, title = 'PanzzPay Gateway', type = 'info') {
+      const overlay = document.getElementById('panzzpayModalOverlay');
+      const titleEl = document.getElementById('panzzpayModalTitle');
+      const msgEl = document.getElementById('panzzpayModalMessage');
+      const closeBtn = document.getElementById('panzzpayModalCloseBtn');
+      const iconEl = document.getElementById('panzzpayModalIcon');
+
+      if (!overlay) return;
+
+      titleEl.textContent = title;
+      msgEl.innerHTML = String(message).replace(/\n/g, '<br>');
+
+      const str = String(message).toLowerCase();
+      if (type === 'success' || str.includes('berhasil') || str.includes('🎉') || str.includes('dikirimkan')) {
+        iconEl.style.background = 'rgba(16, 185, 129, 0.12)';
+        iconEl.style.color = '#10b981';
+        iconEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+      } else if (type === 'error' || str.includes('gagal') || str.includes('⚠️') || str.includes('error') || str.includes('salah')) {
+        iconEl.style.background = 'rgba(239, 68, 68, 0.12)';
+        iconEl.style.color = '#ef4444';
+        iconEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+      } else {
+        iconEl.style.background = 'rgba(99, 102, 241, 0.12)';
+        iconEl.style.color = '#4f46e5';
+        iconEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+      }
+
+      overlay.style.display = 'flex';
+
+      const closeHandler = () => {
+        overlay.style.display = 'none';
+        closeBtn.removeEventListener('click', closeHandler);
+      };
+      closeBtn.addEventListener('click', closeHandler);
+    };
+
+    window.alert = function(msg) {
+      window.showPanzzPayModal(msg);
+    };
+  </script>
   <script src="/app.js"></script>
 </body>
 </html>

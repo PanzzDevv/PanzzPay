@@ -605,7 +605,15 @@ header.bento-header {
 @media (max-width: 640px) {
   header.bento-header {
     margin-bottom: 1.25rem;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 1rem;
+    border-radius: 20px;
+    gap: 0.5rem;
+  }
+  .brand-title {
+    font-size: 1.05rem;
+  }
+  .system-badge {
+    display: none !important;
   }
   .bento-wrapper {
     padding: 0 0.75rem;
@@ -619,8 +627,11 @@ header.bento-header {
   }
   .btn {
     width: 100%;
-    min-height: 46px;
+    min-height: 44px;
     padding: 0.75rem 1.2rem;
+    white-space: normal !important;
+    word-break: break-word;
+    text-align: center;
   }
 }
 

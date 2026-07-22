@@ -534,12 +534,19 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ image_base64: base64 })
         });
 
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          alert('Gagal mendecode QR Code: Server mengembalikan respon non-JSON');
+          return;
+        }
+
         const data = await response.json();
         decodedString.textContent = data.payload || JSON.stringify(data, null, 2);
         decodeResultArea.style.display = 'block';
 
         if (data.payload) {
           document.getElementById('payloadStatic').value = data.payload;
+          showToast(data.message || 'Payload string QRIS berhasil diekstrak!');
         }
 
       } catch (err) {

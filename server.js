@@ -40,9 +40,35 @@ if (smtpUser && smtpPass) {
   console.log('🔥 [FIREBASE AUTH NATIVE EMAIL MODE] Using Firebase Auth built-in email engine (noreply@panzzpay.firebaseapp.com).');
 }
 
+const firebaseApiKey = process.env.FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
+
 async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = 'http://localhost:3000') {
   const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(targetEmail)}`;
 
+  // 1. Native Firebase Auth Email Service (noreply@panzzpay.firebaseapp.com)
+  if (firebaseApiKey) {
+    try {
+      const fbUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`;
+      const fbRes = await fetch(fbUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestType: 'VERIFY_EMAIL',
+          email: targetEmail,
+          continueUrl: `${reqHost}/portal.html?verified=true&email=${encodeURIComponent(targetEmail)}`
+        })
+      });
+      const fbData = await fbRes.json();
+      if (fbRes.ok || fbData.email) {
+        console.log(`🔥 [FIREBASE AUTH EMAIL DELIVERED] Sent via noreply@panzzpay.firebaseapp.com to ${targetEmail}`);
+        return { sent: true, provider: 'firebase' };
+      }
+    } catch (e) {
+      console.warn('⚠️ Firebase Auth Email error:', e.message);
+    }
+  }
+
+  // 2. Custom SMTP Transporter
   if (transporter) {
     const mailOptions = {
       from: `"PanzzPay Gateway" <${smtpUser || 'noreply@panzzpay.firebaseapp.com'}>`,
@@ -66,13 +92,13 @@ async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = '
     try {
       await transporter.sendMail(mailOptions);
       console.log(`✉️ [VERIFICATION EMAIL DELIVERED] Sent to ${targetEmail}`);
-      return { sent: true };
+      return { sent: true, provider: 'smtp' };
     } catch (err) {
       console.warn(`⚠️ SMTP send error:`, err.message);
     }
   }
 
-  // If no SMTP, print link in console
+  // 3. Fallback dev mode logging
   console.log(`🔥 [DEV MODE VERIFICATION LINK] For ${targetEmail}: ${verifyLink}`);
   return { sent: true, link: verifyLink };
 }

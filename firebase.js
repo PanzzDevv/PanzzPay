@@ -34,7 +34,6 @@ class FirebaseStorage {
   }
 
   initFirebaseConfig() {
-    // 1. Cek dari Single Environment Variable FIREBASE_CONFIG_JSON / FIREBASE_SERVICE_ACCOUNT_JSON
     const envJson = process.env.FIREBASE_CONFIG_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (envJson) {
       try {
@@ -51,7 +50,6 @@ class FirebaseStorage {
       }
     }
 
-    // 2. Cek dari file lokal firebase-config.json
     if (fs.existsSync(this.configPath)) {
       try {
         const raw = fs.readFileSync(this.configPath, 'utf8');

@@ -374,29 +374,27 @@
             </button>
           </div>
 
-          <!-- REAL EMAIL 6-DIGIT OTP VERIFICATION FORM -->
+          <!-- EMAIL VERIFICATION VIA LINK INFO CARD -->
           <div id="otpSection" style="display: none; max-width: 480px; margin: 1.5rem auto 0; background: #ffffff; border: 2px solid var(--accent-indigo); border-radius: var(--radius-inner); padding: 1.75rem; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);">
             <div style="text-align: center; margin-bottom: 1.25rem;">
               <span class="badge badge-pending" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo); margin-bottom: 0.5rem; font-size: 0.78rem;">VERIFIKASI EMAIL DIBUTUHKAN</span>
-              <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin: 0.2rem 0;">Masukkan Kode Verifikasi 6-Digit</h3>
+              <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin: 0.2rem 0;">Link Aktivasi Telah Dikirim!</h3>
               <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.5;">
                 Silakan cek kotak masuk (atau folder Spam) pada Gmail Anda:<br>
                 <strong id="otpEmailTarget" style="color: var(--accent-indigo); font-size: 0.95rem;"></strong>
               </p>
             </div>
 
-            <div class="form-group" style="margin-bottom: 1.25rem;">
-              <input type="text" id="otpCodeInput" class="otp-input-box" maxlength="6" placeholder="000000" required>
+            <div style="text-align: center; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-indigo)" stroke-width="1.5" style="margin-bottom: 0.5rem;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                Klik tombol <strong>"Aktivasi Akun Saya"</strong> di dalam email tersebut. Akun Anda akan otomatis aktif dan login secara instan.
+              </p>
             </div>
-
-            <button id="btnVerifyOtp" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              <span>Verifikasi Kode & Aktifkan Akun</span>
-            </button>
 
             <div style="text-align: center; margin-top: 0.75rem;">
               <button id="btnResendOtp" style="background: transparent; border: none; color: var(--accent-indigo); font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
-                Belum terima email? Kirim Ulang Kode 6-Digit
+                Belum terima email? Kirim Ulang Link Aktivasi
               </button>
             </div>
           </div>
@@ -799,31 +797,11 @@
         }
       });
 
-      btnVerifyOtp.addEventListener('click', async () => {
-        const otpCode = otpCodeInput.value.trim();
-        if (otpCode.length !== 6) {
-          alert('Masukkan 6 angka kode verifikasi dari email Anda!');
-          return;
-        }
-
-        try {
-          const res = await fetch('/api/auth/verify-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: pendingEmail, otp_code: otpCode })
-          });
-          const data = await res.json();
-          if (data.ok) {
-            alert('Verifikasi Email Berhasil! Akun Anda aktif.');
-            localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-            showDashboard(data.merchant);
-          } else {
-            alert(data.message);
-          }
-        } catch (err) {
-          alert('Gagal verifikasi OTP: ' + err.message);
-        }
-      });
+      if (btnVerifyOtp) {
+        btnVerifyOtp.addEventListener('click', async () => {
+          // Legacy OTP verification handler disabled in favor of 1-Click Email Activation Links
+        });
+      }
 
       btnResendOtp.addEventListener('click', async () => {
         if (!pendingEmail) return;

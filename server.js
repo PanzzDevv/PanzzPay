@@ -40,37 +40,41 @@ if (smtpUser && smtpPass) {
   console.log('🔥 [FIREBASE AUTH NATIVE EMAIL MODE] Using Firebase Auth built-in email engine (noreply@panzzpay.firebaseapp.com).');
 }
 
-async function sendOtpEmail(targetEmail, otpCode, name = 'Merchant', reqHost = 'http://localhost:3000') {
-  // Generate Firebase Auth official verification link directly via firebase-admin
-  const fbResult = await db.generateFirebaseVerificationLink(targetEmail, reqHost);
+async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = 'http://localhost:3000') {
+  const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(targetEmail)}`;
 
   if (transporter) {
     const mailOptions = {
       from: `"PanzzPay Gateway" <${smtpUser || 'noreply@panzzpay.firebaseapp.com'}>`,
       to: targetEmail,
-      subject: `[PanzzPay] Verifikasi Email Akun Anda`,
+      subject: `[PanzzPay] Aktivasi Akun Merchant Anda`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px;">
-          <h2 style="color: #4f46e5;">PanzzPay Gateway</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <h2 style="color: #4f46e5; margin-bottom: 8px;">PanzzPay Gateway</h2>
           <p>Halo <strong>${name}</strong>,</p>
-          <p>Gunakan kode verifikasi 6-digit berikut atau klik link Firebase untuk mengaktifkan akun Anda:</p>
-          <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; text-align: center; margin: 16px 0;">
-            <span style="font-family: monospace; font-size: 28px; font-weight: bold; color: #4f46e5;">${otpCode}</span>
+          <p>Terima kasih telah mendaftar di PanzzPay Gateway. Silakan klik tombol di bawah ini untuk mengaktifkan akun Anda secara instan:</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${verifyLink}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 9999px; font-weight: bold; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);">
+              Aktivasi Akun Saya
+            </a>
           </div>
-          ${fbResult.ok ? `<p><a href="${fbResult.link}" style="display: inline-block; padding: 10px 20px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px;">Verifikasi via Link Firebase</a></p>` : ''}
+          <p style="font-size: 0.82rem; color: #64748b;">Jika tombol di atas tidak berfungsi, Anda juga dapat membuka link berikut pada browser Anda:</p>
+          <p style="font-size: 0.82rem; color: #4f46e5; word-break: break-all;"><a href="${verifyLink}">${verifyLink}</a></p>
         </div>
       `
     };
     try {
       await transporter.sendMail(mailOptions);
-      console.log(`✉️ [EMAIL DELIVERED] Sent to ${targetEmail}`);
+      console.log(`✉️ [VERIFICATION EMAIL DELIVERED] Sent to ${targetEmail}`);
       return { sent: true };
     } catch (err) {
       console.warn(`⚠️ SMTP send error:`, err.message);
     }
   }
 
-  return { sent: true, firebase_link: fbResult.link || null };
+  // If no SMTP, print link in console
+  console.log(`🔥 [DEV MODE VERIFICATION LINK] For ${targetEmail}: ${verifyLink}`);
+  return { sent: true, link: verifyLink };
 }
 
 function postToUpstreamGateway(endpointPath, postParams, retries = 2) {
@@ -139,18 +143,14 @@ app.post('/api/auth/register', async (req, res) => {
 
     if (existing) {
       if (existing.status === 'UNVERIFIED') {
-        const freshOtp = String(Math.floor(100000 + Math.random() * 900000));
-        existing.otp_code = freshOtp;
-        await db.saveMerchant(existing);
-
         const reqHost = `${req.protocol}://${req.get('host')}`;
-        await sendOtpEmail(existing.email, freshOtp, existing.name, reqHost);
+        await sendVerificationEmail(existing.email, existing.name, reqHost);
 
         return res.json({
           ok: true,
           require_otp: true,
           email: existing.email,
-          message: 'Akun Anda belum terverifikasi. Permintaan verifikasi email Firebase telah diproses!'
+          message: 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
         });
       }
       return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
@@ -159,7 +159,6 @@ app.post('/api/auth/register', async (req, res) => {
     const merchantId = 'MCH-' + Date.now().toString(36).toUpperCase();
     const apiKey = 'pz_live_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
     const webhookToken = 'pz_wh_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-    const otpCode = String(Math.floor(100000 + Math.random() * 900000));
 
     const merchant = {
       id: merchantId,
@@ -168,7 +167,6 @@ app.post('/api/auth/register', async (req, res) => {
       password,
       role: 'merchant',
       status: 'UNVERIFIED',
-      otp_code: otpCode,
       api_key: apiKey,
       webhook_token: webhookToken,
       created_at: new Date().toISOString()
@@ -176,20 +174,20 @@ app.post('/api/auth/register', async (req, res) => {
 
     await db.saveMerchant(merchant);
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendOtpEmail(merchant.email, otpCode, merchant.name, reqHost);
+    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
       require_otp: true,
       email: merchant.email,
-      message: 'Pendaftaran berhasil! Silakan cek email Anda (atau folder Spam) untuk verifikasi.'
+      message: 'Pendaftaran berhasil! Silakan cek email Anda (atau folder Spam) untuk mengaktifkan akun.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
   }
 });
 
-// RESEND OTP CODE OR FIREBASE VERIFICATION LINK
+// RESEND VERIFICATION LINK
 app.post('/api/auth/resend-otp', async (req, res) => {
   try {
     const { email } = req.body;
@@ -198,16 +196,12 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const merchant = await db.getMerchantByEmail(email);
     if (!merchant) return res.status(404).json({ ok: false, message: 'Email tidak ditemukan' });
 
-    const freshOtp = String(Math.floor(100000 + Math.random() * 900000));
-    merchant.otp_code = freshOtp;
-    await db.saveMerchant(merchant);
-
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendOtpEmail(merchant.email, freshOtp, merchant.name, reqHost);
+    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
-      message: 'Kode verifikasi baru berhasil dikirimkan ke email Anda!'
+      message: 'Link verifikasi baru berhasil dikirimkan ke email Anda!'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -277,17 +271,14 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     if (merchant.status === 'UNVERIFIED') {
-      const freshOtp = String(Math.floor(100000 + Math.random() * 900000));
-      merchant.otp_code = freshOtp;
-      await db.saveMerchant(merchant);
       const reqHost = `${req.protocol}://${req.get('host')}`;
-      await sendOtpEmail(merchant.email, freshOtp, merchant.name, reqHost);
+      await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
       return res.status(403).json({
         ok: false,
         require_otp: true,
         email: merchant.email,
-        message: 'Akun Anda belum terverifikasi! Silakan cek email Anda untuk melakukan verifikasi.'
+        message: 'Akun Anda belum terverifikasi! Link verifikasi baru telah dikirimkan ke email Anda.'
       });
     }
 

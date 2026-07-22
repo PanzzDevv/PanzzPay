@@ -44,7 +44,7 @@ if (smtpUser && smtpPass) {
   console.log('🔥 [FIREBASE AUTH NATIVE EMAIL MODE] Using Firebase Auth built-in email engine (noreply@panzzpay.firebaseapp.com).');
 }
 
-const firebaseApiKey = process.env.FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
+const firebaseApiKey = db.getClientConfig().apiKey;
 
 async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = 'http://localhost:3000') {
   const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(targetEmail)}`;
@@ -504,11 +504,22 @@ app.post('/api/auth/google', async (req, res) => {
 
 // GET FIREBASE CLIENT CONFIGURATION
 app.get('/api/auth/config', (req, res) => {
-  res.json({
-    projectId: process.env.FIREBASE_PROJECT_ID || db.projectId || 'panzzpay',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || `${process.env.FIREBASE_PROJECT_ID || db.projectId || 'panzzpay'}.firebaseapp.com`,
-    apiKey: process.env.FIREBASE_API_KEY || ''
-  });
+  const config = db.getClientConfig();
+  res.json({ ...config, enabled: Boolean(config.apiKey && config.projectId) });
+});
+
+app.get('/api/health/firebase', async (req, res) => {
+  try {
+    const health = await db.getHealth(true);
+    return res.status(health.ok ? 200 : 503).json(health);
+  } catch (error) {
+    return res.status(503).json({
+      ok: false,
+      status: 'error',
+      projectId: db.projectId,
+      error: error.message
+    });
+  }
 });
 
 // -------------------------------------------------------------
@@ -516,7 +527,8 @@ app.get('/api/auth/config', (req, res) => {
 // -------------------------------------------------------------
 function requireSuperAdmin(req, res, next) {
   const adminKey = req.headers['x-admin-key'] || req.query.admin_key || req.body.admin_key;
-  if (adminKey !== 'pz_admin_master_key_99999') {
+  const expectedAdminKey = process.env.SUPER_ADMIN_API_KEY || 'pz_admin_master_key_99999';
+  if (adminKey !== expectedAdminKey) {
     return res.status(403).json({ ok: false, message: 'Akses Ditolak. Membutuhkan Master Key Super Admin.' });
   }
   next();
@@ -636,15 +648,20 @@ app.post('/api/qris/generate', async (req, res) => {
 // 4. INVOICES & WEBHOOK CALLBACKS
 // -------------------------------------------------------------
 app.get('/api/invoices', async (req, res) => {
-  const apiKeyHeader = req.headers['x-api-key'] || req.query.api_key;
-  let merchantId = null;
-  if (apiKeyHeader) {
-    const merchant = await db.getMerchantByApiKey(apiKeyHeader);
-    if (merchant) merchantId = merchant.id;
-  }
+  try {
+    const apiKeyHeader = req.headers['x-api-key'] || req.query.api_key;
+    let merchantId = null;
+    if (apiKeyHeader) {
+      const merchant = await db.getMerchantByApiKey(apiKeyHeader);
+      if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid' });
+      merchantId = merchant.id;
+    }
 
-  const list = await db.getInvoicesByMerchant(merchantId);
-  res.json({ ok: true, invoices: list });
+    const list = await db.getInvoicesByMerchant(merchantId);
+    return res.json({ ok: true, invoices: list });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: error.message, invoices: [] });
+  }
 });
 
 app.get('/api/invoices/:id', async (req, res) => {
@@ -653,6 +670,10 @@ app.get('/api/invoices/:id', async (req, res) => {
     const invoice = await db.getInvoice(id);
     if (!invoice) {
       return res.status(404).json({ ok: false, message: 'Invoice tidak ditemukan' });
+    }
+    if (invoice.status === 'PENDING' && invoice.expires_at && new Date() > new Date(invoice.expires_at)) {
+      const expiredInvoice = await db.updateInvoiceStatus(invoice.id, 'EXPIRED');
+      return res.json({ ok: true, invoice: expiredInvoice });
     }
     return res.json({ ok: true, invoice });
   } catch (err) {
@@ -666,7 +687,8 @@ app.get('/api/webhook/logs', async (req, res) => {
     let merchantId = null;
     if (apiKeyHeader) {
       const merchant = await db.getMerchantByApiKey(apiKeyHeader);
-      if (merchant) merchantId = merchant.id;
+      if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid', logs: [] });
+      merchantId = merchant.id;
     }
     const logs = merchantId
       ? await db.getWebhookLogsByMerchant(merchantId)
@@ -716,15 +738,6 @@ app.post('/api/qris/decode', async (req, res) => {
     console.error('QR Decode error:', err);
     return res.status(500).json({ ok: false, message: err.message });
   }
-});
-
-app.get('/api/invoices/:id', async (req, res) => {
-  const invoice = await db.getInvoice(req.params.id);
-  if (!invoice) return res.status(404).json({ ok: false, message: 'Invoice tidak ditemukan' });
-  if (invoice.status === 'PENDING' && new Date() > new Date(invoice.expires_at)) {
-    await db.updateInvoiceStatus(invoice.id, 'EXPIRED');
-  }
-  res.json({ ok: true, invoice });
 });
 
 app.post('/api/merchant/invoices/:id/mark-paid', async (req, res) => {
@@ -954,6 +967,11 @@ db.init().then(() => {
   });
 }).catch(err => {
   console.error('Server startup init note:', err.message);
+  if (db.firebaseRequired) {
+    console.error('Server dihentikan karena FIREBASE_REQUIRED=true.');
+    process.exitCode = 1;
+    return;
+  }
   app.listen(PORT, () => {
     console.log(`⚡ PanzzPay Super Admin & Merchant Server is running at http://localhost:${PORT}`);
   });

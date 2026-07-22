@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "check:firebase": "node scripts/check-firebase.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

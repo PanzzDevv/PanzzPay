@@ -673,7 +673,7 @@ app.get('/api/app/check-update', async (req, res) => {
 
       return res.json({
         ok: true,
-        versionCode: 2,
+        versionCode: 3,
         versionName: tag === 'latest' ? '2.1' : tag.replace(/^v/, ''),
         downloadUrl: downloadUrl,
         releaseNotes: release.body || '• Pembaruan otomatis dari GitHub Release.',

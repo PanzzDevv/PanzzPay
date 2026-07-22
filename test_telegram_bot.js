@@ -38,67 +38,106 @@ if (!process.env.BOT_TOKEN || process.env.BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN
   console.log('  node test_telegram_bot.js\n');
 }
 
+const httpsAgent = new https.Agent({ family: 4, keepAlive: true });
+
 // Map simpan interval polling invoice aktif { invoiceId: { chatId, messageId, timer } }
 const activePollers = new Map();
 
-// Helper panggil Telegram Bot API
-async function tgApi(method, body = {}) {
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/${method}`;
-  try {
-    const res = await fetch(url, {
+// Helper panggil Telegram Bot API via Native IPv4 HTTPS Request
+function tgApi(method, body = {}) {
+  return new Promise((resolve) => {
+    const postData = JSON.stringify(body);
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      port: 443,
+      path: `/bot${BOT_TOKEN}/${method}`,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      agent: httpsAgent,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          resolve({ ok: false, error: e.message });
+        }
+      });
     });
-    return await res.json();
-  } catch (err) {
-    console.error(`❌ Telegram API Error [${method}]:`, err.message);
-    return { ok: false, error: err.message };
-  }
+
+    req.on('error', (err) => {
+      console.error(`❌ Telegram API Error [${method}]:`, err.message);
+      resolve({ ok: false, error: err.message });
+    });
+
+    req.write(postData);
+    req.end();
+  });
 }
 
-// Send photo with base64 to Telegram
-async function tgSendPhotoBase64(chatId, base64DataUrl, caption, replyMarkup) {
-  try {
-    const base64Data = base64DataUrl.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
+// Send photo with base64 to Telegram via Native IPv4 HTTPS Request
+function tgSendPhotoBase64(chatId, base64DataUrl, caption, replyMarkup) {
+  return new Promise((resolve) => {
+    try {
+      const base64Data = base64DataUrl.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
 
-    const boundary = '----PanzzPayBoundary' + Math.random().toString(36).substring(2);
-    let body = [];
+      const boundary = '----PanzzPayBoundary' + Math.random().toString(36).substring(2);
+      let body = [];
 
-    // Chat ID
-    body.push(`--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`);
-    // Caption
-    body.push(`--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`);
-    // Parse Mode
-    body.push(`--${boundary}\r\nContent-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`);
-    
-    if (replyMarkup) {
-      body.push(`--${boundary}\r\nContent-Disposition: form-data; name="reply_markup"\r\n\r\n${JSON.stringify(replyMarkup)}\r\n`);
+      body.push(`--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`);
+      body.push(`--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`);
+      body.push(`--${boundary}\r\nContent-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`);
+
+      if (replyMarkup) {
+        body.push(`--${boundary}\r\nContent-Disposition: form-data; name="reply_markup"\r\n\r\n${JSON.stringify(replyMarkup)}\r\n`);
+      }
+
+      body.push(`--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="qris.png"\r\nContent-Type: image/png\r\n\r\n`);
+
+      const headerBuffer = Buffer.from(body.join(''));
+      const footerBuffer = Buffer.from(`\r\n--${boundary}--\r\n`);
+
+      const fullBuffer = Buffer.concat([headerBuffer, buffer, footerBuffer]);
+
+      const req = https.request({
+        hostname: 'api.telegram.org',
+        port: 443,
+        path: `/bot${BOT_TOKEN}/sendPhoto`,
+        method: 'POST',
+        agent: httpsAgent,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': fullBuffer.length
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', (chunk) => data += chunk);
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            resolve({ ok: false });
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        console.error('❌ Error sending photo to Telegram:', err.message);
+        resolve({ ok: false });
+      });
+
+      req.write(fullBuffer);
+      req.end();
+    } catch (err) {
+      console.error('❌ Error sending photo:', err.message);
+      resolve({ ok: false });
     }
-
-    // Photo file
-    body.push(`--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="qris.png"\r\nContent-Type: image/png\r\n\r\n`);
-
-    const headerBuffer = Buffer.from(body.join(''));
-    const footerBuffer = Buffer.from(`\r\n--${boundary}--\r\n`);
-
-    const fullBuffer = Buffer.concat([headerBuffer, buffer, footerBuffer]);
-
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        'Content-Length': fullBuffer.length
-      },
-      body: fullBuffer
-    });
-
-    return await res.json();
-  } catch (err) {
-    console.error('❌ Error sending photo to Telegram:', err.message);
-    return { ok: false };
-  }
+  });
 }
 
 // -------------------------------------------------------------------------

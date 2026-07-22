@@ -821,10 +821,6 @@
             showDashboard(data.merchant);
           }
         });
-      }
-
-      let verificationPollTimer = null;
-
       function startVerificationPolling(email) {
         if (!email) return;
         if (verificationPollTimer) clearInterval(verificationPollTimer);

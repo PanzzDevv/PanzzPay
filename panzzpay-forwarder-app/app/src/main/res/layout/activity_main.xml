@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC"
+    android:background="#090D16"
     android:fillViewport="true">
 
     <LinearLayout
@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- HEADER BRAND HERO CARD WITH OFFICIAL LOGO -->
+        <!-- HEADER BRAND HERO CARD WITH OFFICIAL LOGO & GRADIENT -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,8 +33,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PanzzPay Forwarder v2.0"
-                android:textColor="#FFFFFF"
+                android:text="PanzzPay Forwarder v2.1"
+                android:textColor="#F8FAFC"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -52,7 +52,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Izin Notifikasi: Mengecek..."
-                android:textColor="#10B981"
+                android:textColor="#34D399"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_badge_status"
@@ -81,7 +81,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Status Layanan Listener"
-                    android:textColor="#0F172A"
+                    android:textColor="#F8FAFC"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -90,7 +90,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Membaca notifikasi transfer e-wallet secara otomatis"
-                    android:textColor="#64748B"
+                    android:textColor="#94A3B8"
                     android:textSize="11sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
@@ -123,7 +123,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🔊 Suara Notifikasi (Uang Masuk!)"
-                    android:textColor="#0F172A"
+                    android:textColor="#F8FAFC"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -131,7 +131,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Mengucapkan pesan uang masuk secara otomatis di HP toko"
-                    android:textColor="#64748B"
+                    android:textColor="#94A3B8"
                     android:textSize="11sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
@@ -157,7 +157,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Target Webhook URL PanzzPay Anda:"
-                android:textColor="#0F172A"
+                android:textColor="#F8FAFC"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -165,7 +165,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Salin URL Webhook dari Portal Merchant PanzzPay Anda"
-                android:textColor="#64748B"
+                android:textColor="#94A3B8"
                 android:textSize="11sp"
                 android:layout_marginTop="2dp" />
 
@@ -174,6 +174,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_..."
+                android:textColorHint="#64748B"
                 android:inputType="textUri|textMultiLine"
                 android:maxLines="3"
                 android:scrollHorizontally="false"
@@ -181,7 +182,7 @@
                 android:layout_marginTop="10dp"
                 android:padding="12dp"
                 android:background="@drawable/bg_input_box"
-                android:textColor="#0F172A" />
+                android:textColor="#F8FAFC" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -196,8 +197,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="📋 Tempel URL"
-                    android:backgroundTint="#475569"
-                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#334155"
+                    android:textColor="#F8FAFC"
                     android:textSize="12sp"
                     android:layout_marginEnd="6dp" />
 
@@ -227,7 +228,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Aplikasi Terhubung &amp; Otomatis Dibaca:"
-                android:textColor="#0F172A"
+                android:textColor="#F8FAFC"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
@@ -235,7 +236,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="DANA • ShopeePay • GoPay • OVO • m-BCA • BRImo • Livin Mandiri • BSI Mobile • SeaBank"
-                android:textColor="#059669"
+                android:textColor="#34D399"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp" />
@@ -263,7 +264,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="[READY] PanzzPay Notification Listener siap menerima data notifikasi..."
-                android:textColor="#94A3B8"
+                android:textColor="#34D399"
                 android:textSize="10sp"
                 android:fontFamily="monospace"
                 android:layout_marginTop="6dp"

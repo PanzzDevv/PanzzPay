@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_blue">#2563EB</color>
+    <color name="brand_blue">#3B82F6</color>
     <color name="brand_blue_dark">#1D4ED8</color>
-    <color name="accent_emerald">#059669</color>
-    <color name="accent_emerald_bg">#ECFDF5</color>
-    <color name="accent_amber">#D97706</color>
-    <color name="dark_slate">#0F172A</color>
-    <color name="dark_slate_card">#1E293B</color>
-    <color name="bg_main">#F8FAFC</color>
-    <color name="card_bg">#FFFFFF</color>
-    <color name="border_color">#E2E8F0</color>
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#334155</color>
-    <color name="text_muted">#64748B</color>
-    <color name="purple_500">#2563EB</color>
-    <color name="purple_700">#1D4ED8</color>
-    <color name="teal_200">#059669</color>
-    <color name="teal_700">#047857</color>
+    <color name="accent_emerald">#10B981</color>
+    <color name="accent_emerald_bg">#064E3B</color>
+    <color name="accent_amber">#F59E0B</color>
+    <color name="dark_slate">#090D16</color>
+    <color name="dark_slate_card">#131C2E</color>
+    <color name="bg_main">#090D16</color>
+    <color name="card_bg">#131C2E</color>
+    <color name="border_color">#1E293B</color>
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#CBD5E1</color>
+    <color name="text_muted">#94A3B8</color>
+    <color name="purple_500">#6366F1</color>
+    <color name="purple_700">#4338CA</color>
+    <color name="teal_200">#34D399</color>
+    <color name="teal_700">#059669</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

@@ -665,16 +665,25 @@ app.get('/api/app/check-update', async (req, res) => {
 
     if (ghRes.ok) {
       const release = await ghRes.json();
-      const tag = release.tag_name || 'latest';
+      const tag = release.tag_name || 'v2.1.0';
       const apkAsset = release.assets?.find(a => a.name.endsWith('.apk'));
       const downloadUrl = apkAsset
         ? apkAsset.browser_download_url
         : 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk';
 
+      // Parse version code e.g. "v2.1.4" -> 214
+      const numParts = tag.replace(/[^0-9.]/g, '').split('.').map(n => parseInt(n) || 0);
+      let calcCode = 210;
+      if (numParts.length >= 3) {
+        calcCode = numParts[0] * 100 + numParts[1] * 10 + numParts[2];
+      } else if (numParts.length === 2) {
+        calcCode = numParts[0] * 100 + numParts[1] * 10;
+      }
+
       return res.json({
         ok: true,
-        versionCode: 2,
-        versionName: tag === 'latest' ? '2.1' : tag.replace(/^v/, ''),
+        versionCode: calcCode,
+        versionName: tag.replace(/^v/, ''),
         downloadUrl: downloadUrl,
         releaseNotes: release.body || '• Pembaruan otomatis dari GitHub Release.',
         forceUpdate: false

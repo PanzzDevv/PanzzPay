@@ -165,17 +165,24 @@ app.post('/api/auth/register', async (req, res) => {
 
     if (existing) {
       if (existing.status === 'UNVERIFIED') {
-        const reqHost = `${req.protocol}://${req.get('host')}`;
-        await sendVerificationEmail(existing.email, existing.name, reqHost);
-
+        existing.status = 'ACTIVE';
+        await db.saveMerchant(existing);
         return res.json({
           ok: true,
-          require_otp: true,
-          email: existing.email,
-          message: 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
+          require_otp: false,
+          merchant: {
+            id: existing.id,
+            name: existing.name,
+            email: existing.email,
+            role: existing.role,
+            status: 'ACTIVE',
+            api_key: existing.api_key,
+            webhook_token: existing.webhook_token
+          },
+          message: 'Akun Anda telah otomatis diaktifkan!'
         });
       }
-      return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
+      return res.status(400).json({ ok: false, message: 'Email sudah terdaftar. Silakan login.' });
     }
 
     const merchantId = 'MCH-' + Date.now().toString(36).toUpperCase();
@@ -188,21 +195,28 @@ app.post('/api/auth/register', async (req, res) => {
       email: cleanEmail,
       password,
       role: 'merchant',
-      status: 'UNVERIFIED',
+      status: 'ACTIVE',
       api_key: apiKey,
       webhook_token: webhookToken,
       created_at: new Date().toISOString()
     };
 
     await db.saveMerchant(merchant);
-    const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
-      require_otp: true,
+      require_otp: false,
       email: merchant.email,
-      message: 'Pendaftaran berhasil! Silakan cek email Anda (atau folder Spam) untuk mengaktifkan akun.'
+      merchant: {
+        id: merchant.id,
+        name: merchant.name,
+        email: merchant.email,
+        role: merchant.role,
+        status: 'ACTIVE',
+        api_key: merchant.api_key,
+        webhook_token: merchant.webhook_token
+      },
+      message: 'Pendaftaran berhasil! Akun Anda telah aktif.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -293,15 +307,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     if (merchant.status === 'UNVERIFIED') {
-      const reqHost = `${req.protocol}://${req.get('host')}`;
-      await sendVerificationEmail(merchant.email, merchant.name, reqHost);
-
-      return res.status(403).json({
-        ok: false,
-        require_otp: true,
-        email: merchant.email,
-        message: 'Akun Anda belum terverifikasi! Link verifikasi baru telah dikirimkan ke email Anda.'
-      });
+      merchant.status = 'ACTIVE';
+      await db.saveMerchant(merchant);
     }
 
     if (merchant.status === 'SUSPENDED') {

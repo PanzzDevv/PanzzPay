@@ -392,8 +392,11 @@
               </p>
             </div>
 
-            <div style="text-align: center; margin-top: 0.75rem;">
-              <button id="btnResendOtp" style="background: transparent; border: none; color: var(--accent-indigo); font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+            <div style="text-align: center; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.6rem; align-items: center;">
+              <button id="btnDirectActivate" style="width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: none; padding: 0.75rem 1.25rem; border-radius: 12px; font-weight: 800; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35); transition: all 0.2s;">
+                ⚡ Klik Di Sini Untuk Langsung Aktifkan & Login Akun
+              </button>
+              <button id="btnResendOtp" style="background: transparent; border: none; color: var(--text-secondary); font-weight: 600; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">
                 Belum terima email? Kirim Ulang Link Aktivasi
               </button>
             </div>
@@ -803,6 +806,29 @@
         });
       }
 
+      const btnDirectActivate = document.getElementById('btnDirectActivate');
+      if (btnDirectActivate) {
+        btnDirectActivate.addEventListener('click', async () => {
+          if (!pendingEmail) return;
+          try {
+            const res = await fetch('/api/auth/verify-otp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: pendingEmail })
+            });
+            const data = await res.json();
+            if (data.ok && data.merchant) {
+              localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
+              showDashboard(data.merchant);
+            } else {
+              alert(data.message || 'Gagal mengaktifkan akun.');
+            }
+          } catch (err) {
+            alert('Gagal mengaktifkan akun: ' + err.message);
+          }
+        });
+      }
+
       btnResendOtp.addEventListener('click', async () => {
         if (!pendingEmail) return;
         try {
@@ -814,7 +840,7 @@
           const data = await res.json();
           alert(data.message);
         } catch (err) {
-          alert('Gagal mengirim ulang kode: ' + err.message);
+          alert('Gagal mengirim ulang link: ' + err.message);
         }
       });
 

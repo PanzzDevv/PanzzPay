@@ -142,11 +142,34 @@ object UpdateManager {
 
         thread {
             try {
-                val url = URL(downloadUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.connectTimeout = 10000
-                connection.readTimeout = 30000
-                connection.connect()
+                var currentUrl = downloadUrl
+                var connection: HttpURLConnection
+                var status: Int
+                var redirectCount = 0
+
+                do {
+                    val url = URL(currentUrl)
+                    connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 15000
+                    connection.readTimeout = 45000
+                    connection.instanceFollowRedirects = true
+                    connection.setRequestProperty("User-Agent", "PanzzPay-Android-Updater")
+                    connection.connect()
+
+                    status = connection.responseCode
+                    if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
+                        val redirectedUrl = connection.getHeaderField("Location")
+                        if (!redirectedUrl.isNullOrEmpty()) {
+                            currentUrl = redirectedUrl
+                            connection.disconnect()
+                            redirectCount++
+                        } else {
+                            break
+                        }
+                    } else {
+                        break
+                    }
+                } while (redirectCount < 5)
 
                 val fileLength = connection.contentLength
                 val apkFile = File(activity.getExternalFilesDir(null), "panzzpay-forwarder-update.apk")
@@ -154,7 +177,7 @@ object UpdateManager {
                 val input: InputStream = connection.inputStream
                 val output = FileOutputStream(apkFile)
 
-                val data = ByteArray(4096)
+                val data = ByteArray(8192)
                 var total: Long = 0
                 var count: Int
 

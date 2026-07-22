@@ -59,20 +59,44 @@ async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = '
   // 2. Native Firebase Auth REST API (noreply@panzzpay.firebaseapp.com)
   if (firebaseApiKey) {
     try {
-      const fbUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`;
-      const fbRes = await fetch(fbUrl, {
+      let idToken = null;
+      const signUpUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseApiKey}`;
+      const signUpRes = await fetch(signUpUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requestType: 'VERIFY_EMAIL',
-          email: targetEmail,
-          continueUrl: `${reqHost}/portal.html?verified=true&email=${encodeURIComponent(targetEmail)}`
-        })
+        body: JSON.stringify({ email: targetEmail, password: 'PanzzPayUser2026!', returnSecureToken: true })
       });
-      const fbData = await fbRes.json();
-      if (fbRes.ok || fbData.email) {
-        console.log(`🔥 [FIREBASE AUTH EMAIL DELIVERED] Sent via noreply@panzzpay.firebaseapp.com to ${targetEmail}`);
-        return { sent: true, provider: 'firebase' };
+      const signUpData = await signUpRes.json();
+      if (signUpData.idToken) {
+        idToken = signUpData.idToken;
+      } else if (signUpData.error && signUpData.error.message.includes('EMAIL_EXISTS')) {
+        const signInUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`;
+        const signInRes = await fetch(signInUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: targetEmail, password: 'PanzzPayUser2026!', returnSecureToken: true })
+        });
+        const signInData = await signInRes.json();
+        idToken = signInData.idToken || null;
+      }
+
+      if (idToken) {
+        const oobUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`;
+        const oobRes = await fetch(oobUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestType: 'VERIFY_EMAIL',
+            idToken: idToken
+          })
+        });
+        const oobData = await oobRes.json();
+        if (oobRes.ok) {
+          console.log(`🔥 [FIREBASE AUTH EMAIL DELIVERED] Sent via noreply@panzzpay.firebaseapp.com to ${targetEmail}`);
+          return { sent: true, provider: 'firebase' };
+        } else {
+          console.warn('⚠️ Firebase sendOobCode note:', oobData.error?.message);
+        }
       }
     } catch (e) {
       console.warn('⚠️ Firebase Auth Email error:', e.message);

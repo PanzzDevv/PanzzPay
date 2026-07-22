@@ -162,6 +162,7 @@ class FirebaseService {
 
   // Helper method to sync document to Cloud Firestore & Firebase Auth Users
   async syncToFirebase(collectionName, docId, data) {
+    if (!this.isFirebaseConfigured || !this.serviceAccount) return;
     const firestore = await this.getFirestoreDB();
     if (!firestore) return;
 

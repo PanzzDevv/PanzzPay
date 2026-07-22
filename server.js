@@ -695,6 +695,27 @@ app.get('/api/app/check-update', async (req, res) => {
   });
 });
 
+// -------------------------------------------------------------
+// DYNAMIC APK DOWNLOAD ROUTE FOR WEB PORTAL
+// -------------------------------------------------------------
+app.get('/downloads/panzzpay-forwarder.apk', async (req, res) => {
+  try {
+    const ghRes = await fetch('https://api.github.com/repos/PanzzDevv/PanzzPay/releases/latest', {
+      headers: { 'User-Agent': 'PanzzPay-Server' }
+    });
+    if (ghRes.ok) {
+      const release = await ghRes.json();
+      const apkAsset = release.assets?.find(a => a.name.endsWith('.apk'));
+      if (apkAsset && apkAsset.browser_download_url) {
+        return res.redirect(apkAsset.browser_download_url);
+      }
+    }
+  } catch (err) {
+    console.log('GitHub Release download redirect fallback:', err.message);
+  }
+  return res.redirect('https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk');
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

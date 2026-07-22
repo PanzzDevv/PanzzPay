@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donasi QRIS - PanzzPay Payment Gateway</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- BENTO APP HEADER WITH HAMBURGER MENU -->
+  <header class="bento-header">
+    <div class="brand-title">
+      <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.75rem;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span>PanzzPay <span style="color: var(--accent-rose); font-weight: 700; font-size: 0.85em;">Donasi</span></span>
+      </a>
+    </div>
+
+    <!-- HAMBURGER BUTTON -->
+    <div class="header-controls">
+      <div class="system-badge">
+        <span class="dot-pulse"></span>
+        <span>PANZZPAY ONLINE</span>
+      </div>
+
+      <button id="btnHamburger" class="hamburger-btn" aria-label="Buka Menu Navigasi">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SLIDE-OUT NAV DRAWER OVERLAY -->
+  <div id="navDrawer" class="nav-drawer">
+    <div class="nav-drawer-backdrop" id="navBackdrop"></div>
+    <div class="nav-drawer-content">
+      <div class="drawer-header">
+        <div class="brand-title" style="font-size: 1.15rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>PanzzPay Menu</span>
+        </div>
+        <button id="btnCloseDrawer" class="close-btn" aria-label="Tutup Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="drawer-nav">
+        <a href="/" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Dashboard Main</span>
+        </a>
+        <a href="/#generator-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>QRIS Generator</span>
+        </a>
+        <a href="/donasi.html" class="drawer-item active">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <span>Halaman Donasi 💖</span>
+        </a>
+        <a href="/#simulator-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span>Simulator Webhook</span>
+        </a>
+        <a href="/#api-docs-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          <span>Dokumentasi REST API</span>
+        </a>
+        <a href="/#history-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span>Riwayat Transaksi</span>
+        </a>
+      </nav>
+
+      <div style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--bento-border);">
+        <div style="font-size: 0.78rem; color: var(--text-muted); text-align: center;">
+          PanzzPay Gateway API v2.0
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BENTO MAIN WRAPPER -->
+  <main class="bento-wrapper">
+    <div class="bento-grid">
+
+      <!-- HERO DONATION CARD (COL 12) -->
+      <section class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%); border: 1px solid rgba(220, 38, 38, 0.2);">
+        <div>
+          <span class="bento-hero-badge" style="background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.2); color: var(--accent-rose);">QRIS DONASI RESMI PANZZPAY</span>
+          <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 0.6rem;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            <span>Dukung Pengembang PanzzPay Gateway</span>
+          </h1>
+          <p style="color: var(--text-secondary); max-width: 900px; font-size: 0.92rem; line-height: 1.6;">
+            Scan gambar QRIS di bawah ini menggunakan aplikasi e-wallet atau m-Banking Anda dengan <strong>nominal bebas tanpa batasan</strong>. Setiap bentuk dukungan sangat berarti bagi kelangsungan server & fitur PanzzPay!
+          </p>
+        </div>
+      </section>
+
+      <!-- STATIC QRIS DISPLAY CARD (COL 6) -->
+      <section class="bento-card col-6">
+        <div>
+          <div class="bento-header-sm">
+            <h2 class="bento-title" style="color: var(--accent-rose);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span>Kode QRIS Donasi Statis</span>
+            </h2>
+            <p class="bento-subtitle">Mendukung semua pembayaran QRIS Bank & E-Wallet di Indonesia.</p>
+          </div>
+
+          <div class="qr-display-box" style="background: #ffffff; border: 1px solid var(--bento-border);">
+            <div class="qr-img-frame" style="padding: 1.25rem; max-width: 280px; width: 100%;">
+              <img id="donationQrImg" src="/assets/images/qris-donasi.jpg" alt="QRIS Donasi PanzzPay" style="width: 100%; height: auto; display: block; border-radius: 8px;" onerror="this.onerror=null; this.src='/assets/images/qris-donasi.svg';">
+            </div>
+
+            <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-top: 0.75rem;">
+              Nominal Donasi Bebas
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+              (Masukkan jumlah sesuka Anda saat scan QRIS)
+            </p>
+          </div>
+
+          <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="/assets/images/qris-donasi.jpg" download="qris-donasi.jpg" class="btn btn-dark" style="flex: 1; text-decoration: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Download Gambar QRIS</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSTRUCTIONS CARD (COL 6) -->
+      <section class="bento-card col-6">
+        <div>
+          <div class="bento-header-sm">
+            <h2 class="bento-title">Panduan Melakukan Donasi</h2>
+            <p class="bento-subtitle">Petunjuk langkah demi langkah melakukan pembayaran via QRIS.</p>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.5rem;">
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>Langkah Pembayaran:</span>
+            </h3>
+            <ol style="font-size: 0.88rem; color: var(--text-secondary); padding-left: 1.2rem; line-height: 1.8;">
+              <li>Buka aplikasi e-Wallet (<strong style="color: var(--accent-indigo);">DANA, GoPay, OVO, ShopeePay</strong>) atau m-Banking (<strong style="color: var(--accent-emerald);">BCA, BRI, Mandiri, BNI</strong> dll).</li>
+              <li>Pilih menu <strong style="color: var(--text-primary);">Scan QRIS / Bayar</strong>.</li>
+              <li>Arahkan kamera HP ke kode QRIS di sebelah kiri (atau tekan tombol Download QRIS lalu upload gambar).</li>
+              <li>Masukkan nominal donasi sesuai keinginan Anda.</li>
+              <li>Konfirmasi PIN dan selesaikan pembayaran. Terima kasih atas dukungan Anda! 💖</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

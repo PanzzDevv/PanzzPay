@@ -18,14 +18,23 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Build APK
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Generate Gradle Wrapper
       run: |
         cd panzzpay-forwarder-app
         gradle wrapper --gradle-version 8.2
+
+    - name: Build APK
+      run: |
+        cd panzzpay-forwarder-app
+        chmod +x ./gradlew
         ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: PanzzPay-Forwarder-APK
         path: panzzpay-forwarder-app/app/build/outputs/apk/debug/*.apk

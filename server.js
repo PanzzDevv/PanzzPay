@@ -297,6 +297,68 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// GOOGLE AUTHENTICATION (SIGN UP & LOGIN) ENDPOINT
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { email, name, google_id, picture } = req.body;
+    if (!email) {
+      return res.status(400).json({ ok: false, message: 'Email Google wajib diisi' });
+    }
+
+    const cleanEmail = email.toLowerCase();
+    let merchant = await db.getMerchantByEmail(cleanEmail);
+
+    if (merchant) {
+      if (merchant.status === 'SUSPENDED') {
+        return res.status(403).json({ ok: false, message: 'Akun Anda dinonaktifkan/ditangguhkan oleh Super Admin.' });
+      }
+
+      if (merchant.status === 'UNVERIFIED') {
+        merchant.status = 'ACTIVE';
+        delete merchant.otp_code;
+        await db.saveMerchant(merchant);
+      }
+    } else {
+      const merchantId = 'MCH-' + Date.now().toString(36).toUpperCase();
+      const apiKey = 'pz_live_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      const webhookToken = 'pz_wh_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+
+      merchant = {
+        id: merchantId,
+        name: name || (cleanEmail.split('@')[0] + ' (Google)'),
+        email: cleanEmail,
+        password: 'GOOGLE_AUTH_' + Math.random().toString(36).substring(2, 12),
+        role: 'merchant',
+        status: 'ACTIVE',
+        provider: 'google',
+        google_id: google_id || null,
+        picture: picture || null,
+        api_key: apiKey,
+        webhook_token: webhookToken,
+        created_at: new Date().toISOString()
+      };
+
+      await db.saveMerchant(merchant);
+    }
+
+    return res.json({
+      ok: true,
+      message: 'Authentikasi Google berhasil!',
+      merchant: {
+        id: merchant.id,
+        name: merchant.name,
+        email: merchant.email,
+        role: merchant.role || 'merchant',
+        status: merchant.status || 'ACTIVE',
+        api_key: merchant.api_key,
+        webhook_token: merchant.webhook_token
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
 // -------------------------------------------------------------
 // 2. SUPER ADMIN ENDPOINTS
 // -------------------------------------------------------------

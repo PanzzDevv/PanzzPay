@@ -667,6 +667,8 @@
       const googleAuthWrapper = document.getElementById('googleAuthWrapper');
 
       let pendingEmail = '';
+      let dashboardPollTimer = null;
+      let verificationPollTimer = null;
 
       const savedMerchant = localStorage.getItem('panzzpay_merchant');
       if (savedMerchant) {
@@ -1052,8 +1054,6 @@
           }
         });
       }
-
-      let dashboardPollTimer = null;
 
       function showDashboard(merchant) {
         authSection.style.display = 'none';

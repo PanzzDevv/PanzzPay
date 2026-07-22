@@ -441,34 +441,42 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Invoices
       const invRes = await fetch('/api/invoices');
-      const invData = await invRes.json();
-
-      if (invData.ok && invData.invoices.length > 0 && invoiceTableBody) {
-        invoiceTableBody.innerHTML = invData.invoices.map(inv => `
-          <tr>
-            <td><strong>${inv.id}</strong></td>
-            <td>${new Date(inv.created_at).toLocaleTimeString('id-ID')}</td>
-            <td>Rp ${inv.base_amount.toLocaleString('id-ID')}</td>
-            <td style="color: var(--brand-blue); font-weight: 700;">${inv.unique_code}</td>
-            <td><strong style="color: var(--text-primary);">Rp ${inv.total_amount.toLocaleString('id-ID')}</strong></td>
-            <td><span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span></td>
-          </tr>
-        `).join('');
+      const invType = invRes.headers.get('content-type') || '';
+      if (invRes.ok && invType.includes('application/json')) {
+        const invData = await invRes.json();
+        if (invData.ok && Array.isArray(invData.invoices) && invoiceTableBody) {
+          if (invData.invoices.length > 0) {
+            invoiceTableBody.innerHTML = invData.invoices.map(inv => `
+              <tr>
+                <td><strong>${inv.id}</strong></td>
+                <td>${new Date(inv.created_at).toLocaleTimeString('id-ID')}</td>
+                <td>Rp ${(inv.base_amount || 0).toLocaleString('id-ID')}</td>
+                <td style="color: var(--brand-blue); font-weight: 700;">${inv.unique_code}</td>
+                <td><strong style="color: var(--text-primary);">Rp ${(inv.total_amount || 0).toLocaleString('id-ID')}</strong></td>
+                <td><span class="badge badge-${(inv.status || 'PENDING').toLowerCase()}">${inv.status}</span></td>
+              </tr>
+            `).join('');
+          }
+        }
       }
 
       // Webhook Logs
       const logRes = await fetch('/api/webhook/logs');
-      const logData = await logRes.json();
-
-      if (logData.ok && logData.logs.length > 0 && webhookLogBody) {
-        webhookLogBody.innerHTML = logData.logs.map(log => `
-          <tr>
-            <td>${new Date(log.received_at).toLocaleTimeString('id-ID')}</td>
-            <td><code>${typeof log.raw_payload === 'object' ? JSON.stringify(log.raw_payload) : log.raw_payload}</code></td>
-            <td><strong style="color: var(--brand-blue);">Rp ${(log.extracted_amount || 0).toLocaleString('id-ID')}</strong></td>
-            <td><span class="badge badge-${log.status === 'MATCHED' ? 'paid' : 'expired'}">${log.status}</span></td>
-          </tr>
-        `).join('');
+      const logType = logRes.headers.get('content-type') || '';
+      if (logRes.ok && logType.includes('application/json')) {
+        const logData = await logRes.json();
+        if (logData.ok && Array.isArray(logData.logs) && webhookLogBody) {
+          if (logData.logs.length > 0) {
+            webhookLogBody.innerHTML = logData.logs.map(log => `
+              <tr>
+                <td>${new Date(log.received_at).toLocaleTimeString('id-ID')}</td>
+                <td><code>${typeof log.raw_payload === 'object' ? JSON.stringify(log.raw_payload) : log.raw_payload}</code></td>
+                <td><strong style="color: var(--brand-blue);">Rp ${(log.extracted_amount || 0).toLocaleString('id-ID')}</strong></td>
+                <td><span class="badge badge-${log.status === 'MATCHED' ? 'paid' : 'expired'}">${log.status}</span></td>
+              </tr>
+            `).join('');
+          }
+        }
       }
 
     } catch (err) {

@@ -428,6 +428,23 @@ app.get('/api/invoices', async (req, res) => {
   res.json({ ok: true, invoices: list });
 });
 
+app.get('/api/webhook/logs', async (req, res) => {
+  try {
+    const apiKeyHeader = req.headers['x-api-key'] || req.query.api_key;
+    let merchantId = null;
+    if (apiKeyHeader) {
+      const merchant = await db.getMerchantByApiKey(apiKeyHeader);
+      if (merchant) merchantId = merchant.id;
+    }
+    const logs = merchantId 
+      ? await db.getWebhookLogsByMerchant(merchantId) 
+      : await db.getAllWebhookLogs();
+    res.json({ ok: true, logs: logs || [] });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message, logs: [] });
+  }
+});
+
 app.get('/api/invoices/:id', async (req, res) => {
   const invoice = await db.getInvoice(req.params.id);
   if (!invoice) return res.status(404).json({ ok: false, message: 'Invoice tidak ditemukan' });

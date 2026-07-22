@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin Master Portal - PanzzPay Gateway</title>
+  <link rel="icon" type="image/png" href="/assets/images/logo.png">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- BENTO APP HEADER WITH HAMBURGER MENU -->
+  <header class="bento-header" style="border-bottom: 2px solid var(--accent-amber);">
+    <div class="brand-title">
+      <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.75rem;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span>PanzzPay <span style="color: var(--accent-amber); font-weight: 800; font-size: 0.85em;">SUPER ADMIN</span></span>
+      </a>
+    </div>
+
+    <div class="header-controls">
+      <div class="system-badge" style="background: rgba(217, 119, 6, 0.1); border-color: rgba(217, 119, 6, 0.3); color: var(--accent-amber);">
+        <span class="dot-pulse" style="background: var(--accent-amber);"></span>
+        <span>MASTER CONTROL ACTIVE</span>
+      </div>
+
+      <button id="btnHamburger" class="hamburger-btn" aria-label="Buka Menu Navigasi">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SLIDE-OUT NAV DRAWER OVERLAY -->
+  <div id="navDrawer" class="nav-drawer">
+    <div class="nav-drawer-backdrop" id="navBackdrop"></div>
+    <div class="nav-drawer-content">
+      <div class="drawer-header">
+        <div class="brand-title" style="font-size: 1.15rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>PanzzPay Menu</span>
+        </div>
+        <button id="btnCloseDrawer" class="close-btn" aria-label="Tutup Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="drawer-nav">
+        <a href="/" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Dashboard Utama</span>
+        </a>
+        <a href="/superadmin.html" class="drawer-item active" style="color: var(--accent-amber); font-weight: 800;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Super Admin Control 👑</span>
+        </a>
+        <a href="/admin.html" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Developer & Merchant Portal</span>
+        </a>
+        <a href="/donasi.html" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <span>Halaman Donasi 💖</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- BENTO MAIN WRAPPER -->
+  <main class="bento-wrapper">
+    <div class="bento-grid">
+
+      <!-- SUPER ADMIN LOGIN CARD (Shown if not authenticated) -->
+      <section class="bento-card col-12" id="superAdminLoginSection">
+        <div>
+          <span class="bento-hero-badge" style="background: rgba(217, 119, 6, 0.1); color: var(--accent-amber);">SUPER ADMIN MASTER AUTH</span>
+          <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+            Login Pemilik Utama Platform PanzzPay
+          </h1>
+          <p style="color: var(--text-secondary); max-width: 900px; font-size: 0.92rem; margin-bottom: 1.25rem;">
+            Masuk dengan kredensial Super Admin Anda untuk mengelola seluruh merchant, melihat total omset gabungan platform, serta memantau kesehatan server.
+          </p>
+
+          <form id="superAdminLoginForm" style="max-width: 480px;">
+            <div class="form-group">
+              <label class="form-label" for="saEmail">Email Super Admin</label>
+              <input type="email" id="saEmail" class="form-control" value="admin@panzzpay.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="saPassword">Password Master</label>
+              <input type="password" id="saPassword" class="form-control" value="adminpanzzpay123" required>
+            </div>
+            <button type="submit" class="btn btn-dark" style="width: 100%; background: #0F172A; border-color: var(--accent-amber); color: var(--accent-amber); font-weight: 700;">
+              Masuk Portal Super Admin 👑
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- SUPER ADMIN DASHBOARD CONTENT (Shown when authenticated) -->
+      <section class="bento-card col-12" id="superAdminDashboardSection" style="display: none;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <span class="bento-hero-badge" style="background: rgba(217, 119, 6, 0.15); color: var(--accent-amber);">GLOBAL PLATFORM MONITORING</span>
+              <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary);">Dashboard Utama Super Admin</h2>
+            </div>
+            <button id="btnSaLogout" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem;">Logout Master</button>
+          </div>
+
+          <!-- GLOBAL PLATFORM STATS CARDS -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #ffffff; border: 1px solid var(--accent-amber); border-radius: var(--radius-inner); padding: 1.25rem;">
+              <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">TOTAL OMSET PLATFORM (ALL MERCHANTS)</span>
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--accent-amber);" id="statGlobalOmset">Rp 0</div>
+            </div>
+            <div style="background: #ffffff; border: 1px solid var(--bento-border); border-radius: var(--radius-inner); padding: 1.25rem;">
+              <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">JUMLAH MERCHANT TERDAFTAR</span>
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--accent-indigo);" id="statTotalMerchants">0</div>
+            </div>
+            <div style="background: #ffffff; border: 1px solid var(--bento-border); border-radius: var(--radius-inner); padding: 1.25rem;">
+              <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">TOTAL TRANSAKSI LUNAS</span>
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--accent-emerald);" id="statTotalPaidInv">0</div>
+            </div>
+          </div>
+
+          <!-- MERCHANT MANAGEMENT TABLE -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem;">
+              Daftar Seluruh Developer / Merchant PanzzPay:
+            </h3>
+            <div class="table-container">
+              <table class="bento-table">
+                <thead>
+                  <tr>
+                    <th>ID Merchant</th>
+                    <th>Nama Toko / Dev</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Total Omset</th>
+                    <th>Status Akun</th>
+                    <th>Aksi Super Admin</th>
+                  </tr>
+                </thead>
+                <tbody id="merchantListBody">
+                  <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Memuat daftar merchant...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    const MASTER_KEY = 'pz_admin_master_key_99999';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const superAdminLoginSection = document.getElementById('superAdminLoginSection');
+      const superAdminDashboardSection = document.getElementById('superAdminDashboardSection');
+      const superAdminLoginForm = document.getElementById('superAdminLoginForm');
+      const btnSaLogout = document.getElementById('btnSaLogout');
+
+      const isSaLoggedIn = localStorage.getItem('panzzpay_sa_auth');
+      if (isSaLoggedIn === 'true') {
+        showSaDashboard();
+      }
+
+      superAdminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('saEmail').value;
+        const password = document.getElementById('saPassword').value;
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (data.ok && data.merchant.role === 'superadmin') {
+            localStorage.setItem('panzzpay_sa_auth', 'true');
+            showSaDashboard();
+          } else if (data.ok) {
+            alert('Akun Anda adalah Merchant biasa. Silakan login di Halaman Developer Portal (/admin.html).');
+          } else {
+            alert(data.message);
+          }
+        } catch (err) {
+          alert('Gagal login Master: ' + err.message);
+        }
+      });
+
+      btnSaLogout.addEventListener('click', () => {
+        localStorage.removeItem('panzzpay_sa_auth');
+        superAdminDashboardSection.style.display = 'none';
+        superAdminLoginSection.style.display = 'block';
+      });
+
+      function showSaDashboard() {
+        superAdminLoginSection.style.display = 'none';
+        superAdminDashboardSection.style.display = 'block';
+
+        loadGlobalStats();
+        loadMerchantsList();
+      }
+
+      async function loadGlobalStats() {
+        try {
+          const res = await fetch('/api/superadmin/stats', {
+            headers: { 'X-ADMIN-KEY': MASTER_KEY }
+          });
+          const data = await res.json();
+          if (data.ok) {
+            document.getElementById('statGlobalOmset').textContent = 'Rp ' + data.stats.total_platform_omset.toLocaleString('id-ID');
+            document.getElementById('statTotalMerchants').textContent = data.stats.total_merchants;
+            document.getElementById('statTotalPaidInv').textContent = data.stats.total_paid_invoices;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function loadMerchantsList() {
+        try {
+          const res = await fetch('/api/superadmin/merchants', {
+            headers: { 'X-ADMIN-KEY': MASTER_KEY }
+          });
+          const data = await res.json();
+          if (data.ok) {
+            renderMerchantsTable(data.merchants);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderMerchantsTable(merchants) {
+        const body = document.getElementById('merchantListBody');
+        if (!merchants || merchants.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada merchant terdaftar.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = merchants.map(m => {
+          const badgeClass = m.status === 'ACTIVE' ? 'badge-paid' : 'badge-expired';
+          const isSuper = m.role === 'superadmin';
+
+          return `
+            <tr>
+              <td><code style="font-family: 'Fira Code', monospace; font-weight: 700;">${m.id}</code></td>
+              <td style="font-weight: 700;">${m.name}</td>
+              <td style="font-size: 0.8rem;">${m.email}</td>
+              <td><span class="badge ${isSuper ? 'badge-paid' : 'badge-pending'}">${m.role}</span></td>
+              <td style="font-weight: 800; color: var(--accent-emerald);">Rp ${(m.total_omset || 0).toLocaleString('id-ID')}</td>
+              <td><span class="badge ${badgeClass}">${m.status || 'ACTIVE'}</span></td>
+              <td>
+                ${isSuper ? '<span style="color: var(--text-muted); font-size: 0.75rem;">Master Owner</span>' : `
+                  <button onclick="toggleStatus('${m.id}', '${m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="btn ${m.status === 'ACTIVE' ? 'btn-dark' : 'btn-emerald'}" style="min-height: 28px; padding: 0.2rem 0.6rem; font-size: 0.72rem;">
+                    ${m.status === 'ACTIVE' ? 'Bekukan (Suspend)' : 'Aktifkan Akun'}
+                  </button>
+                `}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      window.toggleStatus = async (id, newStatus) => {
+        if (!confirm('Apakah Anda yakin ingin mengubah status merchant ini ke ' + newStatus + '?')) return;
+        try {
+          const res = await fetch('/api/superadmin/merchants/' + id + '/toggle-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-ADMIN-KEY': MASTER_KEY },
+            body: JSON.stringify({ status: newStatus })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            alert(data.message);
+            loadMerchantsList();
+            loadGlobalStats();
+          } else {
+            alert(data.message);
+          }
+        } catch (e) {
+          alert('Gagal: ' + e.message);
+        }
+      };
+
+    });
+  </script>
+  <script src="/app.js"></script>
+</body>
+</html>

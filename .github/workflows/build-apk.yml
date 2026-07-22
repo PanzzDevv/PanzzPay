@@ -1,9 +1,14 @@
-name: Build Android Forwarder APK
+name: Build and Release Android APK
 
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -27,10 +32,29 @@ jobs:
       run: |
         cd panzzpay-forwarder-app
         gradle assembleDebug --stacktrace
-      
+
+    - name: Prepare APK File
+      run: |
+        cp panzzpay-forwarder-app/app/build/outputs/apk/debug/app-debug.apk panzzpay-forwarder.apk
+
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       if: success()
       with:
         name: PanzzPay-Forwarder-APK
-        path: panzzpay-forwarder-app/app/build/outputs/apk/debug/*.apk
+        path: panzzpay-forwarder.apk
+
+    - name: Create or Update GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: success()
+      with:
+        tag_name: latest
+        name: PanzzPay Forwarder Latest Build
+        body: |
+          🚀 Automatic Build dari GitHub Actions.
+          File APK ini digunakan untuk auto-update in-app aplikasi PanzzPay Forwarder Android.
+        files: panzzpay-forwarder.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

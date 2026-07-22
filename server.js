@@ -651,14 +651,41 @@ app.post('/api/webhook/callback', async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// APP AUTO-UPDATE ENDPOINT FOR NATIVE APK
+// APP AUTO-UPDATE ENDPOINT FOR NATIVE APK (AUTOMATED GITHUB RELEASES)
 // -------------------------------------------------------------
-app.get('/api/app/check-update', (req, res) => {
+app.get('/api/app/check-update', async (req, res) => {
   const host = req.get('host') || `localhost:${PORT}`;
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
   const baseUrl = `${protocol}://${host}`;
 
-  res.json({
+  try {
+    const ghRes = await fetch('https://api.github.com/repos/PanzzDevv/PanzzPay/releases/latest', {
+      headers: { 'User-Agent': 'PanzzPay-Server' }
+    });
+
+    if (ghRes.ok) {
+      const release = await ghRes.json();
+      const tag = release.tag_name || 'latest';
+      const apkAsset = release.assets?.find(a => a.name.endsWith('.apk'));
+      const downloadUrl = apkAsset 
+        ? apkAsset.browser_download_url 
+        : 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk';
+
+      return res.json({
+        ok: true,
+        versionCode: 2,
+        versionName: tag === 'latest' ? '2.1' : tag.replace(/^v/, ''),
+        downloadUrl: downloadUrl,
+        releaseNotes: release.body || '• Pembaruan otomatis dari GitHub Release.',
+        forceUpdate: false
+      });
+    }
+  } catch (err) {
+    console.log('GitHub Releases API check fallback:', err.message);
+  }
+
+  // Fallback to local server static URL if GitHub API is unreachable
+  return res.json({
     ok: true,
     versionCode: 2,
     versionName: "2.1",

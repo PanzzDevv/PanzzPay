@@ -103,6 +103,47 @@
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
         </LinearLayout>
 
+        <!-- VOICE ALERT TOGGLE CARD -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_bento_card"
+            android:padding="18dp"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔊 Suara Notifikasi (Uang Masuk!)"
+                    android:textColor="#0F172A"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mengucapkan pesan uang masuk secara otomatis di HP toko"
+                    android:textColor="#64748B"
+                    android:textSize="11sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/switchVoice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                tools:ignore="UseSwitchCompatOrMaterialXml" />
+        </LinearLayout>
+
         <!-- WEBHOOK URL CONFIGURATION CARD -->
         <LinearLayout
             android:layout_width="match_parent"

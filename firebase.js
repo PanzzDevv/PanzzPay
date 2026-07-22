@@ -12,7 +12,11 @@ class FirebaseService {
     this.inMemoryLogs = [];
 
     this.loadFirebaseConfig();
-    this.seedSuperAdmin();
+  }
+
+  async init() {
+    await this.seedSuperAdmin();
+    console.log(`🔥 [FIRESTORE READY] Collections 'merchants', 'invoices', 'webhook_logs' synchronized to Cloud Firestore!`);
   }
 
   loadFirebaseConfig() {

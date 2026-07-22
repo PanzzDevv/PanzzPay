@@ -573,6 +573,13 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`⚡ PanzzPay Super Admin & Merchant Server is running at http://localhost:${PORT}`);
+db.init().then(() => {
+  app.listen(PORT, () => {
+    console.log(`⚡ PanzzPay Super Admin & Merchant Server is running at http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Server startup init note:', err.message);
+  app.listen(PORT, () => {
+    console.log(`⚡ PanzzPay Super Admin & Merchant Server is running at http://localhost:${PORT}`);
+  });
 });

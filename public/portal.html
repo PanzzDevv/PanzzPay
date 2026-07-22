@@ -1137,9 +1137,6 @@
                     data.merchant.qris_payload = localMerchant.qris_payload;
                   }
                   localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-                  if (document.activeElement !== displayQrisPayload) {
-                    displayQrisPayload.value = data.merchant.qris_payload || '';
-                  }
                   if (badgeQrisStatus) {
                     if (data.merchant.qris_payload) {
                       badgeQrisStatus.textContent = 'QRIS Toko Aktif';

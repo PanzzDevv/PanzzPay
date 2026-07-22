@@ -45,7 +45,18 @@ const firebaseApiKey = process.env.FIREBASE_API_KEY || process.env.NEXT_PUBLIC_F
 async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = 'http://localhost:3000') {
   const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(targetEmail)}`;
 
-  // 1. Native Firebase Auth Email Service (noreply@panzzpay.firebaseapp.com)
+  // 1. Firebase Admin Auth Verification Link Generator if SDK is connected
+  try {
+    const fbResult = await db.generateFirebaseVerificationLink(targetEmail, reqHost);
+    if (fbResult && fbResult.ok && fbResult.link) {
+      console.log(`🔥 [FIREBASE AUTH LINK GENERATED] For ${targetEmail}: ${fbResult.link}`);
+      return { sent: true, link: fbResult.link };
+    }
+  } catch (e) {
+    console.warn('Firebase Auth link note:', e.message);
+  }
+
+  // 2. Native Firebase Auth REST API (noreply@panzzpay.firebaseapp.com)
   if (firebaseApiKey) {
     try {
       const fbUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`;
@@ -68,7 +79,7 @@ async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = '
     }
   }
 
-  // 2. Custom SMTP Transporter
+  // 3. Custom SMTP Transporter
   if (transporter) {
     const mailOptions = {
       from: `"PanzzPay Gateway" <${smtpUser || 'noreply@panzzpay.firebaseapp.com'}>`,
@@ -98,7 +109,7 @@ async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = '
     }
   }
 
-  // 3. Fallback dev mode logging
+  // 4. Fallback dev mode (returns verifyLink so client can display it if SMTP/Firebase API key is missing!)
   console.log(`🔥 [DEV MODE VERIFICATION LINK] For ${targetEmail}: ${verifyLink}`);
   return { sent: true, link: verifyLink };
 }
@@ -186,19 +197,22 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Email dan password wajib diisi' });
     }
 
-    const cleanEmail = email.toLowerCase();
+    const cleanEmail = String(email).toLowerCase().trim();
     const existing = await db.getMerchantByEmail(cleanEmail);
 
     if (existing) {
       if (existing.status === 'UNVERIFIED') {
         const reqHost = `${req.protocol}://${req.get('host')}`;
-        await sendVerificationEmail(existing.email, existing.name, reqHost);
+        const sendResult = await sendVerificationEmail(existing.email, existing.name, reqHost);
 
         return res.json({
           ok: true,
           require_otp: true,
           email: existing.email,
-          message: 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
+          link: sendResult.link || null,
+          message: sendResult.link
+            ? `Link aktivasi berhasil dibuat! Silakan buka link ini untuk aktivasi:\n\n${sendResult.link}`
+            : 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
         });
       }
       return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
@@ -222,13 +236,16 @@ app.post('/api/auth/register', async (req, res) => {
 
     await db.saveMerchant(merchant);
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
+    const sendResult = await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
       require_otp: true,
       email: merchant.email,
-      message: 'Pendaftaran berhasil! Silakan cek email Anda untuk mengaktifkan akun.'
+      link: sendResult.link || null,
+      message: sendResult.link
+        ? `Pendaftaran berhasil!\n\nLink aktivasi akun Anda:\n${sendResult.link}`
+        : 'Pendaftaran berhasil! Silakan cek email Anda untuk mengaktifkan akun.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -238,18 +255,22 @@ app.post('/api/auth/register', async (req, res) => {
 // RESEND VERIFICATION LINK
 app.post('/api/auth/resend-otp', async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
     if (!email) return res.status(400).json({ ok: false, message: 'Email wajib diisi' });
 
-    const merchant = await db.getMerchantByEmail(email);
-    if (!merchant) return res.status(404).json({ ok: false, message: 'Email tidak ditemukan' });
+    const cleanEmail = String(email).toLowerCase().trim();
+    const merchant = await db.getMerchantByEmail(cleanEmail);
+    if (!merchant) return res.status(404).json({ ok: false, message: `Email '${cleanEmail}' belum terdaftar. Silakan daftar terlebih dahulu.` });
 
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
+    const sendResult = await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
-      message: 'Link verifikasi baru berhasil dikirimkan ke email Anda!'
+      link: sendResult.link || null,
+      message: sendResult.link
+        ? `Link verifikasi berhasil dibuat!\n\nKlik link di bawah ini untuk aktivasi:\n\n${sendResult.link}`
+        : 'Link verifikasi baru berhasil dikirimkan ke email Anda!'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });

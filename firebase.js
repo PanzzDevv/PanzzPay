@@ -226,9 +226,9 @@ class FirebaseService {
 
   async getMerchantByEmail(email) {
     if (!email) return null;
-    const cleanEmail = email.toLowerCase();
+    const cleanEmail = String(email).toLowerCase().trim();
     for (const m of this.inMemoryMerchants.values()) {
-      if (m.email.toLowerCase() === cleanEmail) return m;
+      if (m.email && String(m.email).toLowerCase().trim() === cleanEmail) return m;
     }
     return null;
   }

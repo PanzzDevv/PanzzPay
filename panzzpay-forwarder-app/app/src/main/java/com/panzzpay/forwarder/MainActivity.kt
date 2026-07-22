@@ -1,9 +1,12 @@
 package com.panzzpay.forwarder
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
@@ -16,6 +19,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -202,8 +206,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val title = provider.titlePattern
                 val message = String.format(provider.messagePattern, formattedAmount)
 
+                // 1. Munculkan notifikasi sistem di HP Android
+                postSystemNotification(title, message)
+
+                // 2. Kirim payload JSON ke Webhook server PanzzPay
                 sendTestPayload(webhookUrl, provider.packageName, title, message)
 
+                // 3. Ucapkan suara uang masuk jika fitur voice aktif
                 if (switchVoice.isChecked && isTtsReady) {
                     try {
                         tts?.speak("Pembayaran PanzzPay masuk! $message", TextToSpeech.QUEUE_FLUSH, null, "TestTTSId")
@@ -214,6 +223,31 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
             .setNegativeButton("Batal", null)
             .show()
+    }
+
+    private fun postSystemNotification(title: String, message: String) {
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channelId = "panzzpay_test_channel"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(channelId, "PanzzPay Test Channel", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Saluran pengujian notifikasi pembayaran PanzzPay"
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            val builder = NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_logo)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+
+            notificationManager.notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
+            appendLog("🔔 Memunculkan notifikasi tes di status bar HP...")
+        } catch (e: Exception) {
+            appendLog("⚠️ Gagal membuat notifikasi sistem HP: ${e.message}")
+        }
     }
 
     private fun sendTestPayload(webhookUrl: String, packageName: String, title: String, message: String) {

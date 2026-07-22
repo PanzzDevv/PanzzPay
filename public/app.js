@@ -152,8 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Prefill Webhook Simulator amount
-        document.getElementById('simAmount').value = inv.total_amount;
-        document.getElementById('simPayload').value = JSON.stringify({ message: `Pembayaran masuk Rp ${inv.total_amount.toLocaleString('id-ID')} dari ShopeePay` }, null, 2);
+        if (document.getElementById('simAmount')) {
+          document.getElementById('simAmount').value = inv.total_amount;
+        }
+        if (document.getElementById('simPayload')) {
+          document.getElementById('simPayload').value = JSON.stringify({ message: `Pembayaran masuk Rp ${inv.total_amount.toLocaleString('id-ID')} dari ShopeePay` }, null, 2);
+        }
 
         // Start Polling & Timer
         startStatusPolling(inv.id);
@@ -251,68 +255,83 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (qrisForm) {
-    qrisForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const baseAmount = document.getElementById('baseAmount').value;
-      const uniqueCode = uniqueCodeInput.value;
-      const autoUnique = autoUniqueCheckbox ? autoUniqueCheckbox.checked : true;
-      const payloadStatic = document.getElementById('payloadStatic').value;
-
+  async function generateQRISAction(baseAmount, uniqueCode, autoUnique, payloadStatic) {
+    if (btnGenerate) {
       btnGenerate.disabled = true;
       btnGenerate.innerHTML = '<span>Memproses QRIS...</span>';
+    }
 
-      try {
-        const response = await fetch('/api/qris/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            base_amount: baseAmount,
-            unique_code: uniqueCode,
-            auto_unique: autoUnique,
-            payload_static: payloadStatic
-          })
-        });
+    try {
+      const response = await fetch('/api/qris/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          base_amount: baseAmount,
+          unique_code: uniqueCode,
+          auto_unique: autoUnique,
+          payload_static: payloadStatic
+        })
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!data.ok) {
-          alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
-          return;
-        }
+      if (!data.ok) {
+        alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+        return;
+      }
 
-        const inv = data.invoice;
-        activeInvoiceId = inv.id;
+      const inv = data.invoice;
+      activeInvoiceId = inv.id;
 
-        // Update UI Display
-        document.getElementById('invoiceIdLabel').textContent = inv.id;
-        document.getElementById('qrImage').src = inv.qr_png_data_url || 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(inv.payload || 'DEMO');
-        document.getElementById('totalAmountLabel').textContent = `Rp ${inv.total_amount.toLocaleString('id-ID')}`;
-        document.getElementById('baseAmountLabel').textContent = `Rp ${inv.base_amount.toLocaleString('id-ID')}`;
-        document.getElementById('uniqueCodeLabel').textContent = `${inv.unique_code}`;
-        
-        const badge = document.getElementById('invoiceBadge');
-        badge.className = 'badge badge-pending';
-        badge.textContent = 'PENDING';
+      // Update UI Display
+      document.getElementById('invoiceIdLabel').textContent = inv.id;
+      document.getElementById('qrImage').src = inv.qr_png_data_url || 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(inv.payload || 'DEMO');
+      document.getElementById('totalAmountLabel').textContent = `Rp ${inv.total_amount.toLocaleString('id-ID')}`;
+      document.getElementById('baseAmountLabel').textContent = `Rp ${inv.base_amount.toLocaleString('id-ID')}`;
+      document.getElementById('uniqueCodeLabel').textContent = `${inv.unique_code}`;
+      
+      const badge = document.getElementById('invoiceBadge');
+      badge.className = 'badge badge-pending';
+      badge.textContent = 'PENDING';
 
-        // Prefill Webhook Simulator amount
+      // Prefill Webhook Simulator amount
+      if (document.getElementById('simAmount')) {
         document.getElementById('simAmount').value = inv.total_amount;
+      }
+      if (document.getElementById('simPayload')) {
         document.getElementById('simPayload').value = JSON.stringify({ message: `Pembayaran masuk Rp ${inv.total_amount.toLocaleString('id-ID')} dari ShopeePay` }, null, 2);
+      }
 
-        // Start Polling & Timer
-        startStatusPolling(inv.id);
-        startCountdownTimer(15 * 60);
-        loadHistoryData();
+      // Start Polling & Timer
+      startStatusPolling(inv.id);
+      startCountdownTimer(15 * 60);
+      loadHistoryData();
 
-      } catch (err) {
-        console.error(err);
-        alert('Gagal terhubung ke server');
-      } finally {
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (btnGenerate) {
         btnGenerate.disabled = false;
         btnGenerate.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><span>Generate Gambar QRIS</span>';
       }
+    }
+  }
+
+  if (qrisForm) {
+    qrisForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const baseAmount = document.getElementById('baseAmount').value;
+      const uniqueCode = uniqueCodeInput ? uniqueCodeInput.value : '';
+      const autoUnique = autoUniqueCheckbox ? autoUniqueCheckbox.checked : true;
+      const payloadStatic = document.getElementById('payloadStatic').value;
+
+      generateQRISAction(baseAmount, uniqueCode, autoUnique, payloadStatic);
     });
+
+    // Auto generate initial QRIS on page load!
+    const initialBaseAmount = document.getElementById('baseAmount') ? document.getElementById('baseAmount').value : 10000;
+    const initialPayloadStatic = document.getElementById('payloadStatic') ? document.getElementById('payloadStatic').value : '';
+    generateQRISAction(initialBaseAmount, '', true, initialPayloadStatic);
   }
 
   // --- STATUS POLLING & TIMER ---
@@ -355,15 +374,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (remaining <= 0) {
         clearInterval(timerInterval);
         clearInterval(pollInterval);
-        timerElem.textContent = 'EXPIRED';
+        if (timerElem) timerElem.textContent = 'EXPIRED';
         const badge = document.getElementById('invoiceBadge');
-        badge.className = 'badge badge-expired';
-        badge.textContent = 'EXPIRED';
+        if (badge) {
+          badge.className = 'badge badge-expired';
+          badge.textContent = 'EXPIRED';
+        }
         return;
       }
       const mins = Math.floor(remaining / 60);
       const secs = remaining % 60;
-      timerElem.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      if (timerElem) timerElem.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }, 1000);
   }
 
@@ -428,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><strong>${inv.id}</strong></td>
             <td>${new Date(inv.created_at).toLocaleTimeString('id-ID')}</td>
             <td>Rp ${inv.base_amount.toLocaleString('id-ID')}</td>
-            <td style="color: var(--accent-indigo); font-weight: 700;">${inv.unique_code}</td>
+            <td style="color: var(--brand-blue); font-weight: 700;">${inv.unique_code}</td>
             <td><strong style="color: var(--text-primary);">Rp ${inv.total_amount.toLocaleString('id-ID')}</strong></td>
             <td><span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span></td>
           </tr>
@@ -444,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <tr>
             <td>${new Date(log.received_at).toLocaleTimeString('id-ID')}</td>
             <td><code>${typeof log.raw_payload === 'object' ? JSON.stringify(log.raw_payload) : log.raw_payload}</code></td>
-            <td><strong style="color: var(--accent-indigo);">Rp ${(log.extracted_amount || 0).toLocaleString('id-ID')}</strong></td>
+            <td><strong style="color: var(--brand-blue);">Rp ${(log.extracted_amount || 0).toLocaleString('id-ID')}</strong></td>
             <td><span class="badge badge-${log.status === 'MATCHED' ? 'paid' : 'expired'}">${log.status}</span></td>
           </tr>
         `).join('');
@@ -469,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropZone.style.borderColor = 'var(--accent-indigo)';
+      dropZone.style.borderColor = 'var(--brand-blue)';
     });
 
     dropZone.addEventListener('dragleave', () => {

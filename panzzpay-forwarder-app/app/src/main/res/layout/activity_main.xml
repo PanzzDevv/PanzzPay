@@ -1,111 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8FAFC"
-    android:padding="20dp">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <!-- Header Brand Logo / Banner -->
+        <!-- HEADER BRAND HERO CARD WITH OFFICIAL LOGO -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#0F172A"
-            android:padding="20dp"
+            android:padding="24dp"
             android:orientation="vertical"
             android:gravity="center">
+
+            <!-- OFFICIAL PANZZPAY LOGO -->
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:src="@drawable/ic_logo"
+                android:contentDescription="PanzzPay Logo"
+                android:layout_marginBottom="12dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PanzzPay Forwarder"
-                android:textColor="#FFD200"
-                android:textSize="22sp"
+                android:text="PanzzPay Forwarder v2.0"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Aplikasi Listener Notifikasi QRIS Otomatis"
+                android:text="Automatic QRIS Notification Listener &amp; Webhook Gateway"
                 android:textColor="#94A3B8"
                 android:textSize="12sp"
+                android:gravity="center"
                 android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tvPermissionStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Izin Notifikasi: Mengecek..."
+                android:textColor="#10B981"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:background="#1E293B"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:layout_marginTop="12dp" />
         </LinearLayout>
 
-        <!-- Service Toggle Card -->
+        <!-- SERVICE TOGGLE CARD -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"
-            android:padding="16dp"
+            android:padding="18dp"
             android:layout_marginTop="16dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Status Layanan (Service State)"
-                android:textColor="#0F172A"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Status Layanan Listener"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvServiceStatusSub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Membaca notifikasi transfer e-wallet secara otomatis"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
 
             <Switch
                 android:id="@+id/switchService"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true" />
+                android:checked="true"
+                tools:ignore="UseSwitchCompatOrMaterialXml" />
         </LinearLayout>
 
-        <!-- Webhook URL Configuration Card -->
+        <!-- WEBHOOK URL CONFIGURATION CARD -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"
-            android:padding="16dp"
+            android:padding="18dp"
             android:layout_marginTop="16dp"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Alamat Target Webhook PanzzPay:"
+                android:text="Target Webhook URL PanzzPay Anda:"
                 android:textColor="#0F172A"
                 android:textSize="14sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Salin URL Webhook dari Portal Merchant PanzzPay Anda"
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp" />
 
             <EditText
                 android:id="@+id/etWebhookUrl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="http://domain-anda.com/api/webhook/callback"
+                android:hint="https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_..."
                 android:inputType="textUri"
-                android:textSize="14sp"
-                android:layout_marginTop="8dp"
+                android:textSize="13sp"
+                android:layout_marginTop="10dp"
                 android:padding="12dp"
-                android:background="#F1F5F9" />
+                android:background="#F1F5F9"
+                android:textColor="#0F172A" />
 
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Simpan Webhook URL"
-                android:backgroundTint="#2563EB"
+                android:text="💾 Simpan Webhook URL"
+                android:backgroundTint="#4F46E5"
                 android:textColor="#FFFFFF"
+                android:textStyle="bold"
                 android:layout_marginTop="12dp" />
         </LinearLayout>
 
-        <!-- Action Buttons Card -->
+        <!-- SUPPORTED APPS & E-WALLETS INFO CARD -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"
-            android:padding="16dp"
+            android:padding="18dp"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Aplikasi Terhubung &amp; Otomatis Dibaca:"
+                android:textColor="#0F172A"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DANA • ShopeePay • GoPay • OVO • m-BCA • BRImo • Livin Mandiri • BSI Mobile • SeaBank"
+                android:textColor="#059669"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="6dp" />
+        </LinearLayout>
+
+        <!-- ACTION BUTTONS CARD -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:padding="18dp"
             android:layout_marginTop="16dp"
             android:orientation="vertical">
 
@@ -113,17 +191,19 @@
                 android:id="@+id/btnGrantPermission"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="1. Aktifkan Izin Akses Notifikasi"
+                android:text="1. 🔔 Buka Setting Izin Akses Notifikasi"
                 android:backgroundTint="#059669"
-                android:textColor="#FFFFFF" />
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
 
             <Button
                 android:id="@+id/btnTestWebhook"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="2. Tes Kirim Webhook PanzzPay"
+                android:text="2. ⚡ Tes Kirim Webhook Ke Server PanzzPay"
                 android:backgroundTint="#0F172A"
                 android:textColor="#FFFFFF"
+                android:textStyle="bold"
                 android:layout_marginTop="10dp" />
         </LinearLayout>
 

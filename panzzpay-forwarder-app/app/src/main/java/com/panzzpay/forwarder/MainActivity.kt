@@ -2,11 +2,13 @@ package com.panzzpay.forwarder
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
@@ -22,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var btnGrantPermission: Button
     private lateinit var btnTestWebhook: Button
+    private lateinit var tvPermissionStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,9 +35,10 @@ class MainActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSave)
         btnGrantPermission = findViewById(R.id.btnGrantPermission)
         btnTestWebhook = findViewById(R.id.btnTestWebhook)
+        tvPermissionStatus = findViewById(R.id.tvPermissionStatus)
 
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
-        val savedUrl = prefs.getString("webhook_url", "http://localhost:3000/api/webhook/callback")
+        val savedUrl = prefs.getString("webhook_url", "https://panzzpay.vercel.app/api/webhook/callback")
         val isEnabled = prefs.getBoolean("service_enabled", true)
 
         etWebhookUrl.setText(savedUrl)
@@ -67,6 +71,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        updatePermissionStatus()
+    }
+
+    private fun updatePermissionStatus() {
+        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+        val isGranted = flat != null && flat.contains(packageName)
+
+        if (isGranted) {
+            tvPermissionStatus.text = "Izin Notifikasi: DIBERIKAN ✅"
+            tvPermissionStatus.setTextColor(Color.parseColor("#10B981"))
+        } else {
+            tvPermissionStatus.text = "Izin Notifikasi: BELUM DIBERIKAN ⚠️"
+            tvPermissionStatus.setTextColor(Color.parseColor("#EF4444"))
+        }
+    }
+
     private fun sendTestPayload(webhookUrl: String) {
         thread {
             try {
@@ -75,24 +97,30 @@ class MainActivity : AppCompatActivity() {
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
                 conn.doOutput = true
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
 
                 val payload = JSONObject().apply {
-                    put("message", "Pembayaran masuk Rp 10.338 dari ShopeePay (Test PanzzPay App)")
-                    put("source", "PanzzPay Android App Test")
+                    put("title", "Transfer Masuk Rp 50.000")
+                    put("message", "Pembayaran QRIS Rp 50.000 dari ShopeePay diterima (Test PanzzPay App)")
+                    put("package_name", "com.shopeepay.id")
+                    put("source", "PanzzPay Android App Forwarder v2.0")
+                    put("timestamp", System.currentTimeMillis())
                 }
 
                 val writer = OutputStreamWriter(conn.outputStream)
                 writer.write(payload.toString())
                 writer.flush()
+                writer.close()
 
                 val code = conn.responseCode
                 runOnUiThread {
-                    Toast.makeText(this, "Test Webhook Berhasil (HTTP $code)", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "⚡ Test Webhook Berhasil (HTTP $code)", Toast.LENGTH_LONG).show()
                 }
                 conn.disconnect()
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this, "Gagal Tes Webhook: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "❌ Gagal Tes Webhook: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

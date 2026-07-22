@@ -74,6 +74,8 @@ class FirebaseService {
             credential: certObj,
             projectId: this.projectId
           });
+          this.adminInstance = admin;
+          return admin;
         }
       }
 
@@ -84,6 +86,38 @@ class FirebaseService {
       console.warn('Firebase Admin SDK load note:', e.message);
     }
     return null;
+  }
+
+  async getFirestoreDB() {
+    const admin = await this.getAdminSDK();
+    if (!admin) return null;
+    if (typeof admin.firestore === 'function') return admin.firestore();
+
+    const adminMod = this.adminModuleRef || admin;
+    if (typeof adminMod.firestore === 'function') return adminMod.firestore();
+
+    try {
+      const { getFirestore } = await import('firebase-admin/firestore');
+      return getFirestore();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async getAuthSDK() {
+    const admin = await this.getAdminSDK();
+    if (!admin) return null;
+    if (typeof admin.auth === 'function') return admin.auth();
+
+    const adminMod = this.adminModuleRef || admin;
+    if (typeof adminMod.auth === 'function') return adminMod.auth();
+
+    try {
+      const { getAuth } = await import('firebase-admin/auth');
+      return getAuth();
+    } catch (e) {
+      return null;
+    }
   }
 
   async seedSuperAdmin() {
@@ -108,14 +142,14 @@ class FirebaseService {
 
   // Generate Firebase Auth official Email Verification Link (No SMTP required!)
   async generateFirebaseVerificationLink(email, redirectHost = 'http://localhost:3000') {
-    const admin = await this.getAdminSDK();
-    if (admin) {
+    const auth = await this.getAuthSDK();
+    if (auth) {
       try {
         const actionCodeSettings = {
           url: `${redirectHost}/portal.html?verified=true&email=${encodeURIComponent(email)}`,
           handleCodeInApp: true
         };
-        const link = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+        const link = await auth.generateEmailVerificationLink(email, actionCodeSettings);
         console.log(`🔥 [FIREBASE AUTH LINK GENERATED] For ${email}: ${link}`);
         return { ok: true, link };
       } catch (err) {
@@ -123,33 +157,33 @@ class FirebaseService {
         return { ok: false, error: err.message };
       }
     }
-    return { ok: false, error: 'Firebase Admin SDK not initialized' };
+    return { ok: false, error: 'Firebase Admin Auth not initialized' };
   }
 
   // Helper method to sync document to Cloud Firestore & Firebase Auth Users
   async syncToFirebase(collectionName, docId, data) {
-    const admin = await this.getAdminSDK();
-    if (!admin) return;
+    const firestore = await this.getFirestoreDB();
+    if (!firestore) return;
 
     try {
-      const db = admin.firestore();
-      const auth = admin.auth();
-
-      await db.collection(collectionName).doc(docId).set(data, { merge: true });
+      await firestore.collection(collectionName).doc(docId).set(data, { merge: true });
       console.log(`🔥 [FIRESTORE SYNC] Saved '${collectionName}' -> Doc ID: ${docId}`);
 
       if (collectionName === 'merchants' && data.email && data.password) {
-        try {
-          await auth.getUserByEmail(data.email);
-        } catch (authErr) {
-          if (authErr.code === 'auth/user-not-found') {
-            await auth.createUser({
-              uid: data.id,
-              email: data.email,
-              password: data.password,
-              displayName: data.name
-            });
-            console.log(`👤 [FIREBASE AUTH USER CREATED] Email: ${data.email}`);
+        const auth = await this.getAuthSDK();
+        if (auth) {
+          try {
+            await auth.getUserByEmail(data.email);
+          } catch (authErr) {
+            if (authErr.code === 'auth/user-not-found') {
+              await auth.createUser({
+                uid: data.id,
+                email: data.email,
+                password: data.password,
+                displayName: data.name
+              });
+              console.log(`👤 [FIREBASE AUTH USER CREATED] Email: ${data.email}`);
+            }
           }
         }
       }

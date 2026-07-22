@@ -672,7 +672,20 @@
 
       const savedMerchant = localStorage.getItem('panzzpay_merchant');
       if (savedMerchant) {
-        showDashboard(JSON.parse(savedMerchant));
+        const parsed = JSON.parse(savedMerchant);
+        showDashboard(parsed);
+
+        // Fetch fresh profile in the background to sync local storage with Firestore
+        if (parsed.email) {
+          fetch('/api/auth/check-status?email=' + encodeURIComponent(parsed.email))
+            .then(r => r.json())
+            .then(data => {
+              if (data.ok && data.merchant) {
+                localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
+                showDashboard(data.merchant);
+              }
+            }).catch(e => console.warn('Gagal memuat ulang data profil merchant:', e));
+        }
       }
 
       tabRegisterBtn.addEventListener('click', () => {
@@ -1089,9 +1102,32 @@
         loadMerchantData(merchant.api_key);
 
         if (dashboardPollTimer) clearInterval(dashboardPollTimer);
-        dashboardPollTimer = setInterval(() => {
+        dashboardPollTimer = setInterval(async () => {
           if (merchantDashboard.style.display !== 'none') {
             loadMerchantData(merchant.api_key);
+
+            // Sync merchant profile (QRIS Payload) from Firestore in the background
+            if (merchant.email) {
+              try {
+                const res = await fetch('/api/auth/check-status?email=' + encodeURIComponent(merchant.email));
+                const data = await res.json();
+                if (data.ok && data.merchant) {
+                  localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
+                  if (document.activeElement !== displayQrisPayload) {
+                    displayQrisPayload.value = data.merchant.qris_payload || '';
+                  }
+                  if (badgeQrisStatus) {
+                    if (data.merchant.qris_payload) {
+                      badgeQrisStatus.textContent = 'QRIS Toko Aktif';
+                      badgeQrisStatus.className = 'badge badge-paid';
+                    } else {
+                      badgeQrisStatus.textContent = 'Default PanzzPay';
+                      badgeQrisStatus.className = 'badge badge-pending';
+                    }
+                  }
+                }
+              } catch(e) {}
+            }
           }
         }, 5000);
       }

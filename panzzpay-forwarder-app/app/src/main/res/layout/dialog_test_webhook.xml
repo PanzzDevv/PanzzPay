@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#FFFFFF">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⚡ Tes Notifikasi Pembayaran"
+        android:textColor="#0F172A"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Simulasikan notifikasi uang masuk seolah-olah diterima dari e-wallet/bank asli."
+        android:textColor="#64748B"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp" />
+
+    <!-- SELECT E-WALLET / BANK -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pilih Aplikasi Sumber:"
+        android:textColor="#0F172A"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginTop="14dp" />
+
+    <Spinner
+        android:id="@+id/spinnerProvider"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="6dp"
+        android:padding="8dp"
+        android:background="@drawable/bg_input_box" />
+
+    <!-- INPUT NOMINAL -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nominal Transfer (Rp):"
+        android:textColor="#0F172A"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginTop="14dp" />
+
+    <EditText
+        android:id="@+id/etTestAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Contoh: 50000"
+        android:inputType="number"
+        android:text="50000"
+        android:textSize="14sp"
+        android:layout_marginTop="6dp"
+        android:padding="12dp"
+        android:background="@drawable/bg_input_box"
+        android:textColor="#0F172A" />
+
+</LinearLayout>

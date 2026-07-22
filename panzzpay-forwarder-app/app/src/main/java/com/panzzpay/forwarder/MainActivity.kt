@@ -6,22 +6,27 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.concurrent.thread
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var switchService: Switch
     private lateinit var switchVoice: Switch
@@ -32,6 +37,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnTestWebhook: Button
     private lateinit var tvPermissionStatus: TextView
     private lateinit var tvLogConsole: TextView
+
+    private var tts: TextToSpeech? = null
+    private var isTtsReady = false
+
+    data class PaymentProviderOption(
+        val name: String,
+        val packageName: String,
+        val titlePattern: String,
+        val messagePattern: String
+    )
+
+    private val providerOptions = listOf(
+        PaymentProviderOption("ShopeePay", "com.shopeepay.id", "ShopeePay: Transfer Masuk", "Pembayaran QRIS Rp %s dari ShopeePay diterima"),
+        PaymentProviderOption("DANA", "id.dana", "DANA: Isi Saldo Berhasil", "Kamu dapat saldo Rp %s dari DANA QRIS Merchant"),
+        PaymentProviderOption("GoPay / Gojek", "com.gojek.app", "GoPay Payment Received", "Transfer masuk Rp %s dari GoPay berhasil diterima"),
+        PaymentProviderOption("OVO", "com.ovo", "OVO Cash Masuk", "Topup OVO Cash Rp %s berhasil dilakukan"),
+        PaymentProviderOption("m-BCA", "com.bca", "m-BCA: Transfer Masuk", "m-Transfer Rp %s dari QRIS Merchant telah masuk"),
+        PaymentProviderOption("BRImo", "id.co.bri.brimo", "BRImo Notification", "Transaksi masuk Rp %s via QRIS BRImo berhasil"),
+        PaymentProviderOption("Livin' Mandiri", "id.bmri.livin", "Livin' Mandiri: Kredit", "Dana masuk Rp %s dari Transfer QRIS Mandiri")
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +71,12 @@ class MainActivity : AppCompatActivity() {
         btnTestWebhook = findViewById(R.id.btnTestWebhook)
         tvPermissionStatus = findViewById(R.id.tvPermissionStatus)
         tvLogConsole = findViewById(R.id.tvLogConsole)
+
+        try {
+            tts = TextToSpeech(this, this)
+        } catch (e: Exception) {
+            appendLog("⚠️ TTS Engine Error: ${e.message}")
+        }
 
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
         val savedUrl = prefs.getString("webhook_url", "https://panzzpay.vercel.app/api/webhook/callback")
@@ -104,7 +135,7 @@ class MainActivity : AppCompatActivity() {
         btnTestWebhook.setOnClickListener {
             val urlStr = etWebhookUrl.text.toString().trim()
             if (urlStr.isNotEmpty()) {
-                sendTestPayload(urlStr)
+                showTestWebhookDialog(urlStr)
             } else {
                 Toast.makeText(this, "URL Webhook belum diisi", Toast.LENGTH_SHORT).show()
             }
@@ -115,6 +146,13 @@ class MainActivity : AppCompatActivity() {
         // Cek pembaruan aplikasi otomatis dari server PanzzPay
         val targetUrl = savedUrl ?: "https://panzzpay.vercel.app/api/webhook/callback"
         UpdateManager.checkForUpdate(this, targetUrl)
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts?.setLanguage(Locale("id", "ID"))
+            isTtsReady = (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED)
+        }
     }
 
     override fun onResume() {
@@ -144,23 +182,58 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendTestPayload(webhookUrl: String) {
-        appendLog("Mengirim test webhook payload ke $webhookUrl...")
+    private fun showTestWebhookDialog(webhookUrl: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_test_webhook, null)
+        val spinnerProvider = dialogView.findViewById<Spinner>(R.id.spinnerProvider)
+        val etTestAmount = dialogView.findViewById<EditText>(R.id.etTestAmount)
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, providerOptions.map { it.name })
+        spinnerProvider.adapter = adapter
+
+        AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setPositiveButton("🚀 Kirim Tes Webhook") { _, _ ->
+                val selectedIndex = spinnerProvider.selectedItemPosition
+                val provider = providerOptions.getOrElse(selectedIndex) { providerOptions[0] }
+                val amountStr = etTestAmount.text.toString().trim()
+                val rawAmount = amountStr.toLongOrNull() ?: 50000L
+                val formattedAmount = NumberFormat.getNumberInstance(Locale("id", "ID")).format(rawAmount)
+
+                val title = provider.titlePattern
+                val message = String.format(provider.messagePattern, formattedAmount)
+
+                sendTestPayload(webhookUrl, provider.packageName, title, message)
+
+                if (switchVoice.isChecked && isTtsReady) {
+                    try {
+                        tts?.speak("Pembayaran PanzzPay masuk! $message", TextToSpeech.QUEUE_FLUSH, null, "TestTTSId")
+                    } catch (e: Exception) {
+                        // ignore TTS errors during test
+                    }
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun sendTestPayload(webhookUrl: String, packageName: String, title: String, message: String) {
+        appendLog("Mengirim tes notifikasi payment [$packageName] ke Webhook...")
         thread {
             try {
                 val url = URL(webhookUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json")
+                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/2.0")
                 conn.doOutput = true
                 conn.connectTimeout = 8000
                 conn.readTimeout = 8000
 
                 val payload = JSONObject().apply {
-                    put("title", "Transfer Masuk Rp 50.000")
-                    put("message", "Pembayaran QRIS Rp 50.000 dari ShopeePay diterima (Test PanzzPay App)")
-                    put("package_name", "com.shopeepay.id")
-                    put("source", "PanzzPay Android App Forwarder v2.0")
+                    put("title", title)
+                    put("message", message)
+                    put("package_name", packageName)
+                    put("source", "PanzzPay App Test Simulation")
                     put("timestamp", System.currentTimeMillis())
                 }
 
@@ -170,9 +243,9 @@ class MainActivity : AppCompatActivity() {
                 writer.close()
 
                 val code = conn.responseCode
-                appendLog("⚡ Test Webhook Berhasil! HTTP Status $code")
+                appendLog("⚡ Tes Webhook Sukses! Status HTTP $code\nPayload: $message")
                 runOnUiThread {
-                    Toast.makeText(this, "⚡ Test Webhook Berhasil (HTTP $code)", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "⚡ Tes Webhook Berhasil (HTTP $code)", Toast.LENGTH_LONG).show()
                 }
                 conn.disconnect()
             } catch (e: Exception) {
@@ -182,5 +255,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        tts?.stop()
+        tts?.shutdown()
+        super.onDestroy()
     }
 }

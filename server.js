@@ -751,6 +751,24 @@ app.post('/api/webhook/callback', async (req, res) => {
         break;
       }
     }
+
+    if (!matchedInvoice && merchant && extractedAmount >= 100) {
+      const autoInvId = 'INV-FWD-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
+      matchedInvoice = {
+        id: autoInvId,
+        merchant_id: merchant.id,
+        merchant_name: merchant.name,
+        base_amount: extractedAmount,
+        unique_code: 0,
+        total_amount: extractedAmount,
+        status: 'PAID',
+        payment_source: source + ' (Forwarder HP)',
+        created_at: new Date().toISOString(),
+        paid_at: new Date().toISOString()
+      };
+      await db.saveInvoice(matchedInvoice);
+      console.log(`✅ [AUTO INVOICE RECORDED] Created transaction ${autoInvId} for ${merchant.name} (Rp ${extractedAmount})`);
+    }
   }
 
   const logEntry = {

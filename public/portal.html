@@ -949,6 +949,8 @@
         alert('Webhook Target URL berhasil disalin!');
       });
 
+      let dashboardPollTimer = null;
+
       function showDashboard(merchant) {
         authSection.style.display = 'none';
         merchantDashboard.style.display = 'block';
@@ -964,6 +966,13 @@
         }
 
         loadMerchantData(merchant.api_key);
+
+        if (dashboardPollTimer) clearInterval(dashboardPollTimer);
+        dashboardPollTimer = setInterval(() => {
+          if (merchantDashboard.style.display !== 'none') {
+            loadMerchantData(merchant.api_key);
+          }
+        }, 5000);
       }
 
       async function loadMerchantData(apiKey) {
@@ -973,10 +982,10 @@
           });
           const data = await res.json();
           if (data.ok) {
-            renderMerchantInvoices(data.invoices, apiKey);
+            renderMerchantInvoices(data.invoices || [], apiKey);
           }
         } catch (e) {
-          console.error(e);
+          console.error('Error loading merchant transactions:', e);
         }
       }
 
@@ -986,26 +995,34 @@
         let paidCount = 0;
         let pendingCount = 0;
 
+        if (Array.isArray(invoices)) {
+          invoices.forEach(inv => {
+            if (inv.status === 'PAID') {
+              omset += inv.total_amount || 0;
+              paidCount++;
+            } else if (inv.status === 'PENDING') {
+              pendingCount++;
+            }
+          });
+        }
+
+        document.getElementById('statOmset').textContent = 'Rp ' + omset.toLocaleString('id-ID');
+        document.getElementById('statPaid').textContent = paidCount;
+        document.getElementById('statPending').textContent = pendingCount;
+
         if (!invoices || invoices.length === 0) {
           body.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada transaksi.</td></tr>';
           return;
         }
 
         body.innerHTML = invoices.map(inv => {
-          if (inv.status === 'PAID') {
-            omset += inv.total_amount;
-            paidCount++;
-          } else if (inv.status === 'PENDING') {
-            pendingCount++;
-          }
-
           const badgeClass = inv.status === 'PAID' ? 'badge-paid' : inv.status === 'EXPIRED' ? 'badge-expired' : 'badge-pending';
 
           return `
             <tr>
               <td><code style="font-family: 'Fira Code', monospace; font-weight: 700;">${inv.id}</code></td>
               <td style="font-size: 0.78rem;">${new Date(inv.created_at).toLocaleTimeString('id-ID')}</td>
-              <td style="font-weight: 700;">Rp ${inv.total_amount.toLocaleString('id-ID')}</td>
+              <td><span style="font-weight: 700;">Rp ${(inv.total_amount || 0).toLocaleString('id-ID')}</span></td>
               <td><span class="badge ${badgeClass}">${inv.status}</span></td>
               <td style="font-size: 0.8rem;">${inv.payment_source || '-'}</td>
               <td>
@@ -1014,10 +1031,6 @@
             </tr>
           `;
         }).join('');
-
-        document.getElementById('statOmset').textContent = 'Rp ' + omset.toLocaleString('id-ID');
-        document.getElementById('statPaid').textContent = paidCount;
-        document.getElementById('statPending').textContent = pendingCount;
       }
 
       window.markAsPaid = async (id, apiKey) => {

@@ -331,14 +331,54 @@ class FirebaseService {
   }
 
   async getInvoice(id) {
-    return this.inMemoryInvoices.get(id) || null;
+    if (!id) return null;
+    let inv = this.inMemoryInvoices.get(id);
+    if (inv) return inv;
+
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const doc = await firestore.collection('invoices').doc(id).get();
+        if (doc.exists) {
+          const data = doc.data();
+          this.inMemoryInvoices.set(data.id, data);
+          return data;
+        }
+      } catch (e) {}
+    }
+    return null;
   }
 
   async getAllInvoices() {
-    return Array.from(this.inMemoryInvoices.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    let list = Array.from(this.inMemoryInvoices.values());
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const snap = await firestore.collection('invoices').get();
+        snap.forEach(doc => {
+          const data = doc.data();
+          this.inMemoryInvoices.set(data.id, data);
+        });
+        list = Array.from(this.inMemoryInvoices.values());
+      } catch (e) {}
+    }
+    return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
   async getInvoicesByMerchant(merchantId) {
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        let query = firestore.collection('invoices');
+        if (merchantId) query = query.where('merchant_id', '==', merchantId);
+        const snap = await query.get();
+        snap.forEach(doc => {
+          const data = doc.data();
+          this.inMemoryInvoices.set(data.id, data);
+        });
+      } catch (e) {}
+    }
+
     const list = [];
     for (const inv of this.inMemoryInvoices.values()) {
       if (!merchantId || inv.merchant_id === merchantId) {

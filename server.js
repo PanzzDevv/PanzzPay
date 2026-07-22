@@ -176,14 +176,16 @@ app.post('/api/auth/register', async (req, res) => {
 
     await db.saveMerchant(merchant);
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendOtpEmail(merchant.email, otpCode, merchant.name, reqHost);
+    const fbResult = await sendOtpEmail(merchant.email, otpCode, merchant.name, reqHost);
+    const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(merchant.email)}`;
 
     return res.json({
       ok: true,
       require_otp: true,
       email: merchant.email,
       otp_code: transporter ? undefined : otpCode,
-      message: transporter ? 'Pendaftaran berhasil! Kode verifikasi dikirim ke email Anda.' : `[DEV MODE] Pendaftaran berhasil! Kode OTP Anda: ${otpCode}`
+      verification_link: verifyLink,
+      message: transporter ? 'Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi.' : `Pendaftaran berhasil! Gunakan link verifikasi 1-klik atau kode OTP: ${otpCode}`
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -205,18 +207,20 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 
     const reqHost = `${req.protocol}://${req.get('host')}`;
     await sendOtpEmail(merchant.email, freshOtp, merchant.name, reqHost);
+    const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(merchant.email)}`;
 
     return res.json({
       ok: true,
       otp_code: transporter ? undefined : freshOtp,
-      message: transporter ? 'Kode verifikasi berhasil dikirimkan ke email Anda!' : `[DEV MODE] Kode OTP baru Anda: ${freshOtp}`
+      verification_link: verifyLink,
+      message: transporter ? 'Kode/Link verifikasi berhasil dikirimkan ke email Anda!' : `Link verifikasi dikirim! Kode OTP baru: ${freshOtp}`
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
   }
 });
 
-// VERIFY EMAIL ENDPOINT
+// VERIFY EMAIL ENDPOINT VIA OTP
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {
     const { email, otp_code } = req.body;
@@ -244,6 +248,25 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// 1-CLICK VERIFICATION LINK ENDPOINT (NO CODE ENTRY NEEDED)
+app.get('/api/auth/verify-link', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).send('<div style="font-family:sans-serif;text-align:center;padding:40px;"><h2>⚠️ Parameter Email tidak valid</h2></div>');
+    }
+
+    const result = await db.verifyMerchantOtp(email, null);
+    if (result.ok) {
+      return res.redirect(`/portal.html?verified=true&email=${encodeURIComponent(email)}`);
+    } else {
+      return res.status(400).send(`<div style="font-family:sans-serif;text-align:center;padding:40px;"><h2>⚠️ ${result.message}</h2></div>`);
+    }
+  } catch (err) {
+    return res.status(500).send(`<div style="font-family:sans-serif;text-align:center;padding:40px;"><h2>⚠️ Error: ${err.message}</h2></div>`);
   }
 });
 

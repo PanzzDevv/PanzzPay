@@ -380,6 +380,14 @@
               </p>
             </div>
 
+            <!-- 1-CLICK VERIFICATION DIRECT LINK BUTTON -->
+            <div id="directLinkWrapper" style="display: none; margin-bottom: 1.25rem;">
+              <a id="btnDirectVerifyLink" href="#" class="btn btn-emerald" style="width: 100%; text-decoration: none; justify-content: center; font-weight: 800;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span>🔗 Klik Di Sini Verifikasi Langsung (1-Click Link)</span>
+              </a>
+            </div>
+
             <div class="form-group" style="margin-bottom: 1.25rem;">
               <input type="text" id="otpCodeInput" class="otp-input-box" maxlength="6" placeholder="000000" required>
             </div>
@@ -588,6 +596,23 @@
         });
       }
 
+      // Auto login if redirected from 1-Click Verification Link
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('verified') === 'true' && urlParams.get('email')) {
+        const verifiedEmail = urlParams.get('email');
+        fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifiedEmail })
+        }).then(r => r.json()).then(data => {
+          if (data.ok && data.merchant) {
+            alert('🎉 Verifikasi Email Berhasil melalui Link! Akun Anda Aktif.');
+            localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
+            showDashboard(data.merchant);
+          }
+        });
+      }
+
       registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('regName').value;
@@ -607,6 +632,14 @@
             otpSection.style.display = 'block';
             registerForm.style.display = 'none';
             if (googleAuthWrapper) googleAuthWrapper.style.display = 'none';
+            if (data.verification_link) {
+              const directLinkWrapper = document.getElementById('directLinkWrapper');
+              const btnDirectVerifyLink = document.getElementById('btnDirectVerifyLink');
+              if (directLinkWrapper && btnDirectVerifyLink) {
+                btnDirectVerifyLink.href = data.verification_link;
+                directLinkWrapper.style.display = 'block';
+              }
+            }
             if (data.otp_code) {
               document.getElementById('otpCodeInput').value = data.otp_code;
             }
@@ -647,6 +680,14 @@
             otpSection.style.display = 'block';
             loginForm.style.display = 'none';
             if (googleAuthWrapper) googleAuthWrapper.style.display = 'none';
+            if (data.verification_link) {
+              const directLinkWrapper = document.getElementById('directLinkWrapper');
+              const btnDirectVerifyLink = document.getElementById('btnDirectVerifyLink');
+              if (directLinkWrapper && btnDirectVerifyLink) {
+                btnDirectVerifyLink.href = data.verification_link;
+                directLinkWrapper.style.display = 'block';
+              }
+            }
             if (data.otp_code) {
               document.getElementById('otpCodeInput').value = data.otp_code;
             }

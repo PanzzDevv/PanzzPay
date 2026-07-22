@@ -517,8 +517,8 @@ app.get('/api/webhook/logs', async (req, res) => {
       const merchant = await db.getMerchantByApiKey(apiKeyHeader);
       if (merchant) merchantId = merchant.id;
     }
-    const logs = merchantId 
-      ? await db.getWebhookLogsByMerchant(merchantId) 
+    const logs = merchantId
+      ? await db.getWebhookLogsByMerchant(merchantId)
       : await db.getAllWebhookLogs();
     res.json({ ok: true, logs: logs || [] });
   } catch (err) {
@@ -667,13 +667,13 @@ app.get('/api/app/check-update', async (req, res) => {
       const release = await ghRes.json();
       const tag = release.tag_name || 'latest';
       const apkAsset = release.assets?.find(a => a.name.endsWith('.apk'));
-      const downloadUrl = apkAsset 
-        ? apkAsset.browser_download_url 
+      const downloadUrl = apkAsset
+        ? apkAsset.browser_download_url
         : 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk';
 
       return res.json({
         ok: true,
-        versionCode: 2,
+        versionCode: 2.1,
         versionName: tag === 'latest' ? '2.1' : tag.replace(/^v/, ''),
         downloadUrl: downloadUrl,
         releaseNotes: release.body || '• Pembaruan otomatis dari GitHub Release.',

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// Firebase Firestore Client & In-Memory Persistence Layer
+// Firebase Firestore Client & Storage Engine
 class FirebaseStorage {
   constructor() {
     this.merchants = new Map();
@@ -9,10 +9,12 @@ class FirebaseStorage {
     this.webhookLogs = [];
     this.configPath = path.join(process.cwd(), 'firebase-config.json');
     this.isFirebaseActive = false;
-    this.projectId = process.env.FIREBASE_PROJECT_ID || null;
+    this.projectId = null;
+    this.firebaseCredentials = null;
 
-    // Default Super Admin Seed Account
+    // Seed Master Super Admin Account
     this.seedSuperAdmin();
+    // Initialize Firebase Configuration (File or Single JSON Env)
     this.initFirebaseConfig();
   }
 
@@ -32,21 +34,41 @@ class FirebaseStorage {
   }
 
   initFirebaseConfig() {
+    // 1. Cek dari Single Environment Variable FIREBASE_CONFIG_JSON / FIREBASE_SERVICE_ACCOUNT_JSON
+    const envJson = process.env.FIREBASE_CONFIG_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (envJson) {
+      try {
+        const json = typeof envJson === 'string' ? JSON.parse(envJson) : envJson;
+        if (json.project_id) {
+          this.projectId = json.project_id;
+          this.firebaseCredentials = json;
+          this.isFirebaseActive = true;
+          console.log(`🔥 Firebase Firestore Loaded from FIREBASE_CONFIG_JSON Env Variable! Project ID: ${this.projectId}`);
+          return;
+        }
+      } catch (e) {
+        console.warn('⚠️ Error parsing FIREBASE_CONFIG_JSON env variable:', e.message);
+      }
+    }
+
+    // 2. Cek dari file lokal firebase-config.json
     if (fs.existsSync(this.configPath)) {
       try {
         const raw = fs.readFileSync(this.configPath, 'utf8');
         const json = JSON.parse(raw);
         if (json.project_id) {
           this.projectId = json.project_id;
+          this.firebaseCredentials = json;
           this.isFirebaseActive = true;
-          console.log(`🔥 Firebase Firestore Config loaded! Project ID: ${this.projectId}`);
+          console.log(`🔥 Firebase Firestore Loaded from local firebase-config.json file! Project ID: ${this.projectId}`);
+          return;
         }
       } catch (e) {
-        console.warn('⚠️ Firebase config parse warning, using fallback storage:', e.message);
+        console.warn('⚠️ Error parsing local firebase-config.json file:', e.message);
       }
-    } else {
-      console.log('ℹ️ Firebase config file (firebase-config.json) not found. Running in Local Storage Mode (Ready to sync with Firebase).');
     }
+
+    console.log('ℹ️ Firebase config not found. Running in Local Storage Mode (Ready to sync with Firebase).');
   }
 
   // --- MERCHANT & SUPERADMIN OPERATIONS ---

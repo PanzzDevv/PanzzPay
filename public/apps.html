@@ -204,32 +204,38 @@
             <p class="bento-subtitle">Dukungan mudah untuk berbagai stack pemrograman backend.</p>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem;">
             
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
-              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-indigo); margin-bottom: 0.5rem;">Node.js / Express</h3>
-              <pre class="code-box" style="font-size: 0.72rem; padding: 0.75rem;"><span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">'http://localhost:3000/api/qris/generate'</span>, {
+              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--brand-blue); margin-bottom: 0.6rem;">Node.js / Express</h3>
+              <div class="code-box" style="padding: 0.85rem;">
+                <pre style="margin: 0; font-size: 0.78rem;"><code><span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">'http://localhost:3000/api/qris/generate'</span>, {
   method: <span class="code-string">'POST'</span>,
   headers: { <span class="code-string">'X-API-KEY'</span>: <span class="code-string">'pz_live_your_key'</span> },
   body: JSON.stringify({ base_amount: 15000 })
-});</pre>
+});</code></pre>
+              </div>
             </div>
 
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
-              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-emerald); margin-bottom: 0.5rem;">PHP / Curl</h3>
-              <pre class="code-box" style="font-size: 0.72rem; padding: 0.75rem;">$ch = curl_init(<span class="code-string">'http://localhost:3000/api/qris/generate'</span>);
+              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-emerald); margin-bottom: 0.6rem;">PHP / Curl</h3>
+              <div class="code-box" style="padding: 0.85rem;">
+                <pre style="margin: 0; font-size: 0.78rem;"><code>$ch = curl_init(<span class="code-string">'http://localhost:3000/api/qris/generate'</span>);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [<span class="code-string">'X-API-KEY: pz_live_your_key'</span>]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([<span class="code-string">'base_amount'</span> => 15000]));
-$res = curl_exec($ch);</pre>
+$res = curl_exec($ch);</code></pre>
+              </div>
             </div>
 
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
-              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-amber); margin-bottom: 0.5rem;">Python / Requests</h3>
-              <pre class="code-box" style="font-size: 0.72rem; padding: 0.75rem;"><span class="code-keyword">import</span> requests
+              <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-amber); margin-bottom: 0.6rem;">Python / Requests</h3>
+              <div class="code-box" style="padding: 0.85rem;">
+                <pre style="margin: 0; font-size: 0.78rem;"><code><span class="code-keyword">import</span> requests
 res = requests.post(<span class="code-string">'http://localhost:3000/api/qris/generate'</span>,
   headers={<span class="code-string">'X-API-KEY'</span>: <span class="code-string">'pz_live_your_key'</span>},
   json={<span class="code-string">'base_amount'</span>: 15000}
-)</pre>
+)</code></pre>
+              </div>
             </div>
 
           </div>

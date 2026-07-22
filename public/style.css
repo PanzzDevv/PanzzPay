@@ -461,13 +461,34 @@ header.bento-header {
   padding: 1.25rem;
   position: relative;
   overflow-x: auto;
+  color: #f1f5f9;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
 }
 
-.code-box pre {
+.code-box pre, pre.code-box {
   font-family: 'Fira Code', monospace;
-  font-size: 0.85rem;
-  color: #e2e8f0;
+  font-size: 0.82rem;
+  color: #f1f5f9;
   line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.code-box code, pre.code-box code {
+  color: #38bdf8;
+  font-family: 'Fira Code', monospace;
+}
+
+.code-keyword {
+  color: #f472b6;
+  font-weight: 700;
+}
+
+.code-string {
+  color: #34d399;
 }
 
 /* Badges */

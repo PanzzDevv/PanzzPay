@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
-        val savedUrl = prefs.getString("webhook_url", "https://panzzpay.vercel.app/api/webhook/callback")
+        val savedUrl = prefs.getString("webhook_url", "https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_admin_master_token_99999")
         val isEnabled = prefs.getBoolean("service_enabled", true)
         val isVoiceEnabled = prefs.getBoolean("voice_enabled", true)
 
@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         appendLog("PanzzPay Listener Siap & Running")
 
         // Cek pembaruan aplikasi otomatis dari server PanzzPay
-        val targetUrl = savedUrl ?: "https://panzzpay.vercel.app/api/webhook/callback"
+        val targetUrl = savedUrl ?: "https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_admin_master_token_99999"
         UpdateManager.checkForUpdate(this, targetUrl)
     }
 

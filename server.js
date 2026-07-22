@@ -114,16 +114,38 @@ function postToUpstreamGateway(endpointPath, postParams, retries = 2) {
   });
 }
 
-function extractAmountFromText(text) {
-  if (!text) return null;
-  const str = typeof text === 'object' ? JSON.stringify(text) : String(text);
-  const matches = str.match(/(?:rp\.?|IDR)?\s*([\d\.,]+)/gi);
-  if (!matches) return null;
+function extractAmountFromText(input) {
+  if (!input) return null;
 
-  for (const match of matches) {
-    const cleanNum = match.replace(/[^\d]/g, '');
-    const num = parseInt(cleanNum, 10);
-    if (!isNaN(num) && num >= 100) return num;
+  if (typeof input === 'object' && input.amount) {
+    const amt = parseInt(String(input.amount).replace(/[^\d]/g, ''), 10);
+    if (!isNaN(amt) && amt >= 100) return amt;
+  }
+
+  let str = '';
+  if (typeof input === 'object') {
+    str = (input.message || '') + ' ' + (input.title || '') + ' ' + (input.text || '');
+    if (!str.trim()) str = JSON.stringify(input);
+  } else {
+    str = String(input);
+  }
+
+  const rpMatches = str.match(/(?:rp\.?|IDR)\s*([\d\.,]+)/gi);
+  if (rpMatches && rpMatches.length > 0) {
+    for (const match of rpMatches) {
+      const cleanNum = match.replace(/[^\d]/g, '');
+      const num = parseInt(cleanNum, 10);
+      if (!isNaN(num) && num >= 100) return num;
+    }
+  }
+
+  const allMatches = str.match(/[\d\.,]+/g);
+  if (allMatches) {
+    for (const match of allMatches) {
+      const cleanNum = match.replace(/[^\d]/g, '');
+      const num = parseInt(cleanNum, 10);
+      if (!isNaN(num) && num >= 100 && num < 1000000000) return num;
+    }
   }
   return null;
 }
@@ -618,9 +640,10 @@ app.post('/api/webhook/callback', async (req, res) => {
 
   let matchedInvoice = null;
   if (extractedAmount) {
-    const activeInvoices = await db.getInvoicesByMerchant(merchant ? merchant.id : null);
+    const allInvoices = await db.getAllInvoices();
+    const activeInvoices = allInvoices.filter(inv => inv.status === 'PENDING');
     for (const inv of activeInvoices) {
-      if (inv.status === 'PENDING' && inv.total_amount === extractedAmount) {
+      if (inv.total_amount === extractedAmount) {
         matchedInvoice = await db.updateInvoiceStatus(inv.id, 'PAID', {
           paid_at: new Date().toISOString(),
           payment_source: source

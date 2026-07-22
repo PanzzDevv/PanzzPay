@@ -1,33 +1,31 @@
 /* 
-  PanzzPay - Apple Bento UI Design System with Ultra-Premium Button Aesthetics
-  Responsive Grid Layout for Desktop & Mobile
+  PanzzPay - Apple Bento UI Design System
+  Clean Solid Royal Blue Button Theme & Crisp Responsive Grid
 */
 
 :root {
   --bg-main: #f8fafc;
   --bento-card-bg: #ffffff;
   --bento-border: rgba(15, 23, 42, 0.08);
-  --bento-border-highlight: rgba(99, 102, 241, 0.35);
+  --bento-border-highlight: rgba(37, 99, 235, 0.35);
   
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-muted: #64748b;
   
-  --accent-indigo: #4f46e5;
+  /* Solid Royal Blue Primary Brand Theme */
+  --brand-blue: #2563eb;
+  --brand-blue-hover: #1d4ed8;
+  --brand-blue-glow: rgba(37, 99, 235, 0.25);
+
   --accent-emerald: #059669;
-  --accent-violet: #7c3aed;
-  --accent-rose: #e11d48;
   --accent-amber: #d97706;
-  --accent-cyan: #0284c7;
+  --accent-rose: #dc2626;
+  --accent-indigo: #2563eb;
 
-  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
-  --emerald-gradient: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%);
-  --amber-gradient: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%);
-  --rose-gradient: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #be123c 100%);
-
-  --radius-bento: 32px;
-  --radius-inner: 18px;
-  --gap-bento: 24px;
+  --radius-bento: 24px;
+  --radius-inner: 16px;
+  --gap-bento: 20px;
 }
 
 * {
@@ -55,11 +53,11 @@ header.bento-header {
   max-width: 1280px;
   margin: 0 auto 2rem auto;
   padding: 0.85rem 1.5rem;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--bento-border);
-  border-radius: var(--radius-bento);
+  border-radius: 9999px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -78,7 +76,7 @@ header.bento-header {
 }
 
 .brand-title svg {
-  color: var(--accent-indigo);
+  color: var(--brand-blue);
 }
 
 .header-controls {
@@ -92,12 +90,12 @@ header.bento-header {
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 1rem;
-  background: rgba(5, 150, 105, 0.08);
-  border: 1px solid rgba(5, 150, 105, 0.25);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
   border-radius: 9999px;
   font-size: 0.78rem;
   font-weight: 800;
-  color: var(--accent-emerald);
+  color: var(--brand-blue);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
@@ -126,7 +124,7 @@ header.bento-header {
   height: 44px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: var(--radius-inner);
+  border-radius: 9999px;
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -134,8 +132,8 @@ header.bento-header {
 
 .hamburger-btn:hover {
   background: #f1f5f9;
-  border-color: var(--accent-indigo);
-  color: var(--accent-indigo);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
 }
 
 /* Slide-out Nav Drawer */
@@ -207,9 +205,9 @@ header.bento-header {
 }
 
 .close-btn:hover {
-  background: rgba(224, 36, 36, 0.1);
+  background: rgba(220, 38, 38, 0.1);
   color: var(--accent-rose);
-  border-color: rgba(224, 36, 36, 0.2);
+  border-color: rgba(220, 38, 38, 0.2);
 }
 
 .drawer-nav {
@@ -223,7 +221,7 @@ header.bento-header {
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1.1rem;
-  border-radius: var(--radius-inner);
+  border-radius: 14px;
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.92rem;
@@ -237,12 +235,12 @@ header.bento-header {
 }
 
 .drawer-item:hover, .drawer-item.active {
-  background: rgba(79, 70, 229, 0.08);
-  color: var(--accent-indigo);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--brand-blue);
 }
 
 .drawer-item:hover svg, .drawer-item.active svg {
-  color: var(--accent-indigo);
+  color: var(--brand-blue);
 }
 
 /* Bento Container & Grid Structure */
@@ -263,8 +261,8 @@ header.bento-header {
   background: var(--bento-card-bg);
   border: 1px solid var(--bento-border);
   border-radius: var(--radius-bento);
-  padding: 2.25rem;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04);
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -275,7 +273,7 @@ header.bento-header {
 
 .bento-card:hover {
   border-color: var(--bento-border-highlight);
-  box-shadow: 0 12px 36px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.06);
 }
 
 /* Bento Spans */
@@ -290,12 +288,12 @@ header.bento-header {
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.9rem;
-  background: rgba(79, 70, 229, 0.08);
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 800;
-  color: var(--accent-indigo);
+  color: var(--brand-blue);
   letter-spacing: 0.4px;
   margin-bottom: 0.75rem;
 }
@@ -321,7 +319,7 @@ header.bento-header {
 }
 
 /* -------------------------------------------------------------
-   ULTRA-PREMIUM BUTTON DESIGN SYSTEM (Vibrant Gradients & Animations)
+   CLEAN SOLID ROYAL BLUE BUTTON DESIGN (Matching User Image)
    ------------------------------------------------------------- */
 .btn {
   display: inline-flex;
@@ -329,80 +327,63 @@ header.bento-header {
   justify-content: center;
   gap: 0.6rem;
   min-height: 48px;
-  padding: 0.85rem 1.6rem;
-  border-radius: var(--radius-inner);
-  font-size: 0.92rem;
-  font-weight: 800;
+  padding: 0.85rem 1.75rem;
+  border-radius: 9999px; /* Pure rounded pill style matching user screenshot */
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
   border: none;
   outline: none;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   white-space: nowrap;
-  letter-spacing: -0.2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
+  letter-spacing: -0.1px;
+  box-shadow: 0 4px 14px var(--brand-blue-glow);
+  background-color: var(--brand-blue);
+  color: #ffffff;
+}
+
+.btn:hover:not(:disabled) {
+  background-color: var(--brand-blue-hover);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
 }
 
 .btn:active {
   transform: scale(0.98);
 }
 
-.btn-cyan, .btn-primary {
-  background: var(--primary-gradient);
-  color: #ffffff;
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+/* Class aliases to keep full site button compatibility */
+.btn-primary, .btn-cyan, .btn-gradient-pro, .btn-emerald, .btn-amber, .btn-rose {
+  background-color: var(--brand-blue) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px var(--brand-blue-glow) !important;
+  border-radius: 9999px !important;
+  border: none !important;
 }
 
-.btn-cyan:hover:not(:disabled), .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.48);
-}
-
-.btn-emerald {
-  background: var(--emerald-gradient);
-  color: #ffffff;
-  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.35);
-}
-
-.btn-emerald:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(5, 150, 105, 0.48);
-}
-
-.btn-amber {
-  background: var(--amber-gradient);
-  color: #ffffff;
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);
-}
-
-.btn-amber:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(217, 119, 6, 0.48);
-}
-
-.btn-rose {
-  background: var(--rose-gradient);
-  color: #ffffff;
-  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.35);
-}
-
+.btn-primary:hover:not(:disabled), 
+.btn-cyan:hover:not(:disabled), 
+.btn-gradient-pro:hover:not(:disabled), 
+.btn-emerald:hover:not(:disabled), 
+.btn-amber:hover:not(:disabled), 
 .btn-rose:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(225, 29, 72, 0.48);
+  background-color: var(--brand-blue-hover) !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35) !important;
+  transform: translateY(-1px);
 }
 
 .btn-dark {
-  background: #ffffff;
-  color: var(--text-primary);
-  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
 }
 
 .btn-dark:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: var(--accent-indigo);
-  color: var(--accent-indigo);
-  transform: translateY(-1px);
+  background-color: #f8fafc !important;
+  border-color: var(--brand-blue) !important;
+  color: var(--brand-blue) !important;
 }
 
 .btn:disabled {
@@ -433,15 +414,15 @@ header.bento-header {
   color: var(--text-primary);
   background: #f8fafc;
   border: 1.5px solid #cbd5e1;
-  border-radius: var(--radius-inner);
+  border-radius: 14px;
   outline: none;
   transition: all 0.2s ease;
 }
 
 .form-control:focus {
   background: #ffffff;
-  border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
 }
 
 /* Preset Buttons */
@@ -458,7 +439,7 @@ header.bento-header {
   padding: 0.65rem 0.9rem;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
-  border-radius: var(--radius-inner);
+  border-radius: 9999px;
   color: var(--text-primary);
   font-size: 0.88rem;
   font-weight: 700;
@@ -467,9 +448,9 @@ header.bento-header {
 }
 
 .preset-btn:hover, .preset-btn.active {
-  background: rgba(79, 70, 229, 0.08);
-  border-color: var(--accent-indigo);
-  color: var(--accent-indigo);
+  background: rgba(37, 99, 235, 0.08);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
 }
 
 /* Code Snippet Box */
@@ -502,21 +483,21 @@ header.bento-header {
 }
 
 .badge-pending {
-  background: rgba(217, 119, 6, 0.12);
+  background: rgba(217, 119, 6, 0.1);
   color: var(--accent-amber);
-  border: 1px solid rgba(217, 119, 6, 0.3);
+  border: 1px solid rgba(217, 119, 6, 0.25);
 }
 
 .badge-paid {
-  background: rgba(5, 150, 105, 0.12);
+  background: rgba(5, 150, 105, 0.1);
   color: var(--accent-emerald);
-  border: 1px solid rgba(5, 150, 105, 0.3);
+  border: 1px solid rgba(5, 150, 105, 0.25);
 }
 
 .badge-expired {
-  background: rgba(225, 29, 72, 0.12);
+  background: rgba(220, 38, 38, 0.1);
   color: var(--accent-rose);
-  border: 1px solid rgba(225, 29, 72, 0.3);
+  border: 1px solid rgba(220, 38, 38, 0.25);
 }
 
 /* Tables */
@@ -557,7 +538,7 @@ header.bento-header {
   }
   .bento-card {
     padding: 1.75rem;
-    border-radius: 24px;
+    border-radius: 20px;
   }
 }
 
@@ -574,7 +555,7 @@ header.bento-header {
   }
   .bento-card {
     padding: 1.25rem;
-    border-radius: 20px;
+    border-radius: 18px;
   }
   .btn {
     width: 100%;

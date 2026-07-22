@@ -128,7 +128,7 @@
         <div style="margin-top: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">SERVER BASE URL:</span>
-            <code id="apiBaseUrl" style="background: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--bento-border); color: var(--brand-blue); font-family: 'Fira Code', monospace; font-weight: 700; word-break: break-all;">http://localhost:3000</code>
+            <code id="apiBaseUrl" style="background: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--bento-border); color: var(--brand-blue); font-family: 'Fira Code', monospace; font-weight: 700; word-break: break-all;">https://panzzpay.vercel.app</code>
           </div>
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <a href="/apps.html" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
@@ -340,7 +340,7 @@
               </p>
               <div class="code-box">
                 <pre><code style="color: #38bdf8;">curl -X POST \
-  http://localhost:3000/api/qris/generate \
+  https://panzzpay.vercel.app/api/qris/generate \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: pz_live_xxx" \
   -d '{"base_amount": 10000, "auto_unique": true}'</code></pre>
@@ -358,7 +358,7 @@
               </p>
               <div class="code-box">
                 <pre><code style="color: #38bdf8;">curl -X POST \
-  "http://localhost:3000/api/webhook/callback?token=pz_wh_xxx" \
+  "https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_xxx" \
   -H "Content-Type: application/json" \
   -d '{"message": "Pembayaran masuk Rp 10.338"}'</code></pre>
               </div>
@@ -375,7 +375,7 @@
               </p>
               <div class="code-box">
                 <pre><code style="color: #38bdf8;">curl -X GET \
-  http://localhost:3000/api/invoices/INV-xxx</code></pre>
+  https://panzzpay.vercel.app/api/invoices/INV-xxx</code></pre>
               </div>
             </div>
 

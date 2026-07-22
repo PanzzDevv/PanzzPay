@@ -44,15 +44,19 @@ jobs:
         name: PanzzPay-Forwarder-APK
         path: panzzpay-forwarder.apk
 
-    - name: Create or Update GitHub Release
+    - name: Create New GitHub Release
       uses: softprops/action-gh-release@v2
       if: success()
       with:
-        tag_name: latest
-        name: PanzzPay Forwarder Latest Build
+        tag_name: v2.1.${{ github.run_number }}
+        name: PanzzPay Forwarder v2.1.${{ github.run_number }}
         body: |
-          🚀 Automatic Build dari GitHub Actions.
-          File APK ini digunakan untuk auto-update in-app aplikasi PanzzPay Forwarder Android.
+          🚀 Pembaruan Otomatis Build #${{ github.run_number }} dari GitHub Actions.
+          
+          Catatan Rilis:
+          • Fitur In-App Auto Update bawaan aplikasi
+          • Fitur Tes Webhook Notifikasi Pembayaran (ShopeePay, DANA, BCA, dll.)
+          • Peningkatan kestabilan webhook listener & TTS Suara Uang Masuk
         files: panzzpay-forwarder.apk
         draft: false
         prerelease: false

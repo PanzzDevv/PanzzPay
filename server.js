@@ -292,6 +292,26 @@ app.post('/api/auth/resend-otp', async (req, res) => {
   }
 });
 
+// CHECK VERIFICATION STATUS FOR AUTO-LOGIN POLLING
+app.get('/api/auth/check-status', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ ok: false, message: 'Email required' });
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const merchant = await db.getMerchantByEmail(cleanEmail);
+    if (!merchant) return res.status(404).json({ ok: false, message: 'Merchant not found' });
+
+    return res.json({
+      ok: true,
+      status: merchant.status,
+      merchant: merchant.status === 'ACTIVE' ? merchant : null
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
 // VERIFY EMAIL ENDPOINT VIA OTP
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {

@@ -783,6 +783,30 @@
         });
       }
 
+      let verificationPollTimer = null;
+
+      function startVerificationPolling(email) {
+        if (!email) return;
+        if (verificationPollTimer) clearInterval(verificationPollTimer);
+
+        verificationPollTimer = setInterval(async () => {
+          try {
+            const res = await fetch(`/api/auth/check-status?email=${encodeURIComponent(email)}`);
+            const data = await res.json();
+            if (data.ok && data.status === 'ACTIVE' && data.merchant) {
+              clearInterval(verificationPollTimer);
+              verificationPollTimer = null;
+
+              localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
+              alert('🎉 Email Anda Berhasil Diverifikasi!\n\nSelamat datang di PanzzPay Gateway.');
+              showDashboard(data.merchant);
+            }
+          } catch (e) {
+            console.warn('Polling status note:', e.message);
+          }
+        }, 3000);
+      }
+
       registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('regName').value;
@@ -802,6 +826,7 @@
             otpSection.style.display = 'block';
             registerForm.style.display = 'none';
             if (googleAuthWrapper) googleAuthWrapper.style.display = 'none';
+            startVerificationPolling(pendingEmail);
             if (window.showToast) {
               showToast(data.message, 'info');
             } else {
@@ -839,6 +864,7 @@
             otpSection.style.display = 'block';
             loginForm.style.display = 'none';
             if (googleAuthWrapper) googleAuthWrapper.style.display = 'none';
+            startVerificationPolling(pendingEmail);
             if (window.showToast) {
               showToast(data.message, 'info');
             } else {

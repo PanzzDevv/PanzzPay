@@ -209,10 +209,7 @@ app.post('/api/auth/register', async (req, res) => {
           ok: true,
           require_otp: true,
           email: existing.email,
-          link: sendResult.link || null,
-          message: sendResult.link
-            ? `Link aktivasi berhasil dibuat! Silakan buka link ini untuk aktivasi:\n\n${sendResult.link}`
-            : 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
+          message: 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
         });
       }
       return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
@@ -236,16 +233,13 @@ app.post('/api/auth/register', async (req, res) => {
 
     await db.saveMerchant(merchant);
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    const sendResult = await sendVerificationEmail(merchant.email, merchant.name, reqHost);
+    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
       require_otp: true,
       email: merchant.email,
-      link: sendResult.link || null,
-      message: sendResult.link
-        ? `Pendaftaran berhasil!\n\nLink aktivasi akun Anda:\n${sendResult.link}`
-        : 'Pendaftaran berhasil! Silakan cek email Anda untuk mengaktifkan akun.'
+      message: 'Pendaftaran berhasil! Silakan cek kotak masuk (atau folder Spam) pada email Anda untuk mengaktifkan akun.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -263,14 +257,11 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     if (!merchant) return res.status(404).json({ ok: false, message: `Email '${cleanEmail}' belum terdaftar. Silakan daftar terlebih dahulu.` });
 
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    const sendResult = await sendVerificationEmail(merchant.email, merchant.name, reqHost);
+    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
 
     return res.json({
       ok: true,
-      link: sendResult.link || null,
-      message: sendResult.link
-        ? `Link verifikasi berhasil dibuat!\n\nKlik link di bawah ini untuk aktivasi:\n\n${sendResult.link}`
-        : 'Link verifikasi baru berhasil dikirimkan ke email Anda!'
+      message: 'Link verifikasi baru telah dikirimkan ke email Anda! Silakan cek kotak masuk atau folder Spam.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -581,6 +572,19 @@ app.get('/api/invoices', async (req, res) => {
 
   const list = await db.getInvoicesByMerchant(merchantId);
   res.json({ ok: true, invoices: list });
+});
+
+app.get('/api/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const invoice = await db.getInvoice(id);
+    if (!invoice) {
+      return res.status(404).json({ ok: false, message: 'Invoice tidak ditemukan' });
+    }
+    return res.json({ ok: true, invoice });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
 });
 
 app.get('/api/webhook/logs', async (req, res) => {

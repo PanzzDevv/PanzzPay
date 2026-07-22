@@ -9,20 +9,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    .btn-gradient-vibrant {
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-      color: #ffffff;
-      font-weight: 800;
-      border: none;
-      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);
-      transition: all 0.2s ease;
-    }
-    .btn-gradient-vibrant:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45);
-    }
-  </style>
 </head>
 <body>
 
@@ -32,10 +18,9 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
       </svg>
-      <span>PanzzPay <span style="color: var(--accent-indigo); font-weight: 500; font-size: 0.85em;">Gateway</span></span>
+      <span>PanzzPay <span style="color: var(--brand-blue); font-weight: 500; font-size: 0.85em;">Gateway</span></span>
     </div>
 
-    <!-- HAMBURGER BUTTON -->
     <div class="header-controls">
       <div class="system-badge">
         <span class="dot-pulse"></span>
@@ -72,11 +57,11 @@
       </div>
 
       <nav class="drawer-nav">
-        <a href="#hero-section" class="drawer-item active">
+        <a href="/" class="drawer-item active">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>Dashboard Utama</span>
         </a>
-        <a href="/apps.html" class="drawer-item" style="color: var(--accent-emerald); font-weight: 700;">
+        <a href="/apps.html" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
           <span>Aplikasi & Ekosistem 📱</span>
         </a>
@@ -102,7 +87,7 @@
         </a>
       </nav>
 
-      <!-- DRAWER FOOTER: DAFTAR / LOGIN VIBRANT BUTTON -->
+      <!-- DRAWER FOOTER: DYNAMICALLY MANAGED BY APP.JS -->
       <div id="drawerAuthContainer" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--bento-border);">
         <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
@@ -115,61 +100,41 @@
     </div>
   </div>
 
-  <!-- BENTO GRID MAIN CONTAINER -->
+  <!-- BENTO MAIN WRAPPER -->
   <main class="bento-wrapper">
     <div class="bento-grid">
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 1: HERO & SYSTEM OVERVIEW (COL 12) -->
+      <!-- BENTO CARD 1: HERO / SYSTEM STATUS (COL 12) -->
       <!-- ======================================================= -->
-      <section id="hero-section" class="bento-card col-12 bento-hero">
+      <section class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
         <div>
-          <span class="bento-hero-badge">PANDUAN LENGKAP INTEGRASI REST API v2.0</span>
-          <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.5px;">
-            Sistem Gateway Pembayaran QRIS Otomatis PanzzPay
+          <span class="bento-hero-badge">GATEWAY VERSI 2.0 ONLINE</span>
+          <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.8px;">
+            Sistem Payment Gateway QRIS Dinamis & Notifikasi Otomatis
           </h1>
-          <p style="color: var(--text-secondary); max-width: 900px; font-size: 0.92rem; margin-bottom: 1.25rem; line-height: 1.6;">
-            PanzzPay berfungsi mengecek dan mencatat pembayaran QRIS secara otomatis hanya dengan membaca notifikasi handphone Anda (via aplikasi Android Forwarder). Nikmati integrasi REST API tanpa biaya admin per transaksi!
+          <p style="color: var(--text-secondary); max-width: 900px; font-size: 1rem; line-height: 1.6;">
+            Hubungkan aplikasi toko online Anda langsung ke layanan QRIS All Payment (DANA, ShopeePay, GoPay, OVO, m-Banking BCA, BRI, Mandiri) dengan deteksi pembayaran otomatis tanpa perlu cek mutasi manual.
           </p>
 
-          <!-- System Workflow Steps -->
-          <div style="background: #ffffff; border: 1px solid var(--bento-border); padding: 1.25rem; border-radius: var(--radius-inner); font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-            <div style="font-weight: 800; color: var(--accent-indigo); margin-bottom: 0.75rem; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">// ALUR KERJA SISTEM OTOMATIS:</div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-              <div>
-                <strong style="color: var(--text-primary); display: block; margin-bottom: 0.2rem;">1. QRIS Dinamis</strong>
-                <span style="color: var(--text-muted);">Sistem membuat QRIS dengan nominal unik (Contoh: Rp 10.338).</span>
-              </div>
-              <div>
-                <strong style="color: var(--text-primary); display: block; margin-bottom: 0.2rem;">2. Pembeli Transfer</strong>
-                <span style="color: var(--text-muted);">Pembeli men-scan QRIS via DANA, ShopeePay, OVO, atau m-Banking.</span>
-              </div>
-              <div>
-                <strong style="color: var(--text-primary); display: block; margin-bottom: 0.2rem;">3. Notifikasi HP</strong>
-                <span style="color: var(--text-muted);">HP Anda menerima SMS / Pop-up notifikasi dana masuk.</span>
-              </div>
-              <div>
-                <strong style="color: var(--text-primary); display: block; margin-bottom: 0.2rem;">4. Webhook Forwarder</strong>
-                <span style="color: var(--text-muted);">App Forwarder di HP meneruskan teks notifikasi ke Server PanzzPay.</span>
-              </div>
-              <div>
-                <strong style="color: var(--text-primary); display: block; margin-bottom: 0.2rem;">5. Status LUNAS</strong>
-                <span style="color: var(--text-muted);">Server me-validate nominal & otomatis mengubah invoice ke PAID!</span>
-              </div>
-            </div>
+          <!-- MULTI-TENANT SAAS BADGES -->
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;">
+            <span class="badge badge-paid">⚡ REALTIME FIRESTORE SYNC</span>
+            <span class="badge badge-pending">🔑 MULTI-TENANT MERCHANT SUPPORT</span>
+            <span class="badge badge-paid">📱 NOTIFICATION FORWARDER APK</span>
           </div>
         </div>
 
         <div style="margin-top: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">SERVER BASE URL:</span>
-            <code id="apiBaseUrl" style="background: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--bento-border); color: var(--accent-indigo); font-family: 'Fira Code', monospace; font-weight: 700; word-break: break-all;">http://localhost:3000</code>
+            <code id="apiBaseUrl" style="background: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--bento-border); color: var(--brand-blue); font-family: 'Fira Code', monospace; font-weight: 700; word-break: break-all;">http://localhost:3000</code>
           </div>
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="/apps.html" class="btn btn-emerald" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
+            <a href="/apps.html" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
               <span>Katalog Aplikasi (.APK) 📱</span>
             </a>
-            <a href="/portal.html" class="btn btn-gradient-vibrant" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none; border-radius: 10px;">
+            <a href="/portal.html" class="btn btn-primary" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
               <span>Daftar / Login 🔑</span>
             </a>
           </div>
@@ -177,7 +142,7 @@
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 2: DOWNLOAD APLIKASI FORWARDER & SETTING (COL 12) -->
+      <!-- BENTO CARD 2: DOWNLOAD APLIKASI FORWARDER (COL 12) -->
       <!-- ======================================================= -->
       <section id="forwarder-apk-section" class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border: 1px solid rgba(5, 150, 105, 0.2);">
         <div>
@@ -192,7 +157,7 @@
 
           <!-- DOWNLOAD BUTTON -->
           <div style="margin-bottom: 1.5rem;">
-            <a href="/downloads/panzzpay-forwarder.apk" download="PanzzPay-Forwarder-v2.0.apk" class="btn btn-emerald" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.88rem 1.8rem; font-size: 1rem; font-weight: 800; text-decoration: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);">
+            <a href="/downloads/panzzpay-forwarder.apk" download="PanzzPay-Forwarder-v2.0.apk" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.88rem 1.8rem; font-size: 1rem; text-decoration: none;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               <span>📥 UNDUH FILE APLIKASI (.APK) SEKARANG</span>
             </a>
@@ -203,83 +168,63 @@
             <h3 style="font-size: 1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem; letter-spacing: -0.3px;">
               // LANGKAH-LANGKAH SETTING DI HP ANDA:
             </h3>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 12px;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                  <span style="background: var(--accent-emerald); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">1</span>
-                  <strong style="color: var(--text-primary);">Akses Notifikasi (Service State)</strong>
-                </div>
-                <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
-                  Buka aplikasi PanzzPay Forwarder di HP, aktifkan izin <strong style="color: var(--accent-indigo);">Akses Notifikasi</strong> di menu pengaturan Android. Geser saklar tombol utama ke posisi <strong>"Enabled (Aktif)"</strong>.
-                </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+              <div style="background: #f8fafc; padding: 1.1rem; border-radius: 14px; border: 1px solid #e2e8f0;">
+                <div style="font-weight: 800; color: var(--brand-blue); margin-bottom: 0.4rem; font-size: 0.9rem;">1. BUKA IZIN NOTIFIKASI</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Buka aplikasi PanzzPay Forwarder, berikan izin <em>Notification Access Listener</em> agar notifikasi e-wallet & m-Banking terbaca.</p>
               </div>
-
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 12px;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                  <span style="background: var(--accent-emerald); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">2</span>
-                  <strong style="color: var(--text-primary);">Pilih Aplikasi Target (App Registry)</strong>
-                </div>
-                <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
-                  Pilih aplikasi bank atau e-wallet tempat Anda menerima pembayaran (Contoh: <strong style="color: var(--accent-emerald);">DANA, OVO, ShopeePay, GoBiz, m-BCA, BRImo, Livin</strong>).
-                </p>
+              <div style="background: #f8fafc; padding: 1.1rem; border-radius: 14px; border: 1px solid #e2e8f0;">
+                <div style="font-weight: 800; color: var(--brand-blue); margin-bottom: 0.4rem; font-size: 0.9rem;">2. TEMPEL WEBHOOK TOKEN</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Copy URL Webhook unik dari Portal PanzzPay Anda, lalu paste ke kolom Target Webhook URL di aplikasi HP.</p>
               </div>
-
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 12px;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                  <span style="background: var(--accent-emerald); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">3</span>
-                  <strong style="color: var(--text-primary);">Masukkan Webhook URL (Data Pipeline)</strong>
-                </div>
-                <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
-                  Isikan alamat Webhook PanzzPay Anda:
-                  <code style="display: block; background: #fff; border: 1px solid #cbd5e1; padding: 0.4rem; border-radius: 6px; color: var(--accent-indigo); font-family: 'Fira Code', monospace; font-weight: 700; margin-top: 0.4rem; word-break: break-all;">
-                    http://domain-anda.com/api/webhook/callback?token=TOKEN_ANDA
-                  </code>
-                </p>
+              <div style="background: #f8fafc; padding: 1.1rem; border-radius: 14px; border: 1px solid #e2e8f0;">
+                <div style="font-weight: 800; color: var(--brand-blue); margin-bottom: 0.4rem; font-size: 0.9rem;">3. SIMPAN & AKTIFKAN</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Klik Simpan & Tes Koneksi. Notifikasi pembayaran yang masuk ke HP akan langsung me-LUNASKAN invoice di server!</p>
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 3: DYNAMIC QRIS GENERATOR (COL 6) -->
+      <!-- BENTO CARD 3: GENERATOR QRIS DINAMIS (COL 6) -->
       <!-- ======================================================= -->
       <section id="generator-section" class="bento-card col-6">
         <div>
           <div class="bento-header-sm">
             <h2 class="bento-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              <span>1. Generator QRIS Dinamis</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <span>1. Generate QRIS Dinamis</span>
             </h2>
-            <p class="bento-subtitle">Membuat kode QRIS dengan kode unik otomatis di belakang nominal tagihan.</p>
+            <p class="bento-subtitle">Buat tagihan QRIS dengan nominal unik otomatis untuk transaksi cepat.</p>
           </div>
 
           <form id="qrisForm">
             <div class="form-group">
-              <label class="form-label" for="baseAmount">Harga Barang (IDR) <span style="color: var(--accent-rose);">*</span></label>
-              <input type="number" id="baseAmount" class="form-control" placeholder="Contoh: 10000" value="10000" required>
+              <label class="form-label" for="baseAmount">Harga Dasar / Total Tagihan (IDR)</label>
+              <input type="number" id="baseAmount" class="form-control" placeholder="Contoh: 10000" min="100" value="10000" required>
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="uniqueCode">Kode Unik Tambahan (1 - 999)</label>
+              <div class="checkbox-group">
+                <input type="checkbox" id="autoUnique" checked>
+                <label for="autoUnique" style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); cursor: pointer;">
+                  Gunakan Kode Unik Acak Otomatis (Rekomendasi)
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="uniqueCode">Kode Unik Manual (Opsional)</label>
               <input type="number" id="uniqueCode" class="form-control" placeholder="Otomatis acak sistem" disabled>
             </div>
 
             <div class="form-group">
-              <label class="checkbox-group">
-                <input type="checkbox" id="autoUnique" checked>
-                <span>Acak Kode Unik Otomatis oleh Sistem</span>
-              </label>
+              <label class="form-label" for="payloadStatic">Payload String QRIS Statis Awal</label>
+              <textarea id="payloadStatic" class="form-control" rows="3" style="font-family: 'Fira Code', monospace; font-size: 0.8rem;" placeholder="00020101021126570011ID.DANA.WWW...">00020101021126570011ID.DANA.WWW011893600915300000000002150000000000000005204581253033605802ID5911PanzzPayDemo6007JAKARTA6304ABCD</textarea>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="payloadStatic">Isi Payload QRIS Statis Anda (Opsional)</label>
-              <textarea id="payloadStatic" class="form-control" placeholder="Kosongkan untuk memakai QRIS Demo PanzzPay bawaan"></textarea>
-            </div>
-
-            <button type="submit" id="btnGenerate" class="btn btn-cyan" style="width: 100%;">
+            <button type="submit" id="btnGenerate" class="btn btn-primary" style="width: 100%;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
               <span>Generate Gambar QRIS</span>
             </button>
@@ -288,55 +233,59 @@
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 4: QR CODE DISPLAY & POLLING (COL 6) -->
+      <!-- BENTO CARD 4: DISPLAY HASIL QRIS (COL 6) -->
       <!-- ======================================================= -->
       <section class="bento-card col-6" id="qrResultCard">
         <div>
-          <div class="bento-header-sm" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+          <div class="bento-header-sm" style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
               <h2 class="bento-title">Tampilan Hasil QRIS</h2>
-              <p class="bento-subtitle" id="invoiceIdLabel">Generate QRIS di sebelah kiri untuk melihat tampilan</p>
+              <p class="bento-subtitle">Generate QRIS di sebelah kiri untuk melihat tampilan</p>
             </div>
             <span id="invoiceBadge" class="badge badge-pending">PENDING</span>
           </div>
 
           <div class="qr-display-box">
             <div class="qr-img-frame">
-              <img id="qrImage" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>" alt="QR Code Display">
+              <img id="qrImage" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="QRIS Code Display">
             </div>
 
-            <div class="amount-title" id="totalAmountLabel">Rp 10.338</div>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
-              Harga Dasar: <span id="baseAmountLabel" style="color: var(--text-primary); font-weight: 600;">Rp 10.000</span> + Unik: <span id="uniqueCodeLabel" style="color: var(--accent-indigo); font-weight: 700;">338</span>
-            </p>
+            <div class="amount-title" id="totalAmountLabel">Rp 0</div>
+            
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+              Harga Dasar: <strong id="baseAmountLabel" style="color: var(--text-primary);">Rp 0</strong> + Unik: <strong id="uniqueCodeLabel" style="color: var(--brand-blue);">0</strong>
+            </div>
 
             <div class="timer-pill">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               <span>Berlaku: <strong id="timerCountdown">15:00</strong></span>
             </div>
           </div>
         </div>
 
-        <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">
-          <span style="color: var(--accent-emerald); font-weight: 700;">● Polling Otomatis Aktif</span> — Status akan langsung berubah <strong style="color: var(--text-primary);">LUNAS</strong> jika notifikasi masuk.
+        <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+          ID Invoice: <code id="invoiceIdLabel" style="font-family: 'Fira Code', monospace; color: var(--text-primary); font-weight: 700;">-</code>
+          <div style="margin-top: 0.3rem;">
+            <span style="color: var(--accent-emerald); font-weight: 700;">● Polling Otomatis Aktif</span> — Status akan langsung berubah <strong>LUNAS</strong> jika notifikasi masuk.
+          </div>
         </div>
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 5: WEBHOOK SIMULATOR (COL 6) -->
+      <!-- BENTO CARD 5: SIMULATOR NOTIFIKASI WEBHOOK (COL 6) -->
       <!-- ======================================================= -->
       <section id="simulator-section" class="bento-card col-6">
         <div>
           <div class="bento-header-sm">
             <h2 class="bento-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
               <span>2. Simulator Notifikasi (Webhook)</span>
             </h2>
             <p class="bento-subtitle">Simulasikan lemparan mutasi SMS / Notifikasi HP dari ShopeePay, DANA, OVO, BCA dll.</p>
           </div>
 
           <form id="simulatorForm">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
               <div class="form-group">
                 <label class="form-label" for="simSource">Sumber Pembayaran</label>
                 <select id="simSource" class="form-control">
@@ -344,138 +293,135 @@
                   <option value="DANA">DANA</option>
                   <option value="GoPay">GoPay</option>
                   <option value="OVO">OVO</option>
-                  <option value="m-BCA">m-BCA</option>
+                  <option value="BCA">m-BCA</option>
                   <option value="BRImo">BRImo</option>
-                  <option value="Livin by Mandiri">Livin by Mandiri</option>
                 </select>
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="simAmount">Nominal (IDR)</label>
-                <input type="number" id="simAmount" class="form-control" value="10338">
+                <input type="number" id="simAmount" class="form-control" placeholder="10338" required>
               </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="simPayload">Pesan Notifikasi Tiruan</label>
-              <textarea id="simPayload" class="form-control">{ "message": "Pembayaran masuk Rp 10.338 dari ShopeePay" }</textarea>
+              <textarea id="simPayload" class="form-control" rows="3" style="font-family: 'Fira Code', monospace; font-size: 0.8rem;"></textarea>
             </div>
 
-            <button type="submit" class="btn btn-emerald" style="width: 100%;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
               <span>Kirim Simulasi Webhook</span>
             </button>
           </form>
+        </div>
 
-          <div id="simResultCard" style="display: none; margin-top: 1rem;">
-            <pre id="simResultJson" class="code-box" style="margin-bottom: 0;"></pre>
-          </div>
+        <!-- SIMULATOR RESULT BOX -->
+        <div id="simResultCard" style="display: none; margin-top: 1.25rem; background: #0f172a; border-radius: var(--radius-inner); padding: 1.25rem;">
+          <div style="font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-bottom: 0.4rem;">RESPON WEBHOOK SERVER:</div>
+          <pre id="simResultJson" style="font-family: 'Fira Code', monospace; font-size: 0.8rem; color: #38bdf8; overflow-x: auto; margin: 0;"></pre>
         </div>
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 6: QR CONVERTER / DECODER (COL 6) -->
+      <!-- BENTO CARD 6: SCAN & DECODE QRIS (COL 6) -->
       <!-- ======================================================= -->
       <section class="bento-card col-6">
         <div>
           <div class="bento-header-sm">
             <h2 class="bento-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
               <span>3. Scan / Baca Gambar QRIS</span>
             </h2>
             <p class="bento-subtitle">Ekstrak kode payload string mentah dari file gambar QRIS statis Anda.</p>
           </div>
 
-          <div class="drag-box" id="dropZone">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <p style="font-weight: 700; color: var(--text-primary);">Tarik file gambar ke sini atau klik untuk mencari file</p>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem;">Format: PNG, JPG, JPEG (Maks. 2MB)</p>
-            <input type="file" id="fileInput" style="display: none;" accept="image/png, image/jpeg, image/jpg">
+          <!-- DRAG & DROP ZONE -->
+          <div id="dropZone" style="border: 2px dashed #cbd5e1; border-radius: var(--radius-inner); padding: 2rem 1.5rem; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s ease;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom: 0.75rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">Tarik file gambar ke sini atau klik untuk mencari file</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Format: PNG, JPG, JPEG (Maks. 2MB)</div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
           </div>
 
-          <div id="decodeResultArea" style="display: none; margin-top: 1rem;">
-            <pre id="decodedString" class="code-box"></pre>
+          <!-- RESULT AREA -->
+          <div id="decodeResultArea" style="display: none; margin-top: 1.25rem;">
+            <label class="form-label">Hasil Ekstraksi Payload QRIS String:</label>
+            <div class="code-box" style="margin-bottom: 0.75rem;">
+              <pre id="decodedString" style="font-size: 0.75rem; word-break: break-all; white-space: pre-wrap; margin: 0;"></pre>
+            </div>
             <button id="btnCopyPayload" class="btn btn-dark" style="width: 100%;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              <span>Salin Payload String</span>
+              <span>Salin Payload ke Form Generator</span>
             </button>
           </div>
         </div>
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 7: COMPLETE PANZZPAY REST API DOCS (COL 12) -->
+      <!-- BENTO CARD 7: DOKUMENTASI API REST (COL 12) -->
       <!-- ======================================================= -->
-      <section id="api-docs-section" class="bento-card col-12" style="background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
+      <section id="api-docs-section" class="bento-card col-12">
         <div>
           <div class="bento-header-sm">
             <span class="bento-hero-badge">API DOCUMENTATION FOR DEVELOPERS</span>
-            <h2 class="bento-title" style="font-size: 1.5rem; margin-top: 0.4rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <h2 class="bento-title" style="font-size: 1.4rem; margin-top: 0.4rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
               <span>Dokumentasi Integrasi PanzzPay REST API</span>
             </h2>
             <p class="bento-subtitle">Gunakan endpoint di bawah ini untuk menghubungkan PanzzPay langsung ke backend website/aplikasi Anda sendiri.</p>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
             
-            <!-- ENDPOINT 1: GENERATE DYNAMIC QRIS -->
+            <!-- ENDPOINT 1 -->
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                <span class="badge" style="background: rgba(5, 150, 105, 0.15); color: var(--accent-emerald); border: 1px solid var(--accent-emerald);">POST</span>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-paid">POST</span>
                 <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/qris/generate</code>
               </div>
-              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Membuat QRIS Dinamis lengkap dengan total nominal tagihan dan kode unik.</p>
-
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">PARAMETER (JSON Body):</div>
-              <ul style="font-size: 0.8rem; color: var(--text-secondary); list-style: none; padding: 0; margin-bottom: 0.75rem;">
-                <li><code style="color: var(--accent-indigo); font-weight: 700;">base_amount</code> (number, wajib): Harga dasar barang.</li>
-                <li><code style="color: var(--accent-indigo); font-weight: 700;">api_key</code> (string, opsional): API Key unik merchant Anda dari Portal PanzzPay.</li>
-              </ul>
-
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">CONTOH cURL:</div>
-              <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;"><span class="code-keyword">curl</span> -X POST http://localhost:3000/api/qris/generate \
-  -H <span class="code-string">'Content-Type: application/json'</span> \
-  -H <span class="code-string">'X-API-KEY: pz_live_your_merchant_key'</span> \
-  -d <span class="code-string">'{"base_amount": 20000, "auto_unique": true}'</span></pre>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Membuat QRIS Dinamis lengkap dengan total nominal tagihan dan kode unik.
+              </p>
+              <div class="code-box">
+                <pre><code style="color: #38bdf8;">curl -X POST \
+  http://localhost:3000/api/qris/generate \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: pz_live_xxx" \
+  -d '{"base_amount": 10000, "auto_unique": true}'</code></pre>
+              </div>
             </div>
 
-            <!-- ENDPOINT 2: WEBHOOK CALLBACK RECEIVER -->
+            <!-- ENDPOINT 2 -->
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                <span class="badge" style="background: rgba(5, 150, 105, 0.15); color: var(--accent-emerald); border: 1px solid var(--accent-emerald);">POST</span>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-paid">POST</span>
                 <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/webhook/callback?token=pz_wh_xxx</code>
               </div>
-              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Menerima lemparan notifikasi HP dan mencocokkan status invoice ke PAID.</p>
-
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">FORMAT WEBHOOK PAYLOAD:</div>
-              <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;">{
-  <span class="code-string">"message"</span>: <span class="code-string">"Pembayaran masuk Rp 10.338 dari ShopeePay"</span>
-}</pre>
-
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">CONTOH cURL:</div>
-              <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;"><span class="code-keyword">curl</span> -X POST http://localhost:3000/api/webhook/callback?token=pz_wh_your_token \
-  -H <span class="code-string">'Content-Type: application/json'</span> \
-  -d <span class="code-string">'{"message": "Pembayaran Rp 10.338 diterima"}'</span></pre>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Menerima lemparan notifikasi HP dan mencocokkan status invoice ke PAID.
+              </p>
+              <div class="code-box">
+                <pre><code style="color: #38bdf8;">curl -X POST \
+  "http://localhost:3000/api/webhook/callback?token=pz_wh_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Pembayaran masuk Rp 10.338"}'</code></pre>
+              </div>
             </div>
 
-            <!-- ENDPOINT 3: GET INVOICES & STATUS -->
+            <!-- ENDPOINT 3 -->
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                <span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--accent-indigo); border: 1px solid var(--accent-indigo);">GET</span>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-pending">GET</span>
                 <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/invoices/:id</code>
               </div>
-              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Mengecek status terkini suatu invoice (PENDING, PAID, atau EXPIRED).</p>
-
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">RESPON JSON SUKSES:</div>
-              <pre class="code-box" style="font-size: 0.75rem; padding: 0.75rem;">{
-  <span class="code-string">"ok"</span>: <span class="code-keyword">true</span>,
-  <span class="code-string">"invoice"</span>: {
-    <span class="code-string">"id"</span>: <span class="code-string">"INV-01ABC"</span>,
-    <span class="code-string">"total_amount"</span>: <span class="code-num">10338</span>,
-    <span class="code-string">"status"</span>: <span class="code-string">"PAID"</span>
-  }
-}</pre>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Mengecek status terkini suatu invoice (PENDING, PAID, atau EXPIRED).
+              </p>
+              <div class="code-box">
+                <pre><code style="color: #38bdf8;">curl -X GET \
+  http://localhost:3000/api/invoices/INV-xxx</code></pre>
+              </div>
             </div>
 
           </div>
@@ -483,29 +429,29 @@
       </section>
 
       <!-- ======================================================= -->
-      <!-- BENTO CARD 8: TRANSACTION HISTORY & WEBHOOK LOGS (COL 12) -->
+      <!-- BENTO CARD 8: RIWAYAT TRANSAKSI & LOG REALTIME (COL 12) -->
       <!-- ======================================================= -->
       <section id="history-section" class="bento-card col-12">
         <div>
           <div class="bento-header-sm" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
               <h2 class="bento-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                 <span>Daftar Transaksi & Log Webhook Realtime</span>
               </h2>
               <p class="bento-subtitle">Rekaman transaksi terkini yang sedang diproses maupun sudah lunas.</p>
             </div>
             <button id="btnRefreshHistory" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               <span>Refresh Log</span>
             </button>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
             
-            <!-- Invoices Table -->
+            <!-- INVOICES LIST -->
             <div>
-              <h3 style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Data Invoice PanzzPay:</h3>
+              <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem;">Data Invoice PanzzPay:</div>
               <div class="table-container">
                 <table class="bento-table">
                   <thead>
@@ -525,9 +471,9 @@
               </div>
             </div>
 
-            <!-- Webhook Callback Logs Table -->
+            <!-- WEBHOOK LOGS LIST -->
             <div>
-              <h3 style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Log Webhook Diterima:</h3>
+              <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem;">Log Webhook Diterima:</div>
               <div class="table-container">
                 <table class="bento-table">
                   <thead>

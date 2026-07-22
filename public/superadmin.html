@@ -292,7 +292,7 @@
               <td><span class="badge ${badgeClass}">${m.status || 'ACTIVE'}</span></td>
               <td>
                 ${isSuper ? '<span style="color: var(--text-muted); font-size: 0.75rem;">Master Owner</span>' : `
-                  <button onclick="toggleStatus('${m.id}', '${m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="btn ${m.status === 'ACTIVE' ? 'btn-dark' : 'btn-emerald'}" style="min-height: 28px; padding: 0.2rem 0.6rem; font-size: 0.72rem;">
+                  <button onclick="toggleStatus('${m.id}', '${m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="btn ${m.status === 'ACTIVE' ? 'btn-dark' : 'btn-primary'}" style="min-height: 28px; padding: 0.2rem 0.6rem; font-size: 0.72rem;">
                     ${m.status === 'ACTIVE' ? 'Bekukan (Suspend)' : 'Aktifkan Akun'}
                   </button>
                 `}

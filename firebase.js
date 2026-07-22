@@ -16,11 +16,75 @@ class FirebaseService {
     this.inMemoryLogs = [];
 
     this.loadFirebaseConfig();
+    this.loadLocalBackup();
   }
 
   async init() {
     await this.seedSuperAdmin();
     console.log(`🔥 [FIRESTORE READY] Collections 'merchants', 'invoices', 'webhook_logs' synchronized to Cloud Firestore!`);
+  }
+
+  getDataDir() {
+    const localDir = path.join(__dirname, 'data');
+    try {
+      if (!fs.existsSync(localDir)) {
+        fs.mkdirSync(localDir, { recursive: true });
+      }
+      const testFile = path.join(localDir, '.test_write');
+      fs.writeFileSync(testFile, 'test');
+      fs.unlinkSync(testFile);
+      return localDir;
+    } catch (err) {
+      const tmpDir = path.join('/tmp', 'panzzpay');
+      try {
+        if (!fs.existsSync(tmpDir)) {
+          fs.mkdirSync(tmpDir, { recursive: true });
+        }
+      } catch (e) {}
+      return tmpDir;
+    }
+  }
+
+  loadLocalBackup() {
+    try {
+      const dataDir = this.getDataDir();
+      const merchantsPath = path.join(dataDir, 'merchants.json');
+      if (fs.existsSync(merchantsPath)) {
+        const list = JSON.parse(fs.readFileSync(merchantsPath, 'utf8') || '[]');
+        list.forEach(m => this.inMemoryMerchants.set(m.id, m));
+      }
+
+      const invoicesPath = path.join(dataDir, 'invoices.json');
+      if (fs.existsSync(invoicesPath)) {
+        const list = JSON.parse(fs.readFileSync(invoicesPath, 'utf8') || '[]');
+        list.forEach(inv => this.inMemoryInvoices.set(inv.id, inv));
+      }
+
+      const logsPath = path.join(dataDir, 'webhook_logs.json');
+      if (fs.existsSync(logsPath)) {
+        this.inMemoryLogs = JSON.parse(fs.readFileSync(logsPath, 'utf8') || '[]');
+      }
+      console.log(`📂 [LOCAL PERSISTENCE LOADED] Loaded backup data from ${dataDir}`);
+    } catch (e) {
+      console.warn('⚠️ Gagal membaca database backup lokal:', e.message);
+    }
+  }
+
+  saveLocalBackup(type) {
+    try {
+      const dataDir = this.getDataDir();
+      if (type === 'merchants') {
+        const list = Array.from(this.inMemoryMerchants.values());
+        fs.writeFileSync(path.join(dataDir, 'merchants.json'), JSON.stringify(list, null, 2), 'utf8');
+      } else if (type === 'invoices') {
+        const list = Array.from(this.inMemoryInvoices.values());
+        fs.writeFileSync(path.join(dataDir, 'invoices.json'), JSON.stringify(list, null, 2), 'utf8');
+      } else if (type === 'logs') {
+        fs.writeFileSync(path.join(dataDir, 'webhook_logs.json'), JSON.stringify(this.inMemoryLogs, null, 2), 'utf8');
+      }
+    } catch (e) {
+      // Ignore write errors on read-only serverless lambdas
+    }
   }
 
   loadFirebaseConfig() {
@@ -203,6 +267,7 @@ class FirebaseService {
     if (!merchant.status) merchant.status = 'UNVERIFIED';
 
     this.inMemoryMerchants.set(merchant.id, merchant);
+    this.saveLocalBackup('merchants');
     await this.syncToFirebase('merchants', merchant.id, merchant);
     return merchant;
   }
@@ -413,6 +478,7 @@ class FirebaseService {
   // --- INVOICE OPERATIONS ---
   async saveInvoice(invoice) {
     this.inMemoryInvoices.set(invoice.id, invoice);
+    this.saveLocalBackup('invoices');
     await this.syncToFirebase('invoices', invoice.id, invoice);
     return invoice;
   }
@@ -527,6 +593,7 @@ class FirebaseService {
   async saveWebhookLog(logEntry) {
     this.inMemoryLogs.unshift(logEntry);
     if (this.inMemoryLogs.length > 200) this.inMemoryLogs.pop();
+    this.saveLocalBackup('logs');
     await this.syncToFirebase('webhook_logs', logEntry.id, logEntry);
     return logEntry;
   }

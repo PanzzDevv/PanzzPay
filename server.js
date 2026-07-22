@@ -182,7 +182,8 @@ app.post('/api/auth/register', async (req, res) => {
       ok: true,
       require_otp: true,
       email: merchant.email,
-      message: 'Pendaftaran berhasil! Akun Anda terhubung dengan Firebase Auth.'
+      otp_code: transporter ? undefined : otpCode,
+      message: transporter ? 'Pendaftaran berhasil! Kode verifikasi dikirim ke email Anda.' : `[DEV MODE] Pendaftaran berhasil! Kode OTP Anda: ${otpCode}`
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -207,7 +208,8 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 
     return res.json({
       ok: true,
-      message: 'Kode verifikasi / link Firebase berhasil dikirimkan!'
+      otp_code: transporter ? undefined : freshOtp,
+      message: transporter ? 'Kode verifikasi berhasil dikirimkan ke email Anda!' : `[DEV MODE] Kode OTP baru Anda: ${freshOtp}`
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -268,7 +270,8 @@ app.post('/api/auth/login', async (req, res) => {
         ok: false,
         require_otp: true,
         email: merchant.email,
-        message: 'Akun Anda belum terverifikasi! Silakan cek link / email verifikasi Firebase Anda.'
+        otp_code: transporter ? undefined : freshOtp,
+        message: transporter ? 'Akun Anda belum terverifikasi! Kode OTP telah dikirim ke email.' : `[DEV MODE] Kode OTP Anda: ${freshOtp}`
       });
     }
 

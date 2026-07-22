@@ -522,7 +522,14 @@
             otpEmailTarget.textContent = data.email;
             otpSection.style.display = 'block';
             registerForm.style.display = 'none';
-            alert(data.message);
+            if (data.otp_code) {
+              document.getElementById('otpCodeInput').value = data.otp_code;
+            }
+            if (window.showToast) {
+              showToast(data.message, 'info');
+            } else {
+              alert(data.message);
+            }
           } else if (data.ok) {
             localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
             showDashboard(data.merchant);
@@ -554,7 +561,14 @@
             otpEmailTarget.textContent = data.email;
             otpSection.style.display = 'block';
             loginForm.style.display = 'none';
-            alert(data.message);
+            if (data.otp_code) {
+              document.getElementById('otpCodeInput').value = data.otp_code;
+            }
+            if (window.showToast) {
+              showToast(data.message, 'info');
+            } else {
+              alert(data.message);
+            }
           } else {
             alert(data.message);
           }

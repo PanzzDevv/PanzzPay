@@ -21,6 +21,11 @@
 
 import http from 'http';
 import https from 'https';
+import dns from 'dns';
+
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch (e) {}
 
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 const PANZZPAY_API_URL = process.env.PANZZPAY_URL || 'https://panzzpay.vercel.app';

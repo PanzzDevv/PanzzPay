@@ -224,18 +224,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- TOAST ALERT ---
+  // --- PRO TOAST CONTAINER & ALERT SYSTEM ---
+  let lastToastMsg = '';
+  let lastToastTime = 0;
+
   function showToast(message) {
+    const now = Date.now();
+    if (message === lastToastMsg && (now - lastToastTime < 2000)) {
+      return; // prevent duplicate toast within 2 seconds
+    }
+    lastToastMsg = message;
+    lastToastTime = now;
+
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
     const toast = document.createElement('div');
     toast.className = 'toast-alert';
     toast.innerHTML = `
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      <span>${message}</span>
+      <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 50%; padding: 0.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      </div>
+      <div style="flex: 1; font-size: 0.88rem; font-weight: 700; color: #f8fafc; line-height: 1.4;">${message}</div>
     `;
-    document.body.appendChild(toast);
+
+    container.appendChild(toast);
+
     setTimeout(() => {
-      toast.remove();
-    }, 4000);
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px) scale(0.95)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 4500);
   }
 
   // --- 1. DYNAMIC QRIS FORM SUBMISSION ---

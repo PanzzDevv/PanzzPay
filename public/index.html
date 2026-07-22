@@ -379,6 +379,40 @@
               </div>
             </div>
 
+            <!-- ENDPOINT 4 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-pending">GET</span>
+                <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/invoices</code>
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Mengambil seluruh daftar transaksi toko merchant.
+              </p>
+              <div class="code-box">
+                <pre><code style="color: #38bdf8;">curl -X GET \
+  https://panzzpay.vercel.app/api/invoices \
+  -H "X-API-KEY: pz_live_xxx"</code></pre>
+              </div>
+            </div>
+
+            <!-- ENDPOINT 5 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-paid">POST</span>
+                <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/merchant/qris-payload</code>
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Mengeset payload QRIS statis kustom milik toko merchant sendiri.
+              </p>
+              <div class="code-box">
+                <pre><code style="color: #38bdf8;">curl -X POST \
+  https://panzzpay.vercel.app/api/merchant/qris-payload \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: pz_live_xxx" \
+  -d '{"qris_payload": "0002010102112657..."}'</code></pre>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

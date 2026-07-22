@@ -14,16 +14,19 @@ class FirebaseStorage {
 
     // Seed Master Super Admin Account
     this.seedSuperAdmin();
-    // Initialize Firebase Configuration (File or Single JSON Env)
+    // Initialize Firebase Configuration
     this.initFirebaseConfig();
   }
 
   seedSuperAdmin() {
+    const ownerEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@panzzpay.com';
+    const ownerPassword = process.env.SUPER_ADMIN_PASSWORD || 'adminpanzzpay123';
+
     const superAdmin = {
       id: 'SUPERADMIN-001',
       name: 'PanzzPay Super Admin (Pemilik Platform)',
-      email: 'admin@panzzpay.com',
-      password: 'adminpanzzpay123',
+      email: ownerEmail.toLowerCase(),
+      password: ownerPassword,
       role: 'superadmin',
       api_key: 'pz_admin_master_key_99999',
       webhook_token: 'pz_wh_admin_master_token_99999',
@@ -72,7 +75,7 @@ class FirebaseStorage {
   // --- MERCHANT & SUPERADMIN OPERATIONS ---
   async saveMerchant(merchant) {
     if (!merchant.role) merchant.role = 'merchant';
-    if (!merchant.status) merchant.status = 'ACTIVE';
+    if (!merchant.status) merchant.status = 'UNVERIFIED';
     this.merchants.set(merchant.id, merchant);
     return merchant;
   }
@@ -104,6 +107,21 @@ class FirebaseStorage {
       if (m.email.toLowerCase() === email.toLowerCase()) return m;
     }
     return null;
+  }
+
+  async verifyMerchantOtp(email, otpCode) {
+    const merchant = await this.getMerchantByEmail(email);
+    if (!merchant) return { ok: false, message: 'Email tidak ditemukan.' };
+    if (merchant.status === 'ACTIVE') return { ok: true, message: 'Akun sudah terverifikasi.', merchant };
+
+    if (merchant.otp_code !== String(otpCode).trim()) {
+      return { ok: false, message: 'Kode verifikasi 6-digit salah.' };
+    }
+
+    merchant.status = 'ACTIVE';
+    merchant.otp_code = null;
+    this.merchants.set(merchant.id, merchant);
+    return { ok: true, message: 'Verifikasi email berhasil! Akun Anda sekarang aktif.', merchant };
   }
 
   async toggleMerchantStatus(merchantId, status) {

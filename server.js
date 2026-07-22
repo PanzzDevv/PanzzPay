@@ -70,7 +70,7 @@ function extractAmountFromText(text) {
 }
 
 // -------------------------------------------------------------
-// 1. AUTHENTICATION & ROLE MANAGEMENT (Super Admin & Merchant)
+// 1. AUTHENTICATION & EMAIL OTP VERIFICATION SYSTEM
 // -------------------------------------------------------------
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -81,12 +81,26 @@ app.post('/api/auth/register', async (req, res) => {
 
     const existing = await db.getMerchantByEmail(email);
     if (existing) {
-      return res.status(400).json({ ok: false, message: 'Email sudah terdaftar. Silakan login.' });
+      if (existing.status === 'UNVERIFIED') {
+        // Generate fresh OTP
+        existing.otp_code = String(Math.floor(100000 + Math.random() * 900000));
+        await db.saveMerchant(existing);
+        console.log(`✉️ KODE VERIFIKASI EMAIL PANZZPAY (Resend) untuk ${existing.email}: [ ${existing.otp_code} ]`);
+        return res.json({
+          ok: true,
+          require_otp: true,
+          email: existing.email,
+          message: 'Akun Anda belum terverifikasi. Kode 6-digit baru telah dikirim ke email Anda!',
+          otp_code: existing.otp_code
+        });
+      }
+      return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
     }
 
     const merchantId = 'MCH-' + Date.now().toString(36).toUpperCase();
     const apiKey = 'pz_live_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
     const webhookToken = 'pz_wh_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+    const otpCode = String(Math.floor(100000 + Math.random() * 900000)); // 6-digit OTP
 
     const merchant = {
       id: merchantId,
@@ -94,7 +108,8 @@ app.post('/api/auth/register', async (req, res) => {
       email: email.toLowerCase(),
       password,
       role: 'merchant',
-      status: 'ACTIVE',
+      status: 'UNVERIFIED',
+      otp_code: otpCode,
       api_key: apiKey,
       webhook_token: webhookToken,
       created_at: new Date().toISOString()
@@ -102,17 +117,44 @@ app.post('/api/auth/register', async (req, res) => {
 
     await db.saveMerchant(merchant);
 
+    console.log(`✉️ KODE VERIFIKASI EMAIL PANZZPAY untuk ${merchant.email}: [ ${otpCode} ]`);
+
     return res.json({
       ok: true,
-      message: 'Pendaftaran merchant berhasil!',
+      require_otp: true,
+      email: merchant.email,
+      message: 'Pendaftaran berhasil! Silakan masukkan kode verifikasi 6-digit yang dikirim ke email Anda.',
+      otp_code: otpCode // Provided in response for easy testing
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// Verify 6-Digit Email OTP Endpoint
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp_code } = req.body;
+    if (!email || !otp_code) {
+      return res.status(400).json({ ok: false, message: 'Email dan Kode Verifikasi 6-Digit wajib diisi' });
+    }
+
+    const result = await db.verifyMerchantOtp(email, otp_code);
+    if (!result.ok) {
+      return res.status(400).json(result);
+    }
+
+    return res.json({
+      ok: true,
+      message: result.message,
       merchant: {
-        id: merchant.id,
-        name: merchant.name,
-        email: merchant.email,
-        role: merchant.role,
-        status: merchant.status,
-        api_key: merchant.api_key,
-        webhook_token: merchant.webhook_token
+        id: result.merchant.id,
+        name: result.merchant.name,
+        email: result.merchant.email,
+        role: result.merchant.role,
+        status: result.merchant.status,
+        api_key: result.merchant.api_key,
+        webhook_token: result.merchant.webhook_token
       }
     });
   } catch (err) {
@@ -130,6 +172,20 @@ app.post('/api/auth/login', async (req, res) => {
     const merchant = await db.getMerchantByEmail(email);
     if (!merchant || merchant.password !== password) {
       return res.status(401).json({ ok: false, message: 'Email atau password salah' });
+    }
+
+    if (merchant.status === 'UNVERIFIED') {
+      // Re-generate OTP code
+      merchant.otp_code = String(Math.floor(100000 + Math.random() * 900000));
+      await db.saveMerchant(merchant);
+      console.log(`✉️ KODE VERIFIKASI EMAIL PANZZPAY (Login Pending) untuk ${merchant.email}: [ ${merchant.otp_code} ]`);
+      return res.status(403).json({
+        ok: false,
+        require_otp: true,
+        email: merchant.email,
+        message: 'Akun Anda belum terverifikasi! Masukkan kode 6-digit dari email Anda.',
+        otp_code: merchant.otp_code
+      });
     }
 
     if (merchant.status === 'SUSPENDED') {
@@ -155,7 +211,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 2. SUPER ADMIN ENDPOINTS (Restricted to Super Admin Master Key)
+// 2. SUPER ADMIN ENDPOINTS
 // -------------------------------------------------------------
 function requireSuperAdmin(req, res, next) {
   const adminKey = req.headers['x-admin-key'] || req.query.admin_key || req.body.admin_key;

@@ -176,16 +176,13 @@ app.post('/api/auth/register', async (req, res) => {
 
     await db.saveMerchant(merchant);
     const reqHost = `${req.protocol}://${req.get('host')}`;
-    const fbResult = await sendOtpEmail(merchant.email, otpCode, merchant.name, reqHost);
-    const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(merchant.email)}`;
+    await sendOtpEmail(merchant.email, otpCode, merchant.name, reqHost);
 
     return res.json({
       ok: true,
       require_otp: true,
       email: merchant.email,
-      otp_code: transporter ? undefined : otpCode,
-      verification_link: verifyLink,
-      message: transporter ? 'Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi.' : `Pendaftaran berhasil! Gunakan link verifikasi 1-klik atau kode OTP: ${otpCode}`
+      message: 'Pendaftaran berhasil! Silakan cek email Anda (atau folder Spam) untuk verifikasi.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -207,13 +204,10 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 
     const reqHost = `${req.protocol}://${req.get('host')}`;
     await sendOtpEmail(merchant.email, freshOtp, merchant.name, reqHost);
-    const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(merchant.email)}`;
 
     return res.json({
       ok: true,
-      otp_code: transporter ? undefined : freshOtp,
-      verification_link: verifyLink,
-      message: transporter ? 'Kode/Link verifikasi berhasil dikirimkan ke email Anda!' : `Link verifikasi dikirim! Kode OTP baru: ${freshOtp}`
+      message: 'Kode verifikasi baru berhasil dikirimkan ke email Anda!'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
@@ -293,8 +287,7 @@ app.post('/api/auth/login', async (req, res) => {
         ok: false,
         require_otp: true,
         email: merchant.email,
-        otp_code: transporter ? undefined : freshOtp,
-        message: transporter ? 'Akun Anda belum terverifikasi! Kode OTP telah dikirim ke email.' : `[DEV MODE] Kode OTP Anda: ${freshOtp}`
+        message: 'Akun Anda belum terverifikasi! Silakan cek email Anda untuk melakukan verifikasi.'
       });
     }
 

@@ -722,11 +722,21 @@ app.post('/api/merchant/invoices/:id/mark-paid', async (req, res) => {
 
 app.post('/api/merchant/qris-payload', async (req, res) => {
   try {
-    const apiKeyHeader = req.headers['x-api-key'] || req.body.api_key;
-    let { qris_payload } = req.body;
+    const apiKeyHeader = req.headers['x-api-key'] || req.headers['X-API-KEY'] || req.body.api_key || req.query.api_key;
+    let { qris_payload, email, merchant_id } = req.body;
 
-    const merchant = await db.getMerchantByApiKey(apiKeyHeader);
-    if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid' });
+    let merchant = null;
+    if (apiKeyHeader) {
+      merchant = await db.getMerchantByApiKey(apiKeyHeader);
+    }
+    if (!merchant && email) {
+      merchant = await db.getMerchantByEmail(email);
+    }
+    if (!merchant && merchant_id) {
+      merchant = await db.getMerchantById(merchant_id);
+    }
+
+    if (!merchant) return res.status(401).json({ ok: false, message: 'Autentikasi merchant tidak valid. Silakan login ulang.' });
 
     if (!qris_payload || typeof qris_payload !== 'string') {
       return res.status(400).json({ ok: false, message: 'Payload QRIS tidak boleh kosong' });

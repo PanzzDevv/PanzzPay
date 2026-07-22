@@ -1027,13 +1027,19 @@
 
           try {
             const currentMerchant = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
+            const apiKeyToSend = currentMerchant.api_key || displayApiKey.value || '';
             const res = await fetch('/api/merchant/qris-payload', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-API-KEY': currentMerchant.api_key
+                'X-API-KEY': apiKeyToSend
               },
-              body: JSON.stringify({ qris_payload: payloadVal })
+              body: JSON.stringify({
+                qris_payload: payloadVal,
+                api_key: apiKeyToSend,
+                email: currentMerchant.email || '',
+                merchant_id: currentMerchant.id || ''
+              })
             });
             const data = await res.json();
             if (data.ok) {

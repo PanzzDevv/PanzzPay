@@ -49,19 +49,37 @@ class FirebaseService {
 
     try {
       const adminModule = await import('firebase-admin').catch(() => null);
-      if (adminModule) {
-        const admin = adminModule.default || adminModule;
-        const apps = admin.apps || (admin.getApps ? admin.getApps() : []);
+      if (!adminModule) return null;
 
-        if ((!apps || apps.length === 0) && this.serviceAccount) {
-          admin.initializeApp({
-            credential: admin.credential.cert(this.serviceAccount),
+      const admin = adminModule.default || adminModule;
+      const apps = admin.apps || (admin.getApps ? admin.getApps() : []);
+
+      if ((!apps || apps.length === 0) && this.serviceAccount) {
+        let certObj = null;
+
+        if (admin.credential && typeof admin.credential.cert === 'function') {
+          certObj = admin.credential.cert(this.serviceAccount);
+        } else if (adminModule.credential && typeof adminModule.credential.cert === 'function') {
+          certObj = adminModule.credential.cert(this.serviceAccount);
+        } else {
+          const appMod = await import('firebase-admin/app').catch(() => ({}));
+          if (appMod && typeof appMod.cert === 'function') {
+            certObj = appMod.cert(this.serviceAccount);
+          }
+        }
+
+        const initializeAppFn = admin.initializeApp || adminModule.initializeApp;
+        if (typeof initializeAppFn === 'function') {
+          initializeAppFn({
+            credential: certObj,
             projectId: this.projectId
           });
         }
-        this.adminInstance = admin;
-        return admin;
       }
+
+      this.adminInstance = admin;
+      return admin;
+
     } catch (e) {
       console.warn('Firebase Admin SDK load note:', e.message);
     }

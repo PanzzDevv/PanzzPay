@@ -204,23 +204,76 @@ class FirebaseService {
   }
 
   async getAllMerchants() {
-    return Array.from(this.inMemoryMerchants.values());
+    let list = Array.from(this.inMemoryMerchants.values());
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const snap = await firestore.collection('merchants').get();
+        snap.forEach(doc => {
+          const data = doc.data();
+          this.inMemoryMerchants.set(data.id, data);
+        });
+        list = Array.from(this.inMemoryMerchants.values());
+      } catch (e) {}
+    }
+    return list;
   }
 
   async getMerchantById(id) {
-    return this.inMemoryMerchants.get(id) || null;
+    if (!id) return null;
+    let m = this.inMemoryMerchants.get(id);
+    if (m) return m;
+
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const doc = await firestore.collection('merchants').doc(id).get();
+        if (doc.exists) {
+          const data = doc.data();
+          this.inMemoryMerchants.set(data.id, data);
+          return data;
+        }
+      } catch (e) {}
+    }
+    return null;
   }
 
   async getMerchantByApiKey(apiKey) {
+    if (!apiKey) return null;
     for (const m of this.inMemoryMerchants.values()) {
       if (m.api_key === apiKey) return m;
+    }
+
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const snap = await firestore.collection('merchants').where('api_key', '==', apiKey).limit(1).get();
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          this.inMemoryMerchants.set(data.id, data);
+          return data;
+        }
+      } catch (e) {}
     }
     return null;
   }
 
   async getMerchantByWebhookToken(token) {
+    if (!token) return null;
     for (const m of this.inMemoryMerchants.values()) {
       if (m.webhook_token === token) return m;
+    }
+
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const snap = await firestore.collection('merchants').where('webhook_token', '==', token).limit(1).get();
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          this.inMemoryMerchants.set(data.id, data);
+          return data;
+        }
+      } catch (e) {}
     }
     return null;
   }
@@ -230,6 +283,18 @@ class FirebaseService {
     const cleanEmail = String(email).toLowerCase().trim();
     for (const m of this.inMemoryMerchants.values()) {
       if (m.email && String(m.email).toLowerCase().trim() === cleanEmail) return m;
+    }
+
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const snap = await firestore.collection('merchants').where('email', '==', cleanEmail).limit(1).get();
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          this.inMemoryMerchants.set(data.id, data);
+          return data;
+        }
+      } catch (e) {}
     }
     return null;
   }

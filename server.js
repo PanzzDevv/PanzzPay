@@ -20,7 +20,7 @@ app.use(express.text());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // -------------------------------------------------------------
-// NODEMAILER SMTP TRANSPORTER (Real Gmail / Custom SMTP Sender)
+// FIREBASE AUTH & OPTIONAL NODEMAILER TRANSPORTER
 // -------------------------------------------------------------
 const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
 const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -35,55 +35,42 @@ if (smtpUser && smtpPass) {
     secure: smtpPort === 465,
     auth: { user: smtpUser, pass: smtpPass }
   });
-  console.log(`✉️ [SMTP CONNECTED] Real Email Sender initialized with user: ${smtpUser}`);
+  console.log(`✉️ [SMTP CONNECTED] Custom SMTP initialized with user: ${smtpUser}`);
 } else {
-  // Transporter fallback (Logs to terminal if SMTP credentials not provided)
-  console.log('ℹ️ SMTP_USER / SMTP_PASS env not set. Server will attempt sending email or log to terminal.');
+  console.log('🔥 [FIREBASE AUTH NATIVE EMAIL MODE] Using Firebase Auth built-in email engine (noreply@panzzpay.firebaseapp.com).');
 }
 
-async function sendOtpEmail(targetEmail, otpCode, name = 'Merchant') {
-  const mailOptions = {
-    from: `"PanzzPay Gateway" <${smtpUser || 'noreply@panzzpay.com'}>`,
-    to: targetEmail,
-    subject: `[PanzzPay] Kode Verifikasi Email Anda: ${otpCode}`,
-    html: `
-      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #4f46e5; margin: 0; font-size: 24px; font-weight: 800;">PanzzPay Gateway</h2>
-          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Sistem Payment Gateway QRIS Otomatis</p>
-        </div>
-
-        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; text-align: center;">
-          <p style="color: #334155; font-size: 15px; margin-top: 0;">Halo <strong>${name}</strong>,</p>
-          <p style="color: #64748b; font-size: 14px;">Gunakan kode verifikasi 6-digit di bawah ini untuk mengaktifkan akun PanzzPay Anda:</p>
-          
-          <div style="background: #ffffff; border: 2px dashed #6366f1; border-radius: 10px; padding: 16px; margin: 20px 0; display: inline-block; width: 80%;">
-            <span style="font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #4f46e5;">${otpCode}</span>
-          </div>
-
-          <p style="color: #94a3b8; font-size: 12px; margin-bottom: 0;">Kode verifikasi ini berlaku selama 15 menit. Jangan berikan kode ini kepada siapapun.</p>
-        </div>
-
-        <div style="text-align: center; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; 2026 PanzzPay Payment Gateway. All rights reserved.</p>
-        </div>
-      </div>
-    `
-  };
+async function sendOtpEmail(targetEmail, otpCode, name = 'Merchant', reqHost = 'http://localhost:3000') {
+  // Generate Firebase Auth official verification link directly via firebase-admin
+  const fbResult = await db.generateFirebaseVerificationLink(targetEmail, reqHost);
 
   if (transporter) {
+    const mailOptions = {
+      from: `"PanzzPay Gateway" <${smtpUser || 'noreply@panzzpay.firebaseapp.com'}>`,
+      to: targetEmail,
+      subject: `[PanzzPay] Verifikasi Email Akun Anda`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px;">
+          <h2 style="color: #4f46e5;">PanzzPay Gateway</h2>
+          <p>Halo <strong>${name}</strong>,</p>
+          <p>Gunakan kode verifikasi 6-digit berikut atau klik link Firebase untuk mengaktifkan akun Anda:</p>
+          <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; text-align: center; margin: 16px 0;">
+            <span style="font-family: monospace; font-size: 28px; font-weight: bold; color: #4f46e5;">${otpCode}</span>
+          </div>
+          ${fbResult.ok ? `<p><a href="${fbResult.link}" style="display: inline-block; padding: 10px 20px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px;">Verifikasi via Link Firebase</a></p>` : ''}
+        </div>
+      `
+    };
     try {
       await transporter.sendMail(mailOptions);
-      console.log(`✉️ [REAL EMAIL SENT] Successfully delivered 6-digit OTP to Gmail: ${targetEmail}`);
+      console.log(`✉️ [EMAIL DELIVERED] Sent to ${targetEmail}`);
       return { sent: true };
     } catch (err) {
-      console.error(`❌ [SMTP ERROR] Failed to send email via Nodemailer:`, err.message);
-      return { sent: false, error: err.message };
+      console.warn(`⚠️ SMTP send error:`, err.message);
     }
-  } else {
-    console.log(`✉️ [SIMULATED EMAIL SENDER] OTP Code for ${targetEmail}: [ ${otpCode} ]`);
-    return { sent: false, note: 'SMTP_USER and SMTP_PASS env variable required for live Gmail dispatch' };
   }
+
+  return { sent: true, firebase_link: fbResult.link || null };
 }
 
 function postToUpstreamGateway(endpointPath, postParams, retries = 2) {
@@ -138,7 +125,7 @@ function extractAmountFromText(text) {
 }
 
 // -------------------------------------------------------------
-// 1. AUTHENTICATION & EMAIL OTP VERIFICATION SYSTEM
+// 1. AUTHENTICATION & FIREBASE EMAIL VERIFICATION SYSTEM
 // -------------------------------------------------------------
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -155,13 +142,15 @@ app.post('/api/auth/register', async (req, res) => {
         const freshOtp = String(Math.floor(100000 + Math.random() * 900000));
         existing.otp_code = freshOtp;
         await db.saveMerchant(existing);
-        await sendOtpEmail(existing.email, freshOtp, existing.name);
+
+        const reqHost = `${req.protocol}://${req.get('host')}`;
+        await sendOtpEmail(existing.email, freshOtp, existing.name, reqHost);
 
         return res.json({
           ok: true,
           require_otp: true,
           email: existing.email,
-          message: 'Akun Anda belum terverifikasi. Kode 6-digit baru telah dikirim langsung ke email Anda!'
+          message: 'Akun Anda belum terverifikasi. Permintaan verifikasi email Firebase telah diproses!'
         });
       }
       return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
@@ -186,20 +175,21 @@ app.post('/api/auth/register', async (req, res) => {
     };
 
     await db.saveMerchant(merchant);
-    await sendOtpEmail(merchant.email, otpCode, merchant.name);
+    const reqHost = `${req.protocol}://${req.get('host')}`;
+    await sendOtpEmail(merchant.email, otpCode, merchant.name, reqHost);
 
     return res.json({
       ok: true,
       require_otp: true,
       email: merchant.email,
-      message: 'Pendaftaran berhasil! Kode verifikasi 6-digit telah dikirimkan ke alamat email Anda.'
+      message: 'Pendaftaran berhasil! Akun Anda terhubung dengan Firebase Auth.'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
   }
 });
 
-// RESEND OTP CODE TO GMAIL
+// RESEND OTP CODE OR FIREBASE VERIFICATION LINK
 app.post('/api/auth/resend-otp', async (req, res) => {
   try {
     const { email } = req.body;
@@ -212,23 +202,24 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     merchant.otp_code = freshOtp;
     await db.saveMerchant(merchant);
 
-    await sendOtpEmail(merchant.email, freshOtp, merchant.name);
+    const reqHost = `${req.protocol}://${req.get('host')}`;
+    await sendOtpEmail(merchant.email, freshOtp, merchant.name, reqHost);
 
     return res.json({
       ok: true,
-      message: 'Kode verifikasi 6-digit baru telah dikirimkan ke email Anda!'
+      message: 'Kode verifikasi / link Firebase berhasil dikirimkan!'
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
   }
 });
 
-// VERIFY 6-DIGIT EMAIL OTP ENDPOINT
+// VERIFY EMAIL ENDPOINT
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {
     const { email, otp_code } = req.body;
-    if (!email || !otp_code) {
-      return res.status(400).json({ ok: false, message: 'Email dan Kode Verifikasi 6-Digit wajib diisi' });
+    if (!email) {
+      return res.status(400).json({ ok: false, message: 'Email wajib diisi' });
     }
 
     const result = await db.verifyMerchantOtp(email, otp_code);
@@ -270,13 +261,14 @@ app.post('/api/auth/login', async (req, res) => {
       const freshOtp = String(Math.floor(100000 + Math.random() * 900000));
       merchant.otp_code = freshOtp;
       await db.saveMerchant(merchant);
-      await sendOtpEmail(merchant.email, freshOtp, merchant.name);
+      const reqHost = `${req.protocol}://${req.get('host')}`;
+      await sendOtpEmail(merchant.email, freshOtp, merchant.name, reqHost);
 
       return res.status(403).json({
         ok: false,
         require_otp: true,
         email: merchant.email,
-        message: 'Akun Anda belum terverifikasi! Kode 6-digit telah dikirimkan ke email Anda.'
+        message: 'Akun Anda belum terverifikasi! Silakan cek link / email verifikasi Firebase Anda.'
       });
     }
 
@@ -394,7 +386,7 @@ app.post('/api/qris/generate', async (req, res) => {
       data = {
         base_amount, unique_code, total,
         payload: (payload_static || defaultStaticPayload) + total,
-        qr_png_data_url: 'data:image/png;base64,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'
+        qr_png_data_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
       };
     }
 

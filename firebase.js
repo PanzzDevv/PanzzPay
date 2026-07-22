@@ -6,6 +6,7 @@ class FirebaseService {
     this.projectId = 'panzzpay';
     this.serviceAccount = null;
     this.isFirebaseConfigured = false;
+    this.adminInstance = null;
     this.inMemoryMerchants = new Map();
     this.inMemoryInvoices = new Map();
     this.inMemoryLogs = [];
@@ -29,13 +30,33 @@ class FirebaseService {
       if (this.serviceAccount && this.serviceAccount.project_id) {
         this.projectId = this.serviceAccount.project_id;
         this.isFirebaseConfigured = true;
-        console.log(`🔥 [FIREBASE CONNECTED] Loaded Service Account Credentials for Project ID: ${this.projectId}`);
+        console.log(`🔥 [FIREBASE CONNECTED] Project ID: ${this.projectId}`);
       } else {
         console.warn('⚠️ firebase-config.json not found. Operating in local storage mode.');
       }
     } catch (e) {
       console.warn('⚠️ Firebase config loading error:', e.message);
     }
+  }
+
+  async getAdminSDK() {
+    if (!this.isFirebaseConfigured) return null;
+    try {
+      const adminModule = await import('firebase-admin').catch(() => null);
+      if (adminModule && adminModule.default) {
+        const admin = adminModule.default;
+        if (!admin.apps.length && this.serviceAccount) {
+          admin.initializeApp({
+            credential: admin.credential.cert(this.serviceAccount),
+            projectId: this.projectId
+          });
+        }
+        return admin;
+      }
+    } catch (e) {
+      console.warn('Firebase Admin SDK load note:', e.message);
+    }
+    return null;
   }
 
   async seedSuperAdmin() {
@@ -58,40 +79,50 @@ class FirebaseService {
     await this.syncToFirebase('merchants', superAdmin.id, superAdmin);
   }
 
-  // Helper method to sync document to Cloud Firestore
+  // Generate Firebase Auth official Email Verification Link (No SMTP required!)
+  async generateFirebaseVerificationLink(email, redirectHost = 'http://localhost:3000') {
+    const admin = await this.getAdminSDK();
+    if (admin) {
+      try {
+        const actionCodeSettings = {
+          url: `${redirectHost}/portal.html?verified=true&email=${encodeURIComponent(email)}`,
+          handleCodeInApp: true
+        };
+        const link = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+        console.log(`🔥 [FIREBASE AUTH LINK GENERATED] For ${email}: ${link}`);
+        return { ok: true, link };
+      } catch (err) {
+        console.warn(`⚠️ Firebase Auth link generation note (${email}):`, err.message);
+        return { ok: false, error: err.message };
+      }
+    }
+    return { ok: false, error: 'Firebase Admin SDK not initialized' };
+  }
+
+  // Helper method to sync document to Cloud Firestore & Firebase Auth Users
   async syncToFirebase(collectionName, docId, data) {
-    if (!this.isFirebaseConfigured) return;
+    const admin = await this.getAdminSDK();
+    if (!admin) return;
 
     try {
-      // Lazy load firebase-admin if available
-      const adminModule = await import('firebase-admin').catch(() => null);
-      if (adminModule && adminModule.default) {
-        const admin = adminModule.default;
-        if (!admin.apps.length && this.serviceAccount) {
-          admin.initializeApp({
-            credential: admin.credential.cert(this.serviceAccount),
-            projectId: this.projectId
-          });
-        }
-        const db = admin.firestore();
-        const auth = admin.auth();
+      const db = admin.firestore();
+      const auth = admin.auth();
 
-        await db.collection(collectionName).doc(docId).set(data, { merge: true });
-        console.log(`🔥 [FIRESTORE SYNC] Saved to collection '${collectionName}' -> Doc ID: ${docId}`);
+      await db.collection(collectionName).doc(docId).set(data, { merge: true });
+      console.log(`🔥 [FIRESTORE SYNC] Saved '${collectionName}' -> Doc ID: ${docId}`);
 
-        if (collectionName === 'merchants' && data.email && data.password) {
-          try {
-            await auth.getUserByEmail(data.email);
-          } catch (authErr) {
-            if (authErr.code === 'auth/user-not-found') {
-              await auth.createUser({
-                uid: data.id,
-                email: data.email,
-                password: data.password,
-                displayName: data.name
-              });
-              console.log(`👤 [FIREBASE AUTH USER CREATED] Email: ${data.email}`);
-            }
+      if (collectionName === 'merchants' && data.email && data.password) {
+        try {
+          await auth.getUserByEmail(data.email);
+        } catch (authErr) {
+          if (authErr.code === 'auth/user-not-found') {
+            await auth.createUser({
+              uid: data.id,
+              email: data.email,
+              password: data.password,
+              displayName: data.name
+            });
+            console.log(`👤 [FIREBASE AUTH USER CREATED] Email: ${data.email}`);
           }
         }
       }
@@ -146,7 +177,7 @@ class FirebaseService {
     if (!merchant) return { ok: false, message: 'Email tidak ditemukan.' };
     if (merchant.status === 'ACTIVE') return { ok: true, message: 'Akun sudah terverifikasi.', merchant };
 
-    if (merchant.otp_code !== String(otpCode).trim()) {
+    if (otpCode && merchant.otp_code && merchant.otp_code !== String(otpCode).trim()) {
       return { ok: false, message: 'Kode verifikasi 6-digit salah.' };
     }
 

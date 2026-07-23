@@ -66,7 +66,7 @@
     if (credentials?.api_key) {
       apiInput.value = credentials.api_key;
     } else if (merchant?.api_key_hint) {
-      apiInput.value = merchant.api_key_hint;
+      apiInput.value = `${merchant.api_key_hint} (Disensor demi keamanan)`;
     } else {
       apiInput.value = 'Klik "Revoke / Reset" untuk membuat kredensial baru';
     }
@@ -85,7 +85,7 @@
     try {
       const data = await request('/api/merchant/credentials/rotate', { method: 'POST', body: '{}' });
       applyCredentials(data.credentials);
-      notify('Kredensial baru sudah dibuat dan hanya ditampilkan penuh pada sesi ini. Salin API key dan URL webhook Anda sekarang.', 'Kredensial Dirotasi');
+      notify('Kredensial baru berhasil dibuat dan ditampilkan secara penuh.\n\n⚠️ SALIN SEKARANG! Kredensial penuh hanya ditampilkan 1x pada sesi ini demi keamanan.', 'Kredensial Baru Dibuat');
     } catch (error) {
       notify(error.message, 'Revoke Gagal');
     }
@@ -94,29 +94,33 @@
   async function copyToClipboard(kind) {
     const apiInput = byId('displayApiKey');
     const webhookInput = byId('displayWebhookUrl');
-    let value = '';
+    let value = kind === 'api' ? oneTimeCredentials?.api_key : oneTimeCredentials?.webhook_url;
+    const currentInputValue = kind === 'api' ? apiInput?.value : webhookInput?.value;
 
-    if (kind === 'api') {
-      value = oneTimeCredentials?.api_key || apiInput?.value || '';
-    } else {
-      value = oneTimeCredentials?.webhook_url || webhookInput?.value || '';
-    }
-
-    if (!value || value.startsWith('Klik "Revoke')) {
-      notify('Kredensial belum tersedia. Silakan klik tombol Revoke / Reset Kredensial.', 'Belum Ada Kredensial');
-      return;
+    if (!value) {
+      if (!currentInputValue || currentInputValue.includes('…') || currentInputValue.includes('Disensor') || currentInputValue.startsWith('Klik "Revoke')) {
+        notify(
+          '🔒 KREDENSIAL DISENSOR DEMI KEAMANAN:\n\n' +
+          'Demi keamanan, Secret API Key & Token Webhook penuh hanya ditampilkan 1x saat baru pertama kali dibuat / di-reset.\n\n' +
+          'Saat halaman dimuat ulang di HP/browser lain, sistem sengaja mensensor kunci (pz_live_...).\n\n' +
+          'Silakan klik tombol "Revoke / Reset Kredensial" untuk membuat kunci baru dan menyalinnya secara lengkap.',
+          'Kredensial Disensor'
+        );
+        return;
+      }
+      value = currentInputValue;
     }
 
     try {
       await navigator.clipboard.writeText(value);
-      notify('Berhasil disalin ke clipboard.', 'Tersalin');
+      notify('Berhasil disalin ke clipboard! Simpan kredensial ini baik-baik.', 'Tersalin');
     } catch {
       const input = kind === 'api' ? apiInput : webhookInput;
       if (input) {
         input.select();
         document.execCommand('copy');
       }
-      notify('Berhasil disalin ke clipboard.', 'Tersalin');
+      notify('Berhasil disalin ke clipboard! Simpan kredensial ini baik-baik.', 'Tersalin');
     }
   }
 

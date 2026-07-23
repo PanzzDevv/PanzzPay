@@ -58,13 +58,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     )
 
     private val providerOptions = listOf(
-        PaymentProviderOption("ShopeePay", "com.shopeepay.id", "ShopeePay: Transfer Masuk", "Pembayaran QRIS Rp %s dari ShopeePay diterima"),
-        PaymentProviderOption("DANA / DANA Bisnis", "id.dana", "DANA: Pembayaran Masuk", "Pembayaran Rp %s dari DANA berhasil diterima"),
-        PaymentProviderOption("GoPay / Gojek", "com.gojek.app", "GoPay Payment Received", "Transfer masuk Rp %s dari GoPay berhasil diterima"),
-        PaymentProviderOption("OVO", "com.ovo", "OVO Cash Masuk", "Topup OVO Cash Rp %s berhasil dilakukan"),
-        PaymentProviderOption("m-BCA", "com.bca", "m-BCA: Transfer Masuk", "m-Transfer Rp %s dari QRIS Merchant telah masuk"),
-        PaymentProviderOption("BRImo", "id.co.bri.brimo", "BRImo Notification", "Transaksi masuk Rp %s via QRIS BRImo berhasil"),
-        PaymentProviderOption("Livin' Mandiri", "id.bmri.livin", "Livin' Mandiri: Kredit", "Dana masuk Rp %s dari Transfer QRIS Mandiri")
+        PaymentProviderOption("DANA / DANA Bisnis", "id.dana", "Pembayaran Masuk", "Rp%s diterima DANA Bisnis."),
+        PaymentProviderOption("ShopeePay", "com.shopeepay.id", "Pembayaran Dikonfirmasi", "Pembayaran sebesar Rp%s telah berhasil. Terima kasih telah menggunakan ShopeePay."),
+        PaymentProviderOption("GoPay / Gojek", "com.gojek.app", "Pembayaran Diterima", "Berhasil menerima Rp%s via QRIS."),
+        PaymentProviderOption("OVO", "com.ovo", "Transfer diterima", "Transfer diterima sebesar Rp%s ke OVO Cash Anda."),
+        PaymentProviderOption("m-BCA", "com.bca", "BCA mobile", "Transfer masuk sebesar Rp%s ke rekening Anda."),
+        PaymentProviderOption("BRImo", "id.co.bri.brimo", "BRImo", "Ada dana masuk sebesar Rp%s ke rekening Anda."),
+        PaymentProviderOption("Livin' Mandiri", "id.bmri.livin", "Livin' by Mandiri", "Dana sebesar Rp%s telah diterima di rekening Anda."),
+        PaymentProviderOption("BSI Mobile", "id.co.bankbsi.user", "BSI Mobile", "Dana masuk sebesar Rp%s ke rekening BSI Anda."),
+        PaymentProviderOption("SeaBank", "com.seabank.id", "SeaBank", "Transfer masuk Rp%s ke rekening SeaBank Anda.")
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {

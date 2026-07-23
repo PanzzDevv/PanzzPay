@@ -9,7 +9,7 @@ def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasReleaseSigning = releaseKeystorePath && releaseStorePassword && releaseKeyAlias &&
         releaseKeyPassword && file(releaseKeystorePath).exists()
-def appVersionName = System.getenv('APP_VERSION_NAME') ?: '2.2.2'
+def appVersionName = System.getenv('APP_VERSION_NAME') ?: '2.2.3'
 def versionParts = appVersionName =~ /^(\d+)\.(\d+)\.(\d+)$/
 if (!versionParts.matches()) {
     throw new GradleException('APP_VERSION_NAME must use major.minor.patch, for example 2.2.0.')

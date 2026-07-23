@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
         val savedUrl = SecurePreferences.getWebhookUrl(this)
         val isEnabled = prefs.getBoolean("service_enabled", true)
-        val isVoiceEnabled = prefs.getBoolean("voice_enabled", true)
+        val isVoiceEnabled = prefs.getBoolean("voice_enabled", false)
 
         etWebhookUrl.setText(savedUrl)
         switchService.isChecked = isEnabled

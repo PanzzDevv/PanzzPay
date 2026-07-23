@@ -90,7 +90,7 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
 
     private fun speakNotification(messageText: String) {
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
-        val isVoiceEnabled = prefs.getBoolean("voice_enabled", true)
+        val isVoiceEnabled = prefs.getBoolean("voice_enabled", false)
 
         if (!isVoiceEnabled || !isTtsInitialized) return
 

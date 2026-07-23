@@ -48,6 +48,11 @@ class FakeQuery {
   }
 
   async get() {
+    if (this.order && this.store.failOrderedQueries) {
+      const error = new Error('The query requires an index.');
+      error.code = 9;
+      throw error;
+    }
     let rows = Array.from(this.store.entries())
       .map(([id, value]) => new FakeDocumentSnapshot(id, value))
       .filter(document => this.filters.every(([field, value]) => document.value[field] === value));
@@ -193,6 +198,29 @@ test('webhook logs are read from Firestore and filtered per merchant', async () 
 
   assert.deepEqual(allLogs.map(log => log.id), ['LOG-2', 'LOG-1']);
   assert.deepEqual(merchantLogs.map(log => log.id), ['LOG-1']);
+});
+
+test('merchant history falls back safely while composite indexes are unavailable', async () => {
+  const firestore = new FakeFirestore({
+    invoices: [
+      { id: 'INV-OLD', merchant_id: 'MCH-1', created_at: '2026-07-23T01:00:00.000Z' },
+      { id: 'INV-NEW', merchant_id: 'MCH-1', created_at: '2026-07-23T03:00:00.000Z' },
+      { id: 'INV-OTHER', merchant_id: 'MCH-2', created_at: '2026-07-23T04:00:00.000Z' }
+    ],
+    webhook_logs: [
+      { id: 'LOG-OLD', merchant_id: 'MCH-1', received_at: '2026-07-23T01:00:00.000Z' },
+      { id: 'LOG-NEW', merchant_id: 'MCH-1', received_at: '2026-07-23T02:00:00.000Z' }
+    ]
+  });
+  firestore.collections.get('invoices').failOrderedQueries = true;
+  firestore.collections.get('webhook_logs').failOrderedQueries = true;
+  const service = new FirebaseService({ firestore, skipLocalBackup: true });
+
+  const invoices = await service.getInvoicesByMerchant('MCH-1');
+  const logs = await service.getWebhookLogsByMerchant('MCH-1');
+
+  assert.deepEqual(invoices.map(invoice => invoice.id), ['INV-NEW', 'INV-OLD']);
+  assert.deepEqual(logs.map(log => log.id), ['LOG-NEW', 'LOG-OLD']);
 });
 
 test('merchant suspension is synchronized to Firebase Auth', async () => {

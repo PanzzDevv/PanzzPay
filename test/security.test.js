@@ -52,6 +52,15 @@ test('webhook tokens in query strings are rejected', async () => {
   assert.equal(response.status, 400);
 });
 
+test('webhook simulator requires an authenticated merchant session', async () => {
+  const response = await fetch(`${baseUrl}/api/webhook/simulate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Pembayaran masuk Rp 10.000' })
+  });
+  assert.equal(response.status, 401);
+});
+
 test('registration validation rejects weak passwords and unknown fields', async () => {
   const response = await fetch(`${baseUrl}/api/auth/register`, {
     method: 'POST',

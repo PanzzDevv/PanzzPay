@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
           bodyData = payloadText;
         }
 
-        const response = await fetch('/api/webhook/callback', {
+        const response = await fetch('/api/webhook/simulate', {
           method: 'POST',
           headers: { 'Content-Type': typeof bodyData === 'object' ? 'application/json' : 'text/plain' },
           body: typeof bodyData === 'object' ? JSON.stringify(bodyData) : bodyData
@@ -449,6 +449,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         simResultJson.textContent = JSON.stringify(data, null, 2);
         simResultCard.style.display = 'block';
+        if (!response.ok) {
+          showToast(data.message || 'Simulator webhook gagal.');
+          return;
+        }
 
         if (data.matched_invoice) {
           showToast(data.message);
@@ -620,11 +624,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const data = await response.json();
+        if (!response.ok) {
+          alert('Gagal mendecode QR Code: ' + (data.message || 'QRIS tidak dapat dibaca'));
+          return;
+        }
         decodedString.textContent = data.payload || JSON.stringify(data, null, 2);
         decodeResultArea.style.display = 'block';
 
         if (data.payload) {
-          document.getElementById('payloadStatic').value = data.payload;
+          const payloadInput = document.getElementById('payloadStatic');
+          if (payloadInput) payloadInput.value = data.payload;
           showToast(data.message || 'Payload string QRIS berhasil diekstrak!');
         }
 

@@ -665,6 +665,38 @@ app.post('/api/merchant/credentials/rotate', requireSessionMerchant, async (req,
   }
 });
 
+async function processWebhookPayload(req, res, merchant) {
+  const amount = extractAmountFromText(req.body);
+  if (!amount) return res.status(422).json({ ok: false, message: 'Nominal pembayaran tidak ditemukan atau tidak valid' });
+  const suppliedEventId = req.get('x-webhook-event-id') || req.body?.event_id || req.body?.transaction_id || req.body?.reference_id;
+  const eventId = buildEventId(merchant.id, req.body, suppliedEventId);
+  const receivedAt = new Date().toISOString();
+  const result = await db.processWebhookEvent({
+    merchant,
+    eventId,
+    amount,
+    source: paymentSource(req.body),
+    payloadDigest: hashSecret(stableStringify(req.body)),
+    receivedAt
+  });
+  if (result.duplicate) return res.status(200).json({ ok: true, duplicate: true, event_id: eventId });
+  return res.status(result.invoice ? 200 : 202).json({
+    ok: true,
+    duplicate: false,
+    event_id: eventId,
+    matched_invoice_id: result.invoice?.id || null,
+    status: result.invoice ? 'MATCHED' : 'UNMATCHED'
+  });
+}
+
+app.post('/api/webhook/simulate', webhookLimiter, requireSessionMerchant, async (req, res, next) => {
+  try {
+    return await processWebhookPayload(req, res, req.merchant);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 app.post('/api/webhook/callback', webhookLimiter, async (req, res, next) => {
   try {
     if (req.query.token) return res.status(400).json({ ok: false, message: 'Token pada URL tidak lagi diterima. Gunakan Authorization: Bearer.' });
@@ -672,28 +704,7 @@ app.post('/api/webhook/callback', webhookLimiter, async (req, res, next) => {
     if (!token) return res.status(401).json({ ok: false, message: 'Webhook token diperlukan' });
     const merchant = await db.getMerchantByWebhookToken(token);
     if (!merchant || merchant.status !== 'ACTIVE') return res.status(401).json({ ok: false, message: 'Webhook token tidak valid' });
-
-    const amount = extractAmountFromText(req.body);
-    if (!amount) return res.status(422).json({ ok: false, message: 'Nominal pembayaran tidak ditemukan atau tidak valid' });
-    const suppliedEventId = req.get('x-webhook-event-id') || req.body?.event_id || req.body?.transaction_id || req.body?.reference_id;
-    const eventId = buildEventId(merchant.id, req.body, suppliedEventId);
-    const receivedAt = new Date().toISOString();
-    const result = await db.processWebhookEvent({
-      merchant,
-      eventId,
-      amount,
-      source: paymentSource(req.body),
-      payloadDigest: hashSecret(stableStringify(req.body)),
-      receivedAt
-    });
-    if (result.duplicate) return res.status(200).json({ ok: true, duplicate: true, event_id: eventId });
-    return res.status(result.invoice ? 200 : 202).json({
-      ok: true,
-      duplicate: false,
-      event_id: eventId,
-      matched_invoice_id: result.invoice?.id || null,
-      status: result.invoice ? 'MATCHED' : 'UNMATCHED'
-    });
+    return await processWebhookPayload(req, res, merchant);
   } catch (error) {
     return next(error);
   }

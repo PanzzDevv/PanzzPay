@@ -50,6 +50,10 @@ function documentData(document) {
   return { ...data, id: data.id || document.id };
 }
 
+function isMissingFirestoreIndex(error) {
+  return Number(error?.code) === 9 || /requires an index/i.test(String(error?.message || ''));
+}
+
 export class FirebaseService {
   constructor(options = {}) {
     this.projectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'panzzpay';
@@ -642,20 +646,28 @@ export class FirebaseService {
       const firestore = await this.getFirestoreDB();
       if (!firestore) return null;
       const pageSize = Math.min(Math.max(Number(options.limit) || 50, 1), 100);
-      let query = firestore.collection(COLLECTIONS.invoices);
-      if (merchantId) query = query.where('merchant_id', '==', merchantId);
+      let baseQuery = firestore.collection(COLLECTIONS.invoices);
+      if (merchantId) baseQuery = baseQuery.where('merchant_id', '==', merchantId);
 
-      let snapshot;
+      let invoices;
       try {
-        query = query.orderBy('created_at', 'desc');
-        if (options.cursor && typeof query.startAfter === 'function') query = query.startAfter(options.cursor);
-        snapshot = await query.limit(pageSize).get();
+        let orderedQuery = baseQuery.orderBy('created_at', 'desc');
+        if (options.cursor && typeof orderedQuery.startAfter === 'function') orderedQuery = orderedQuery.startAfter(options.cursor);
+        const snapshot = await orderedQuery.limit(pageSize).get();
+        invoices = snapshot.docs.map(documentData);
       } catch (indexError) {
-        snapshot = await query.limit(pageSize).get();
+        if (!isMissingFirestoreIndex(indexError)) throw indexError;
+        const snapshot = await baseQuery.get();
+        invoices = snapshot.docs.map(documentData)
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        const cursorTime = Date.parse(options.cursor || '');
+        if (Number.isFinite(cursorTime)) {
+          invoices = invoices.filter(invoice => Date.parse(invoice.created_at || '') < cursorTime);
+        }
+        invoices = invoices.slice(0, pageSize);
       }
 
-      const invoices = snapshot.docs.map(documentData)
-        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      invoices.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       this.lastSuccessfulConnectionAt = new Date().toISOString();
       this.lastFirebaseError = null;
       return invoices;
@@ -714,6 +726,15 @@ export class FirebaseService {
           .get();
         return snapshot.empty ? null : documentData(snapshot.docs[0]);
       } catch (error) {
+        if (isMissingFirestoreIndex(error)) {
+          const fallback = await firestore.collection(COLLECTIONS.invoices)
+            .where('merchant_id', '==', merchantId)
+            .get();
+          const match = fallback.docs.map(documentData).find(invoice =>
+            invoice.status === 'PENDING' && invoice.total_amount === totalAmount
+          );
+          return match || null;
+        }
         this.recordFirebaseError('check pending invoice amount', error);
         if (this.firebaseRequired) throw error;
       }
@@ -734,12 +755,12 @@ export class FirebaseService {
         if (existingLog.exists) return { duplicate: true, log: documentData(existingLog), invoice: null };
 
         const query = firestore.collection(COLLECTIONS.invoices)
-          .where('merchant_id', '==', merchant.id)
-          .where('status', '==', 'PENDING')
-          .where('total_amount', '==', amount)
-          .limit(1);
+          .where('merchant_id', '==', merchant.id);
         const invoiceSnapshot = await transaction.get(query);
-        const invoiceDocument = invoiceSnapshot.empty ? null : invoiceSnapshot.docs[0];
+        const invoiceDocument = invoiceSnapshot.docs.find(document => {
+          const invoice = document.data();
+          return invoice.status === 'PENDING' && invoice.total_amount === amount;
+        }) || null;
         let invoice = null;
         if (invoiceDocument) {
           invoice = {
@@ -810,20 +831,28 @@ export class FirebaseService {
       const firestore = await this.getFirestoreDB();
       if (!firestore) return null;
       const pageSize = Math.min(Math.max(Number(options.limit) || 50, 1), 100);
-      let query = firestore.collection(COLLECTIONS.webhookLogs);
-      if (merchantId) query = query.where('merchant_id', '==', merchantId);
+      let baseQuery = firestore.collection(COLLECTIONS.webhookLogs);
+      if (merchantId) baseQuery = baseQuery.where('merchant_id', '==', merchantId);
 
-      let snapshot;
+      let logs;
       try {
-        query = query.orderBy('received_at', 'desc');
-        if (options.cursor && typeof query.startAfter === 'function') query = query.startAfter(options.cursor);
-        snapshot = await query.limit(pageSize).get();
+        let orderedQuery = baseQuery.orderBy('received_at', 'desc');
+        if (options.cursor && typeof orderedQuery.startAfter === 'function') orderedQuery = orderedQuery.startAfter(options.cursor);
+        const snapshot = await orderedQuery.limit(pageSize).get();
+        logs = snapshot.docs.map(documentData);
       } catch (indexError) {
-        snapshot = await query.limit(pageSize).get();
+        if (!isMissingFirestoreIndex(indexError)) throw indexError;
+        const snapshot = await baseQuery.get();
+        logs = snapshot.docs.map(documentData)
+          .sort((a, b) => new Date(b.received_at || 0) - new Date(a.received_at || 0));
+        const cursorTime = Date.parse(options.cursor || '');
+        if (Number.isFinite(cursorTime)) {
+          logs = logs.filter(log => Date.parse(log.received_at || '') < cursorTime);
+        }
+        logs = logs.slice(0, pageSize);
       }
 
-      const logs = snapshot.docs.map(documentData)
-        .sort((a, b) => new Date(b.received_at || 0) - new Date(a.received_at || 0));
+      logs.sort((a, b) => new Date(b.received_at || 0) - new Date(a.received_at || 0));
       this.lastSuccessfulConnectionAt = new Date().toISOString();
       this.lastFirebaseError = null;
       return logs;

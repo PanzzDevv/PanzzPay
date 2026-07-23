@@ -312,6 +312,52 @@ function paymentSource(payload) {
   return 'Transfer QRIS';
 }
 
+async function sendTelegramNotification({ merchant, amount, source, eventId, invoiceId, status, isTest = false }) {
+  const token = merchant?.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = merchant?.telegram_chat_id || process.env.TELEGRAM_CHAT_ID;
+  const enabled = merchant ? merchant.telegram_enabled !== false : true;
+
+  if (!enabled || !token || !chatId) {
+    return { ok: false, message: 'Telegram Bot Token atau Chat ID belum dikonfigurasi.' };
+  }
+
+  const formattedAmount = `Rp ${Number(amount || 0).toLocaleString('id-ID')}`;
+  const timeStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+  const titleHeader = isTest ? '🧪 *TES NOTIFIKASI TELEGRAM*' : '🔔 *PEMBAYARAN MASUK (PANZZPAY)*';
+  const statusStr = status === 'MATCHED' ? '✅ MATCHED (Invoice Terbayar)' : '📥 DITERIMA (Standalone Payment)';
+
+  const textMessage = `${titleHeader}\n\n` +
+    `💰 *Nominal:* ${formattedAmount}\n` +
+    `💳 *Sumber:* ${source || 'DANA / E-Wallet'}\n` +
+    `📊 *Status:* ${statusStr}\n` +
+    (invoiceId ? `🧾 *Invoice ID:* \`${invoiceId}\`\n` : '') +
+    `🆔 *Event ID:* \`${eventId}\`\n` +
+    `⏰ *Waktu:* ${timeStr} WIB\n\n` +
+    `⚡ _PanzzPay Real-time Notification Bot_`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: textMessage,
+        parse_mode: 'Markdown'
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('Telegram API Error:', data);
+      return { ok: false, message: data.description || 'Gagal mengirim pesan ke Telegram' };
+    }
+    return { ok: true, data };
+  } catch (error) {
+    console.error('Failed to send Telegram notification:', error);
+    return { ok: false, message: error.message };
+  }
+}
+
 app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req, res, next) => {
   let createdUser = null;
   try {
@@ -680,6 +726,43 @@ app.post('/api/merchant/credentials/rotate', requireSessionMerchant, async (req,
   }
 });
 
+app.post('/api/merchant/telegram-config', requireSessionMerchant, async (req, res, next) => {
+  try {
+    const { telegram_bot_token, telegram_chat_id, telegram_enabled } = req.body || {};
+    const updatedPayload = {
+      ...req.merchant,
+      telegram_bot_token: telegram_bot_token !== undefined ? String(telegram_bot_token).trim() : (req.merchant.telegram_bot_token || ''),
+      telegram_chat_id: telegram_chat_id !== undefined ? String(telegram_chat_id).trim() : (req.merchant.telegram_chat_id || ''),
+      telegram_enabled: telegram_enabled !== undefined ? Boolean(telegram_enabled) : (req.merchant.telegram_enabled !== false)
+    };
+    const merchant = await db.saveMerchant(updatedPayload);
+    securityLog('merchant_telegram_config_updated', { merchantId: req.merchant.id, ip: req.ip });
+    return res.json({ ok: true, message: 'Pengaturan Bot Telegram berhasil disimpan', merchant: currentMerchantResponse(merchant) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/merchant/telegram-test', requireSessionMerchant, async (req, res, next) => {
+  try {
+    const result = await sendTelegramNotification({
+      merchant: req.merchant,
+      amount: 1000,
+      source: 'DANA Bisnis (Simulation Test)',
+      eventId: `test_${Date.now()}`,
+      invoiceId: 'INV-TEST-TELEGRAM',
+      status: 'MATCHED',
+      isTest: true
+    });
+    if (!result.ok) {
+      return res.status(400).json({ ok: false, message: result.message || 'Gagal mengirim pesan tes ke Telegram' });
+    }
+    return res.json({ ok: true, message: 'Notifikasi tes berhasil dikirim ke Telegram Chat ID Anda! Silakan periksa Telegram.' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 async function processWebhookPayload(req, res, merchant) {
   const amount = extractAmountFromText(req.body);
   if (!amount) return res.status(422).json({ ok: false, message: 'Nominal pembayaran tidak ditemukan atau tidak valid' });
@@ -695,6 +778,17 @@ async function processWebhookPayload(req, res, merchant) {
     receivedAt
   });
   if (result.duplicate) return res.status(200).json({ ok: true, duplicate: true, event_id: eventId });
+
+  // Send real-time Telegram notification asynchronously
+  sendTelegramNotification({
+    merchant,
+    amount,
+    source: paymentSource(req.body),
+    eventId,
+    invoiceId: result.invoice?.id || null,
+    status: result.invoice ? 'MATCHED' : 'UNMATCHED'
+  }).catch(err => console.error('Telegram notification background error:', err));
+
   return res.status(result.invoice ? 200 : 202).json({
     ok: true,
     duplicate: false,

@@ -3,65 +3,58 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp"
-    android:background="#131C2E">
+    android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="⚡ Tes Notifikasi Pembayaran"
-        android:textColor="#F8FAFC"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:text="@string/test_dialog_title"
+        android:textAppearance="@style/TextAppearance.PanzzPay.SectionTitle" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="@string/test_dialog_subtitle"
+        android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Simulasikan notifikasi uang masuk seolah-olah diterima dari e-wallet/bank asli."
-        android:textColor="#94A3B8"
-        android:textSize="12sp"
-        android:layout_marginTop="4dp" />
-
-    <!-- SELECT E-WALLET / BANK -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pilih Aplikasi Sumber:"
-        android:textColor="#F8FAFC"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:layout_marginTop="14dp" />
+        android:layout_marginTop="20dp"
+        android:text="@string/provider_label"
+        android:textAppearance="@style/TextAppearance.PanzzPay.Label"
+        android:textColor="@color/text_secondary" />
 
     <Spinner
         android:id="@+id/spinnerProvider"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="6dp"
-        android:padding="8dp"
-        android:background="@drawable/bg_input_box" />
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_input_box"
+        android:paddingHorizontal="12dp"
+        android:popupBackground="@color/surface_high" />
 
-    <!-- INPUT NOMINAL -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nominal Transfer (Rp):"
-        android:textColor="#F8FAFC"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:layout_marginTop="14dp" />
+        android:layout_marginTop="18dp"
+        android:text="@string/amount_label"
+        android:textAppearance="@style/TextAppearance.PanzzPay.Label"
+        android:textColor="@color/text_secondary" />
 
     <EditText
         android:id="@+id/etTestAmount"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Contoh: 50000"
-        android:textColorHint="#64748B"
-        android:inputType="number"
-        android:text="50000"
-        android:textSize="14sp"
-        android:layout_marginTop="6dp"
-        android:padding="12dp"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/bg_input_box"
-        android:textColor="#F8FAFC" />
-
+        android:hint="@string/amount_hint"
+        android:importantForAutofill="no"
+        android:inputType="number"
+        android:paddingHorizontal="14dp"
+        android:text="@string/default_test_amount"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="14sp" />
 </LinearLayout>

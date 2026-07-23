@@ -1,4 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PanzzPay Forwarder</string>
+    <string name="screen_title">PanzzPay Forwarder</string>
+    <string name="screen_subtitle">Teruskan notifikasi pembayaran ke webhook merchant secara aman dan otomatis.</string>
+    <string name="app_version_format">Versi %1$s</string>
+    <string name="permission_checking">Memeriksa izin notifikasi…</string>
+    <string name="permission_granted">Izin notifikasi aktif</string>
+    <string name="permission_not_granted">Izin notifikasi belum aktif</string>
+    <string name="automation_title">Automasi</string>
+    <string name="automation_subtitle">Atur listener pembayaran dan pemberitahuan suara.</string>
+    <string name="listener_title">Listener pembayaran</string>
+    <string name="listener_description">Baca notifikasi transaksi yang masuk secara otomatis.</string>
+    <string name="voice_title">Suara uang masuk</string>
+    <string name="voice_description">Ucapkan informasi pembayaran saat transaksi diterima.</string>
+    <string name="webhook_title">Koneksi webhook</string>
+    <string name="webhook_subtitle">Tempel URL provisioning dari Portal Merchant. Token akan disimpan terenkripsi di perangkat.</string>
+    <string name="webhook_label">URL provisioning</string>
+    <string name="webhook_hint">https://panzzpay.vercel.app/api/webhook/callback#token=…</string>
+    <string name="invalid_webhook_url">Gunakan URL provisioning HTTPS lengkap dari Portal Merchant.</string>
+    <string name="webhook_required">Tempel dan simpan URL provisioning terlebih dahulu.</string>
+    <string name="paste_url">Tempel URL</string>
+    <string name="save_url">Simpan URL</string>
+    <string name="quick_setup_title">Pengaturan cepat</string>
+    <string name="quick_setup_subtitle">Aktifkan akses Android, lalu kirim simulasi untuk memastikan koneksi bekerja.</string>
+    <string name="open_notification_access">Buka akses notifikasi</string>
+    <string name="test_webhook">Tes koneksi webhook</string>
+    <string name="supported_apps_title">Sumber pembayaran didukung</string>
+    <string name="supported_apps">DANA · ShopeePay · GoPay · OVO · m-BCA · BRImo · Livin’ · BSI · SeaBank</string>
+    <string name="activity_log_title">Aktivitas terbaru</string>
+    <string name="activity_log_ready">Listener siap menerima notifikasi pembayaran.</string>
+    <string name="test_dialog_title">Tes notifikasi pembayaran</string>
+    <string name="test_dialog_subtitle">Pilih sumber dan nominal untuk mensimulasikan pembayaran masuk.</string>
+    <string name="provider_label">Sumber pembayaran</string>
+    <string name="amount_label">Nominal transfer</string>
+    <string name="amount_hint">Contoh: 50000</string>
+    <string name="default_test_amount">50000</string>
+    <string name="send_test">Kirim tes</string>
+    <string name="cancel">Batal</string>
+    <string name="downloading_update">Mengunduh pembaruan</string>
+    <string name="downloading_update_message">Mohon tunggu. Installer akan dibuka setelah unduhan selesai.</string>
 </resources>

@@ -1,12 +1,12 @@
 package com.panzzpay.forwarder
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -15,13 +15,14 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import com.google.android.material.materialswitch.MaterialSwitch
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -36,8 +37,8 @@ import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    private lateinit var switchService: Switch
-    private lateinit var switchVoice: Switch
+    private lateinit var switchService: MaterialSwitch
+    private lateinit var switchVoice: MaterialSwitch
     private lateinit var etWebhookUrl: EditText
     private lateinit var btnPasteUrl: Button
     private lateinit var btnSave: Button
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var btnTestWebhook: Button
     private lateinit var tvPermissionStatus: TextView
     private lateinit var tvLogConsole: TextView
+    private lateinit var tvAppVersion: TextView
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -80,11 +82,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         btnTestWebhook = findViewById(R.id.btnTestWebhook)
         tvPermissionStatus = findViewById(R.id.tvPermissionStatus)
         tvLogConsole = findViewById(R.id.tvLogConsole)
+        tvAppVersion = findViewById(R.id.tvAppVersion)
+        tvAppVersion.text = getString(R.string.app_version_format, getAppVersionName())
 
         try {
             tts = TextToSpeech(this, this)
         } catch (e: Exception) {
-            appendLog("⚠️ TTS Engine Error: ${e.message}")
+            appendLog("TTS tidak tersedia: ${e.message}")
         }
 
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
@@ -115,10 +119,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val pastedText = clipData.getItemAt(0).text.toString().trim()
                 if (isValidProvisioningUrl(pastedText)) {
                     etWebhookUrl.setText(pastedText)
+                    etWebhookUrl.error = null
                     clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
                     appendLog("URL berhasil ditempel dari Clipboard")
                     Toast.makeText(this, "URL Webhook Berhasil Ditempel!", Toast.LENGTH_SHORT).show()
                 } else {
+                    etWebhookUrl.error = getString(R.string.invalid_webhook_url)
                     Toast.makeText(this, "Teks di clipboard bukan URL Webhook yang valid", Toast.LENGTH_SHORT).show()
                 }
             } else {
@@ -129,10 +135,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         btnSave.setOnClickListener {
             val newUrl = etWebhookUrl.text.toString().trim()
             if (isValidProvisioningUrl(newUrl) && SecurePreferences.putWebhookUrl(this, newUrl)) {
+                etWebhookUrl.error = null
                 appendLog("Target Webhook URL disimpan secara terenkripsi")
                 Toast.makeText(this, "Target Webhook URL Disimpan!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Gunakan URL provisioning HTTPS lengkap dari dashboard", Toast.LENGTH_SHORT).show()
+                etWebhookUrl.error = getString(R.string.invalid_webhook_url)
+                etWebhookUrl.requestFocus()
             }
         }
 
@@ -143,10 +151,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         btnTestWebhook.setOnClickListener {
             val urlStr = etWebhookUrl.text.toString().trim()
-            if (urlStr.isNotEmpty()) {
+            if (isValidProvisioningUrl(urlStr)) {
+                etWebhookUrl.error = null
                 showTestWebhookDialog(urlStr)
             } else {
-                Toast.makeText(this, "URL Webhook belum diisi", Toast.LENGTH_SHORT).show()
+                etWebhookUrl.error = if (urlStr.isEmpty()) {
+                    getString(R.string.webhook_required)
+                } else {
+                    getString(R.string.invalid_webhook_url)
+                }
+                etWebhookUrl.requestFocus()
             }
         }
 
@@ -165,6 +179,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         uri.scheme.equals("https", ignoreCase = true) && !uri.host.isNullOrBlank() && token.length >= 32
     }.getOrDefault(false)
 
+    private fun getAppVersionName(): String = try {
+        packageManager.getPackageInfo(packageName, 0).versionName ?: "-"
+    } catch (e: Exception) {
+        "-"
+    }
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts?.setLanguage(Locale("id", "ID"))
@@ -182,14 +202,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val isGranted = flat != null && flat.contains(packageName)
 
         if (isGranted) {
-            tvPermissionStatus.text = "Izin Notifikasi: DIBERIKAN ✅"
-            tvPermissionStatus.setTextColor(Color.parseColor("#10B981"))
+            tvPermissionStatus.setText(R.string.permission_granted)
+            tvPermissionStatus.setTextColor(ContextCompat.getColor(this, R.color.accent_emerald))
         } else {
-            tvPermissionStatus.text = "Izin Notifikasi: BELUM DIBERIKAN ⚠️"
-            tvPermissionStatus.setTextColor(Color.parseColor("#EF4444"))
+            tvPermissionStatus.setText(R.string.permission_not_granted)
+            tvPermissionStatus.setTextColor(ContextCompat.getColor(this, R.color.accent_rose))
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun appendLog(msg: String) {
         val timeStr = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         val logLine = "[$timeStr] $msg"
@@ -204,12 +225,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val spinnerProvider = dialogView.findViewById<Spinner>(R.id.spinnerProvider)
         val etTestAmount = dialogView.findViewById<EditText>(R.id.etTestAmount)
 
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, providerOptions.map { it.name })
+        val adapter = ArrayAdapter(this, R.layout.item_spinner_provider, providerOptions.map { it.name })
+        adapter.setDropDownViewResource(R.layout.item_spinner_provider_dropdown)
         spinnerProvider.adapter = adapter
 
         AlertDialog.Builder(this)
             .setView(dialogView)
-            .setPositiveButton("🚀 Kirim Tes Webhook") { _, _ ->
+            .setPositiveButton(R.string.send_test) { _, _ ->
                 val selectedIndex = spinnerProvider.selectedItemPosition
                 val provider = providerOptions.getOrElse(selectedIndex) { providerOptions[0] }
                 val amountStr = etTestAmount.text.toString().trim()
@@ -234,7 +256,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
                 }
             }
-            .setNegativeButton("Batal", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -257,9 +279,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 .setAutoCancel(true)
 
             notificationManager.notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
-            appendLog("🔔 Memunculkan notifikasi tes di status bar HP...")
+            appendLog("Notifikasi tes ditampilkan di status bar.")
         } catch (e: Exception) {
-            appendLog("⚠️ Gagal membuat notifikasi sistem HP: ${e.message}")
+            appendLog("Gagal membuat notifikasi sistem: ${e.message}")
         }
     }
 
@@ -279,7 +301,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/3.0")
+                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/${getAppVersionName()}")
                 conn.setRequestProperty("Authorization", "Bearer $token")
                 conn.setRequestProperty("X-Webhook-Event-Id", eventId)
                 conn.doOutput = true
@@ -301,15 +323,18 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 writer.close()
 
                 val code = conn.responseCode
-                appendLog("⚡ Tes Webhook Sukses! Status HTTP $code\nPayload: $message")
+                if (code !in 200..299) {
+                    throw IllegalStateException("Server merespons HTTP $code")
+                }
+                appendLog("Tes webhook berhasil. Status HTTP $code\nPayload: $message")
                 runOnUiThread {
-                    Toast.makeText(this, "⚡ Tes Webhook Berhasil (HTTP $code)", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Tes webhook berhasil (HTTP $code)", Toast.LENGTH_LONG).show()
                 }
                 conn.disconnect()
             } catch (e: Exception) {
-                appendLog("❌ Gagal Tes Webhook: ${e.message}")
+                appendLog("Tes webhook gagal: ${e.message}")
                 runOnUiThread {
-                    Toast.makeText(this, "❌ Gagal Tes Webhook: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Tes webhook gagal: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

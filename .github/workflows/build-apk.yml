@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version without the v prefix
+        required: true
+        default: '2.2.0'
 
 permissions:
   contents: write
@@ -30,6 +35,29 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.2'
+
+      - name: Resolve Android release version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            app_version="${GITHUB_REF_NAME#v}"
+          else
+            app_version="$INPUT_VERSION"
+          fi
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must use major.minor.patch." >&2
+            exit 1
+          fi
+          IFS='.' read -r major minor patch <<< "$app_version"
+          if (( minor > 99 || patch > 9999 )); then
+            echo "Minor must be <= 99 and patch must be <= 9999." >&2
+            exit 1
+          fi
+          version_code=$((major * 1000000 + minor * 10000 + patch))
+          echo "APP_VERSION_NAME=$app_version" >> "$GITHUB_ENV"
+          echo "APP_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v$app_version" >> "$GITHUB_ENV"
 
       - name: Validate signing secrets
         env:
@@ -77,12 +105,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            release_tag="$GITHUB_REF_NAME"
-          else
-            release_tag="v2.1.${GITHUB_RUN_NUMBER}"
-          fi
-          gh release create "$release_tag" panzzpay-forwarder.apk \
+          gh release create "$RELEASE_TAG" panzzpay-forwarder.apk \
             --target "$GITHUB_SHA" \
-            --title "PanzzPay Forwarder $release_tag" \
-            --notes "Signed security-hardened Android release from GitHub Actions run #${GITHUB_RUN_NUMBER}."
+            --title "PanzzPay Forwarder $RELEASE_TAG" \
+            --notes "Pembaruan PanzzPay Forwarder $RELEASE_TAG.
+
+          - Memperbaiki notifikasi update yang muncul berulang setelah APK diperbarui.
+          - Tampilan native baru dengan tata letak, tema, dan tipografi yang lebih rapi.
+          - Validasi installer kini memastikan versi APK sesuai metadata server.
+          - Peningkatan stabilitas dan keamanan update."

@@ -1,8 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.PanzzPayForwarder" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#2563eb</item>
-        <item name="colorPrimaryVariant">#1d4ed8</item>
-        <item name="colorOnPrimary">#ffffff</item>
+        <item name="colorPrimary">@color/brand_blue</item>
+        <item name="colorPrimaryVariant">@color/brand_blue_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/accent_emerald</item>
+        <item name="colorOnSecondary">@color/bg_main</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorError">@color/accent_rose</item>
+        <item name="android:colorAccent">@color/brand_blue</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">@color/bg_main</item>
+        <item name="android:statusBarColor">@color/bg_main</item>
+        <item name="android:navigationBarColor">@color/bg_main</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="TextAppearance.PanzzPay.Display" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <style name="TextAppearance.PanzzPay.SectionTitle" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="TextAppearance.PanzzPay.ItemTitle" parent="TextAppearance.MaterialComponents.Subtitle2">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TextAppearance.PanzzPay.Body" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="TextAppearance.PanzzPay.Label" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="Widget.PanzzPay.Button.Primary" parent="Widget.MaterialComponents.Button">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="backgroundTint">@color/brand_blue_dark</item>
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <style name="Widget.PanzzPay.Button.Secondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="strokeColor">@color/border_color</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">14dp</item>
     </style>
 </resources>

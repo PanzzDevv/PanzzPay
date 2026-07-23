@@ -12,6 +12,7 @@ import { db } from './firebase.js';
 import { requireIdentity, requireMerchant, requireSessionMerchant, requireSuperAdmin, currentMerchantResponse } from './middleware/auth.js';
 import { validate } from './middleware/validate.js';
 import { buildEventId, generateId, getBearerToken, hashSecret, isTrustedOrigin, parseCookies, publicMerchant, securityLog, stableStringify } from './lib/security.js';
+import { parseReleaseVersion } from './lib/versioning.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -717,14 +718,17 @@ app.get('/api/app/check-update', async (req, res) => {
     });
     if (response.ok) {
       const release = await response.json();
-      const tag = release.tag_name || 'v2.1.0';
-      const asset = release.assets?.find(item => item.name.endsWith('.apk'));
-      const parts = tag.replace(/[^0-9.]/g, '').split('.').map(value => Number(value) || 0);
+      const version = parseReleaseVersion(release.tag_name);
+      const asset = release.assets?.find(item => item.name === 'panzzpay-forwarder.apk');
+      if (!version || !asset?.browser_download_url) {
+        return res.status(503).json({ ok: false, message: 'Rilis APK terbaru belum valid.' });
+      }
+      res.set('Cache-Control', 'no-store');
       return res.json({
         ok: true,
-        versionCode: (parts[0] || 2) * 100 + (parts[1] || 1) * 10 + (parts[2] || 0),
-        versionName: tag.replace(/^v/, ''),
-        downloadUrl: asset?.browser_download_url || 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk',
+        versionCode: version.versionCode,
+        versionName: version.versionName,
+        downloadUrl: asset.browser_download_url,
         releaseNotes: String(release.body || 'Pembaruan otomatis dari GitHub Release.').slice(0, 5000),
         forceUpdate: false
       });

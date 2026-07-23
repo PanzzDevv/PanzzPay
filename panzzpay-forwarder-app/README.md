@@ -35,6 +35,13 @@ disimpan di repository. Isi `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`
 `ANDROID_KEY_ALIAS`, dan `ANDROID_KEY_PASSWORD` melalui environment variable. GitHub Actions
 juga membutuhkan secret `ANDROID_KEYSTORE_BASE64` beserta tiga nilai signing lainnya.
 
+## Versi dan pembaruan otomatis
+
+Rilis APK wajib memakai tag semantik `vMAJOR.MINOR.PATCH`, contohnya `v2.2.0`. Gradle,
+workflow GitHub Actions, dan API update memakai rumus version code yang sama:
+`MAJOR * 1.000.000 + MINOR * 10.000 + PATCH`. Jangan mengubah `versionCode` secara manual
+tanpa memperbarui skema ini karena dapat membuat notifikasi update muncul berulang.
+
 ---
 
 ## 📱 Fitur Utama Aplikasi PanzzPay Forwarder:

@@ -1,6 +1,5 @@
 package com.panzzpay.forwarder
 
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,6 +8,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.util.Base64
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -95,11 +95,11 @@ object UpdateManager {
 
     private fun showUpdateDialog(activity: AppCompatActivity, updateInfo: UpdateInfo) {
         val builder = AlertDialog.Builder(activity)
-            .setTitle("📢 Pembaruan Aplikasi Tersedia (v${updateInfo.versionName})")
+            .setTitle("Pembaruan v${updateInfo.versionName} tersedia")
             .setMessage(updateInfo.releaseNotes)
             .setCancelable(!updateInfo.forceUpdate)
             .setPositiveButton("Update Sekarang") { _, _ ->
-                checkPermissionAndDownload(activity, updateInfo.downloadUrl)
+                checkPermissionAndDownload(activity, updateInfo)
             }
 
         if (!updateInfo.forceUpdate) {
@@ -111,7 +111,7 @@ object UpdateManager {
         builder.show()
     }
 
-    private fun checkPermissionAndDownload(activity: AppCompatActivity, downloadUrl: String) {
+    private fun checkPermissionAndDownload(activity: AppCompatActivity, updateInfo: UpdateInfo) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!activity.packageManager.canRequestPackageInstalls()) {
                 Toast.makeText(
@@ -126,22 +126,21 @@ object UpdateManager {
                 return
             }
         }
-        downloadAndInstallApk(activity, downloadUrl)
+        downloadAndInstallApk(activity, updateInfo)
     }
 
-    private fun downloadAndInstallApk(activity: AppCompatActivity, downloadUrl: String) {
-        @Suppress("DEPRECATION")
-        val progressDialog = ProgressDialog(activity).apply {
-            setTitle("Mengunduh Pembaruan")
-            setMessage("Mohon tunggu sebentar...")
-            setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-            isIndeterminate = false
-            setCancelable(false)
-            show()
-        }
+    private fun downloadAndInstallApk(activity: AppCompatActivity, updateInfo: UpdateInfo) {
+        val progressView = activity.layoutInflater.inflate(R.layout.dialog_update_progress, null)
+        val progressBar = progressView.findViewById<ProgressBar>(R.id.updateProgressBar)
+        val progressDialog = AlertDialog.Builder(activity)
+            .setView(progressView)
+            .setCancelable(false)
+            .create()
+        progressDialog.show()
 
         thread {
             try {
+                val downloadUrl = updateInfo.downloadUrl
                 if (!isAllowedDownloadUrl(downloadUrl)) throw SecurityException("Host update tidak diizinkan")
                 var currentUrl = downloadUrl
                 var connection: HttpURLConnection
@@ -190,7 +189,7 @@ object UpdateManager {
                             if (total > MAX_APK_BYTES) throw SecurityException("Ukuran APK melebihi batas")
                             if (fileLength > 0) {
                                 val progress = (total * 100 / fileLength).toInt()
-                                activity.runOnUiThread { progressDialog.progress = progress }
+                                activity.runOnUiThread { progressBar.progress = progress }
                             }
                             output.write(data, 0, count)
                         }
@@ -203,6 +202,10 @@ object UpdateManager {
                     apkFile.delete()
                     throw SecurityException("Sertifikat APK update tidak cocok dengan aplikasi terpasang")
                 }
+                if (!hasExpectedVersion(activity, apkFile, updateInfo.versionCode)) {
+                    apkFile.delete()
+                    throw SecurityException("Versi APK tidak sesuai dengan informasi pembaruan")
+                }
 
                 activity.runOnUiThread {
                     progressDialog.dismiss()
@@ -212,7 +215,7 @@ object UpdateManager {
             } catch (e: Exception) {
                 activity.runOnUiThread {
                     progressDialog.dismiss()
-                    Toast.makeText(activity, "❌ Gagal mengunduh update: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(activity, "Gagal mengunduh update: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -238,6 +241,19 @@ object UpdateManager {
         if (candidate.packageName != context.packageName) return false
         val installed = context.packageManager.getPackageInfo(context.packageName, flags)
         return signerDigests(candidate).isNotEmpty() && signerDigests(candidate) == signerDigests(installed)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun hasExpectedVersion(context: Context, apkFile: File, expectedVersionCode: Int): Boolean {
+        val candidate = context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0) ?: return false
+        val candidateVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            candidate.longVersionCode
+        } else {
+            candidate.versionCode.toLong()
+        }
+        return candidate.packageName == context.packageName &&
+                candidateVersionCode == expectedVersionCode.toLong() &&
+                candidateVersionCode > getAppVersionCode(context).toLong()
     }
 
     @Suppress("DEPRECATION")
@@ -274,7 +290,7 @@ object UpdateManager {
 
             activity.startActivity(installIntent)
         } catch (e: Exception) {
-            Toast.makeText(activity, "❌ Gagal membuka installer: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, "Gagal membuka installer: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 }

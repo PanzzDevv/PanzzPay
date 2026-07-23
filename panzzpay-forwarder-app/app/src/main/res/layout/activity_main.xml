@@ -1,306 +1,347 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#090D16"
-    android:fillViewport="true">
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="32dp">
 
-        <!-- HEADER BRAND HERO CARD WITH OFFICIAL LOGO & GRADIENT -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_header_card"
-            android:padding="22dp"
             android:orientation="vertical"
-            android:gravity="center">
+            android:padding="20dp">
 
-            <!-- OFFICIAL PANZZPAY LOGO -->
-            <ImageView
-                android:id="@+id/imgLogo"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:src="@drawable/ic_logo"
-                android:contentDescription="PanzzPay Logo"
-                android:layout_marginBottom="10dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/imgLogo"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_logo" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:text="@string/screen_title"
+                        android:textAppearance="@style/TextAppearance.PanzzPay.Display" />
+
+                    <TextView
+                        android:id="@+id/tvAppVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_badge_status"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="@string/app_version_format"
+                        android:textAppearance="@style/TextAppearance.PanzzPay.Label"
+                        android:textColor="@color/brand_blue" />
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="PanzzPay Forwarder v2.1"
-                android:textColor="#F8FAFC"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Automatic QRIS Notification Listener &amp; Webhook Gateway"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"
-                android:gravity="center"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="16dp"
+                android:text="@string/screen_subtitle"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
 
             <TextView
                 android:id="@+id/tvPermissionStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Izin Notifikasi: Mengecek..."
-                android:textColor="#34D399"
-                android:textSize="11sp"
-                android:textStyle="bold"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_badge_status"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="6dp"
-                android:layout_marginTop="12dp" />
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="7dp"
+                android:text="@string/permission_checking"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Label"
+                android:textColor="@color/text_secondary" />
         </LinearLayout>
 
-        <!-- SERVICE TOGGLE CARD -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:background="@drawable/bg_bento_card"
-            android:padding="18dp"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Status Layanan Listener"
-                    android:textColor="#F8FAFC"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvServiceStatusSub"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Membaca notifikasi transfer e-wallet secara otomatis"
-                    android:textColor="#94A3B8"
-                    android:textSize="11sp"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-
-            <Switch
-                android:id="@+id/switchService"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                tools:ignore="UseSwitchCompatOrMaterialXml" />
-        </LinearLayout>
-
-        <!-- VOICE ALERT TOGGLE CARD -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_bento_card"
-            android:padding="18dp"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🔊 Suara Notifikasi (Uang Masuk!)"
-                    android:textColor="#F8FAFC"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mengucapkan pesan uang masuk secara otomatis di HP toko"
-                    android:textColor="#94A3B8"
-                    android:textSize="11sp"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-
-            <Switch
-                android:id="@+id/switchVoice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                tools:ignore="UseSwitchCompatOrMaterialXml" />
-        </LinearLayout>
-
-        <!-- WEBHOOK URL CONFIGURATION CARD -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_bento_card"
-            android:padding="18dp"
-            android:layout_marginTop="14dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Target Webhook URL PanzzPay Anda:"
-                android:textColor="#F8FAFC"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:text="@string/automation_title"
+                android:textAppearance="@style/TextAppearance.PanzzPay.SectionTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/automation_subtitle"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/listener_title"
+                        android:textAppearance="@style/TextAppearance.PanzzPay.ItemTitle" />
+
+                    <TextView
+                        android:id="@+id/tvServiceStatusSub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="@string/listener_description"
+                        android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchService"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:checked="true"
+                    android:contentDescription="@string/listener_title" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="14dp"
+                android:background="@color/border_color" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/voice_title"
+                        android:textAppearance="@style/TextAppearance.PanzzPay.ItemTitle" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="@string/voice_description"
+                        android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchVoice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:checked="true"
+                    android:contentDescription="@string/voice_title" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_bento_card"
+            android:orientation="vertical"
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Salin URL Webhook dari Portal Merchant PanzzPay Anda"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"
-                android:layout_marginTop="2dp" />
+                android:text="@string/webhook_title"
+                android:textAppearance="@style/TextAppearance.PanzzPay.SectionTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/webhook_subtitle"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/webhook_label"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Label"
+                android:textColor="@color/text_secondary" />
 
             <EditText
                 android:id="@+id/etWebhookUrl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_..."
-                android:textColorHint="#64748B"
-                android:inputType="textUri|textMultiLine"
-                android:maxLines="3"
-                android:scrollHorizontally="false"
-                android:textSize="12sp"
-                android:layout_marginTop="10dp"
-                android:padding="12dp"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_box"
-                android:textColor="#F8FAFC" />
+                android:gravity="top|start"
+                android:hint="@string/webhook_hint"
+                android:importantForAutofill="no"
+                android:inputType="textUri|textMultiLine|textNoSuggestions"
+                android:maxLines="3"
+                android:minHeight="76dp"
+                android:padding="14dp"
+                android:scrollHorizontally="false"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_muted"
+                android:textSize="13sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical">
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnPasteUrl"
+                    style="@style/Widget.PanzzPay.Button.Secondary"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="📋 Tempel URL"
-                    android:backgroundTint="#334155"
-                    android:textColor="#F8FAFC"
-                    android:textSize="12sp"
-                    android:layout_marginEnd="6dp" />
+                    android:text="@string/paste_url" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSave"
+                    style="@style/Widget.PanzzPay.Button.Primary"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1.3"
-                    android:text="💾 Simpan URL"
-                    android:backgroundTint="#2563EB"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/save_url" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- SUPPORTED APPS & E-WALLETS INFO CARD -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:background="@drawable/bg_bento_card"
-            android:padding="18dp"
-            android:layout_marginTop="14dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Aplikasi Terhubung &amp; Otomatis Dibaca:"
-                android:textColor="#F8FAFC"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:text="@string/quick_setup_title"
+                android:textAppearance="@style/TextAppearance.PanzzPay.SectionTitle" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="DANA • ShopeePay • GoPay • OVO • m-BCA • BRImo • Livin Mandiri • BSI Mobile • SeaBank"
-                android:textColor="#34D399"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="4dp"
+                android:text="@string/quick_setup_subtitle"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGrantPermission"
+                style="@style/Widget.PanzzPay.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/open_notification_access" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestWebhook"
+                style="@style/Widget.PanzzPay.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/test_webhook" />
         </LinearLayout>
 
-        <!-- LIVE LOG TERMINAL CONSOLE CARD -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_console_terminal"
-            android:padding="16dp"
-            android:layout_marginTop="14dp"
-            android:orientation="vertical">
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_bento_card"
+            android:orientation="vertical"
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="💻 LOG AKTIVITAS FORWARDER (REAL-TIME):"
-                android:textColor="#38BDF8"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:text="@string/supported_apps_title"
+                android:textAppearance="@style/TextAppearance.PanzzPay.ItemTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:text="@string/supported_apps"
+                android:textAppearance="@style/TextAppearance.PanzzPay.Body"
+                android:textColor="@color/accent_emerald" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_console_terminal"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/activity_log_title"
+                android:textAppearance="@style/TextAppearance.PanzzPay.ItemTitle" />
 
             <TextView
                 android:id="@+id/tvLogConsole"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="[READY] PanzzPay Notification Listener siap menerima data notifikasi..."
-                android:textColor="#34D399"
-                android:textSize="10sp"
+                android:layout_marginTop="10dp"
                 android:fontFamily="monospace"
-                android:layout_marginTop="6dp"
-                android:lineSpacingExtra="2dp" />
+                android:lineSpacingExtra="3dp"
+                android:minHeight="72dp"
+                android:text="@string/activity_log_ready"
+                android:textColor="@color/accent_emerald"
+                android:textSize="11sp" />
         </LinearLayout>
-
-        <!-- ACTION BUTTONS CARD -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_bento_card"
-            android:padding="18dp"
-            android:layout_marginTop="14dp"
-            android:orientation="vertical">
-
-            <Button
-                android:id="@+id/btnGrantPermission"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="1. 🔔 Buka Setting Izin Akses Notifikasi"
-                android:backgroundTint="#059669"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/btnTestWebhook"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="2. ⚡ Tes Kirim Webhook Ke Server PanzzPay"
-                android:backgroundTint="#2563EB"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:textSize="12sp"
-                android:layout_marginTop="8dp" />
-        </LinearLayout>
-
     </LinearLayout>
 </ScrollView>

@@ -9,6 +9,19 @@ def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasReleaseSigning = releaseKeystorePath && releaseStorePassword && releaseKeyAlias &&
         releaseKeyPassword && file(releaseKeystorePath).exists()
+def appVersionName = System.getenv('APP_VERSION_NAME') ?: '2.2.0'
+def versionParts = appVersionName =~ /^(\d+)\.(\d+)\.(\d+)$/
+if (!versionParts.matches()) {
+    throw new GradleException('APP_VERSION_NAME must use major.minor.patch, for example 2.2.0.')
+}
+def versionMajor = versionParts[0][1].toInteger()
+def versionMinor = versionParts[0][2].toInteger()
+def versionPatch = versionParts[0][3].toInteger()
+if (versionMinor > 99 || versionPatch > 9999) {
+    throw new GradleException('APP_VERSION_NAME minor must be <= 99 and patch must be <= 9999.')
+}
+def calculatedVersionCode = versionMajor * 1_000_000 + versionMinor * 10_000 + versionPatch
+def appVersionCode = (System.getenv('APP_VERSION_CODE') ?: calculatedVersionCode.toString()).toInteger()
 
 android {
     namespace 'com.panzzpay.forwarder'
@@ -18,8 +31,8 @@ android {
         applicationId "com.panzzpay.forwarder"
         minSdk 24
         targetSdk 34
-        versionCode 2
-        versionName "2.1"
+        versionCode appVersionCode
+        versionName appVersionName
     }
 
     signingConfigs {

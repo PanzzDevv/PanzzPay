@@ -11,5 +11,6 @@ firebase-config.json
 .env
 .env.*
 !.env.example
-
+test_telegram_bot.js
+test_firestore.js
 .vercel

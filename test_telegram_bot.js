@@ -31,7 +31,7 @@ try {
 
 const BOT_TOKEN = process.env.BOT_TOKEN || '8568489661:AAE27EDchGtJgEYZkxrD3D17DMcyxfJgEQI';
 const PANZZPAY_API_URL = process.env.PANZZPAY_URL || 'https://panzzpay.vercel.app';
-const PANZZPAY_API_KEY = process.env.PANZZPAY_API_KEY || 'pz_live_4S3hmisAbOQuL5bYW5OkaOWiSiwxojeHFTPhCfnAZ6o';
+const PANZZPAY_API_KEY = process.env.PANZZPAY_API_KEY || 'pz_live_UR31NEGhUFUDVhZtlKE0Flf8OpqV3SxxyjoVT0uKlPA';
 
 if (!process.env.BOT_TOKEN || process.env.BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN') {
   console.log('\n⚠️ [PERHATIAN] Anda belum memasukkan TELEGRAM_BOT_TOKEN!');

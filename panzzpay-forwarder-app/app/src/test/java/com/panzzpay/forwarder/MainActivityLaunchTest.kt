@@ -1,7 +1,6 @@
 package com.panzzpay.forwarder
 
 import android.widget.TextView
-import com.google.android.material.materialswitch.MaterialSwitch
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -20,9 +19,11 @@ class MainActivityLaunchTest {
         val activity = controller.get()
 
         assertNotNull(activity.findViewById<TextView>(R.id.tvPermissionStatus))
-        val serviceSwitch = activity.findViewById<MaterialSwitch>(R.id.switchService)
-        assertEquals(activity.getString(R.string.switch_on), serviceSwitch.textOn)
-        assertEquals(activity.getString(R.string.switch_off), serviceSwitch.textOff)
+        assertNotNull(activity.findViewById<TextView>(R.id.etWebhookUrl))
+        assertNotNull(activity.findViewById<TextView>(R.id.btnSave))
+        assertNotNull(activity.findViewById<TextView>(R.id.btnGrantPermission))
+        assertNotNull(activity.findViewById<TextView>(R.id.btnTestWebhook))
+        
         val versionName = activity.packageManager
             .getPackageInfo(activity.packageName, 0)
             .versionName

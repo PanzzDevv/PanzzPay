@@ -9,7 +9,7 @@ on:
       version:
         description: Semantic version without the v prefix
         required: true
-        default: '2.2.0'
+        default: '2.2.1'
 
 permissions:
   contents: write
@@ -78,6 +78,11 @@ jobs:
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/panzzpay-release.keystore"
           chmod 600 "$RUNNER_TEMP/panzzpay-release.keystore"
 
+      - name: Verify Android UI lifecycle and lint
+        run: |
+          cd panzzpay-forwarder-app
+          gradle testDebugUnitTest lintDebug --stacktrace
+
       - name: Build signed release APK
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/panzzpay-release.keystore
@@ -110,7 +115,6 @@ jobs:
             --title "PanzzPay Forwarder $RELEASE_TAG" \
             --notes "Pembaruan PanzzPay Forwarder $RELEASE_TAG.
 
-          - Memperbaiki notifikasi update yang muncul berulang setelah APK diperbarui.
-          - Tampilan native baru dengan tata letak, tema, dan tipografi yang lebih rapi.
-          - Validasi installer kini memastikan versi APK sesuai metadata server.
-          - Peningkatan stabilitas dan keamanan update."
+          - Memperbaiki force close saat layar utama menampilkan switch layanan.
+          - Menambahkan pengujian lifecycle layar utama sebelum APK dirilis.
+          - Mempertahankan perbaikan deteksi versi dan keamanan installer."

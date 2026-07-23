@@ -9,7 +9,7 @@ def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasReleaseSigning = releaseKeystorePath && releaseStorePassword && releaseKeyAlias &&
         releaseKeyPassword && file(releaseKeystorePath).exists()
-def appVersionName = System.getenv('APP_VERSION_NAME') ?: '2.2.0'
+def appVersionName = System.getenv('APP_VERSION_NAME') ?: '2.2.1'
 def versionParts = appVersionName =~ /^(\d+)\.(\d+)\.(\d+)$/
 if (!versionParts.matches()) {
     throw new GradleException('APP_VERSION_NAME must use major.minor.patch, for example 2.2.0.')
@@ -63,6 +63,9 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
 }
 
 gradle.taskGraph.whenReady { graph ->
@@ -81,4 +84,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.12.2'
 }

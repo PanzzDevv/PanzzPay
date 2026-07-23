@@ -138,7 +138,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"
                     android:checked="true"
-                    android:contentDescription="@string/listener_title" />
+                    android:contentDescription="@string/listener_title"
+                    android:showText="false"
+                    android:textOff="@string/switch_off"
+                    android:textOn="@string/switch_on" />
             </LinearLayout>
 
             <View
@@ -179,7 +182,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"
                     android:checked="true"
-                    android:contentDescription="@string/voice_title" />
+                    android:contentDescription="@string/voice_title"
+                    android:showText="false"
+                    android:textOff="@string/switch_off"
+                    android:textOn="@string/switch_on" />
             </LinearLayout>
         </LinearLayout>
 

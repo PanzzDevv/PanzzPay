@@ -23,6 +23,8 @@
     <string name="save_url">Simpan URL</string>
     <string name="quick_setup_title">Pengaturan cepat</string>
     <string name="quick_setup_subtitle">Aktifkan akses Android, lalu kirim simulasi untuk memastikan koneksi bekerja.</string>
+    <string name="switch_on">Aktif</string>
+    <string name="switch_off">Nonaktif</string>
     <string name="open_notification_access">Buka akses notifikasi</string>
     <string name="test_webhook">Tes koneksi webhook</string>
     <string name="supported_apps_title">Sumber pembayaran didukung</string>

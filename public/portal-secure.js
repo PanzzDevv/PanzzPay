@@ -61,26 +61,63 @@
     const apiInput = byId('displayApiKey');
     const webhookInput = byId('displayWebhookUrl');
     if (!apiInput || !webhookInput) return;
-    apiInput.value = credentials?.api_key || merchant?.api_key_hint || 'Klik tombol untuk membuat kredensial baru';
-    webhookInput.value = credentials?.webhook_url || merchant?.webhook_token_hint || 'Klik tombol untuk membuat kredensial baru';
-  }
+    const hostUrl = `${window.location.protocol}//${window.location.host}`;
 
-  async function rotateCredentials() {
-    if (!window.confirm('Kredensial lama akan langsung tidak berlaku. Lanjutkan?')) return;
-    try {
-      const data = await request('/api/merchant/credentials/rotate', { method: 'POST', body: '{}' });
-      applyCredentials(data.credentials);
-      notify('Kredensial baru sudah dibuat dan hanya ditampilkan pada sesi ini. Salin API key dan URL webhook sekarang.', 'Kredensial Dirotasi');
-    } catch (error) {
-      notify(error.message, 'Rotasi Gagal');
+    if (credentials?.api_key) {
+      apiInput.value = credentials.api_key;
+    } else if (merchant?.api_key_hint) {
+      apiInput.value = merchant.api_key_hint;
+    } else {
+      apiInput.value = 'Klik "Revoke / Reset" untuk membuat kredensial baru';
+    }
+
+    if (credentials?.webhook_url) {
+      webhookInput.value = credentials.webhook_url;
+    } else if (merchant?.webhook_token_hint) {
+      webhookInput.value = `${hostUrl}/api/webhook/callback#token=${merchant.webhook_token_hint}`;
+    } else {
+      webhookInput.value = 'Klik "Revoke / Reset" untuk membuat kredensial baru';
     }
   }
 
-  async function copyOrRotate(kind) {
-    const value = kind === 'api' ? oneTimeCredentials?.api_key : oneTimeCredentials?.webhook_url;
-    if (!value) return rotateCredentials();
-    await navigator.clipboard.writeText(value);
-    notify('Berhasil disalin. Jangan kirim kredensial melalui chat atau menyimpannya di source code.', 'Tersalin');
+  async function rotateCredentials() {
+    if (!window.confirm('Kredensial lama akan langsung tidak berlaku. Lanjutkan untuk membuat/merevoke kredensial baru?')) return;
+    try {
+      const data = await request('/api/merchant/credentials/rotate', { method: 'POST', body: '{}' });
+      applyCredentials(data.credentials);
+      notify('Kredensial baru sudah dibuat dan hanya ditampilkan penuh pada sesi ini. Salin API key dan URL webhook Anda sekarang.', 'Kredensial Dirotasi');
+    } catch (error) {
+      notify(error.message, 'Revoke Gagal');
+    }
+  }
+
+  async function copyToClipboard(kind) {
+    const apiInput = byId('displayApiKey');
+    const webhookInput = byId('displayWebhookUrl');
+    let value = '';
+
+    if (kind === 'api') {
+      value = oneTimeCredentials?.api_key || apiInput?.value || '';
+    } else {
+      value = oneTimeCredentials?.webhook_url || webhookInput?.value || '';
+    }
+
+    if (!value || value.startsWith('Klik "Revoke')) {
+      notify('Kredensial belum tersedia. Silakan klik tombol Revoke / Reset Kredensial.', 'Belum Ada Kredensial');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      notify('Berhasil disalin ke clipboard.', 'Tersalin');
+    } catch {
+      const input = kind === 'api' ? apiInput : webhookInput;
+      if (input) {
+        input.select();
+        document.execCommand('copy');
+      }
+      notify('Berhasil disalin ke clipboard.', 'Tersalin');
+    }
   }
 
   function renderInvoices(invoices) {
@@ -264,8 +301,9 @@
       if (window.firebase?.apps?.length) await firebase.auth().signOut().catch(() => {});
       showAuth();
     });
-    byId('btnCopyApiKey')?.addEventListener('click', () => copyOrRotate('api'));
-    byId('btnCopyWebhookUrl')?.addEventListener('click', () => copyOrRotate('webhook'));
+    byId('btnCopyApiKey')?.addEventListener('click', () => copyToClipboard('api'));
+    byId('btnCopyWebhookUrl')?.addEventListener('click', () => copyToClipboard('webhook'));
+    byId('btnRevokeCredentials')?.addEventListener('click', rotateCredentials);
 
     byId('btnUploadQrisImage')?.addEventListener('click', () => byId('qrisFileInput').click());
     byId('qrisFileInput')?.addEventListener('change', event => {

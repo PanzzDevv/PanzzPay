@@ -454,13 +454,19 @@
 
           <!-- API KEYS CARD -->
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem;">Kredensial API & Webhook Token Anda:</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h3 style="font-size: 1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Kredensial API & Webhook Token Anda:</h3>
+              <button id="btnRevokeCredentials" type="button" class="btn" style="font-size: 0.78rem; font-weight: 700; padding: 0.4rem 0.82rem; border-radius: 8px; border: 1px solid #f87171; background: #fef2f2; color: #dc2626; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s ease;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                Revoke / Reset Kredensial
+              </button>
+            </div>
             
             <div style="margin-bottom: 1rem;">
               <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">SECRET API KEY (Gunakan pada Header X-API-KEY):</label>
               <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
                 <input type="text" id="displayApiKey" class="form-control" readonly style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--accent-indigo);">
-                <button id="btnCopyApiKey" class="btn btn-dark" style="min-height: 42px;">Salin</button>
+                <button id="btnCopyApiKey" type="button" class="btn btn-dark" style="min-height: 42px;">Salin</button>
               </div>
             </div>
 
@@ -468,7 +474,7 @@
               <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">URL WEBHOOK HP FORWARDER ANDA:</label>
               <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
                 <input type="text" id="displayWebhookUrl" class="form-control" readonly style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--accent-emerald);">
-                <button id="btnCopyWebhookUrl" class="btn btn-dark" style="min-height: 42px;">Salin</button>
+                <button id="btnCopyWebhookUrl" type="button" class="btn btn-dark" style="min-height: 42px;">Salin</button>
               </div>
               <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
                 Masukkan URL ini ke dalam aplikasi <strong>PanzzPay Forwarder APK</strong> di Smartphone penerima dana Anda.

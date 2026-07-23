@@ -11,9 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- FIREBASE AUTH & GOOGLE IDENTITY SERVICES FOR OFFICIAL GOOGLE ACCOUNTS POPUP -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js" integrity="sha384-4gq9w/AGf72FXdNQ3Kn3EqWP7633NbCMjpYHt8YCZyXf23o2opcuAr4cif41tLrC" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js" integrity="sha384-xtdq4MQqPj1dB5DQsuw9O7dh4kHhMP/Wp5u8O1jiaWiou13ZfJIgiccjtVK2pBhL" crossorigin="anonymous"></script>
   
   <style>
     :root {
@@ -233,7 +232,7 @@
         </a>
         <a href="/apps.html" class="drawer-item" style="color: var(--accent-emerald); font-weight: 700;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-          <span>Aplikasi & Ekosistem 📱</span>
+          <span>Aplikasi & Ekosistem ðŸ“±</span>
         </a>
         <a href="/#generator-section" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -253,7 +252,7 @@
         </a>
         <a href="/donasi.html" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          <span>Halaman Donasi 💖</span>
+          <span>Halaman Donasi ðŸ’–</span>
         </a>
       </nav>
 
@@ -261,7 +260,7 @@
       <div id="drawerAuthContainer" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--bento-border);">
         <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-          <span>🔑 DAFTAR / LOGIN</span>
+          <span>ðŸ”‘ DAFTAR / LOGIN</span>
         </a>
         <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.8rem;">
           PanzzPay Gateway API v2.0
@@ -320,7 +319,7 @@
             <div class="form-group">
               <label class="form-label" for="regPassword">Password Rahasia</label>
               <div class="input-field-wrapper">
-                <input type="password" id="regPassword" class="form-control-pro" placeholder="Minimal 6 karakter" required>
+                <input type="password" id="regPassword" class="form-control-pro" placeholder="Minimal 10 karakter, huruf besar, kecil, dan angka" minlength="10" maxlength="128" autocomplete="new-password" required>
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               </div>
             </div>
@@ -344,7 +343,7 @@
             <div class="form-group">
               <label class="form-label" for="loginPassword">Password</label>
               <div class="input-field-wrapper">
-                <input type="password" id="loginPassword" class="form-control-pro" placeholder="Password akun Anda" required>
+                <input type="password" id="loginPassword" class="form-control-pro" placeholder="Password akun Anda" maxlength="128" autocomplete="current-password" required>
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               </div>
             </div>
@@ -410,7 +409,7 @@
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
               <div>
                 <span class="badge" style="background: rgba(217, 119, 6, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); font-weight: 800; margin-bottom: 0.5rem; display: inline-block;">
-                  👑 AKUN PEMILIK PLATFORM (SUPER ADMIN)
+                  ðŸ‘‘ AKUN PEMILIK PLATFORM (SUPER ADMIN)
                 </span>
                 <h3 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin-bottom: 0.3rem; line-height: 1.3;">
                   Selamat Datang, Pemilik Platform PanzzPay!
@@ -589,7 +588,7 @@
       <div id="panzzpayModalIcon" style="width: 56px; height: 56px; margin: 0 auto 1rem; background: rgba(99, 102, 241, 0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4f46e5;">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
       </div>
-      <span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.25); font-weight: 800; font-size: 0.75rem; margin-bottom: 0.5rem; display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px;">⚡ PANZZPAY GATEWAY</span>
+      <span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.25); font-weight: 800; font-size: 0.75rem; margin-bottom: 0.5rem; display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px;">âš¡ PANZZPAY GATEWAY</span>
       <h3 id="panzzpayModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0.3rem 0 0.6rem;">Informasi</h3>
       <p id="panzzpayModalMessage" style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin-bottom: 1.5rem; word-break: break-word;"></p>
       <button id="panzzpayModalCloseBtn" style="width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: none; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35); transition: all 0.2s ease;">
@@ -597,642 +596,7 @@
       </button>
     </div>
   </div>
-
-  <script>
-    window.showPanzzPayModal = function(message, title = 'PanzzPay Gateway', type = 'info') {
-      const overlay = document.getElementById('panzzpayModalOverlay');
-      const titleEl = document.getElementById('panzzpayModalTitle');
-      const msgEl = document.getElementById('panzzpayModalMessage');
-      const closeBtn = document.getElementById('panzzpayModalCloseBtn');
-      const iconEl = document.getElementById('panzzpayModalIcon');
-
-      if (!overlay) return;
-
-      titleEl.textContent = title;
-      msgEl.innerHTML = String(message).replace(/\n/g, '<br>');
-
-      const str = String(message).toLowerCase();
-      if (type === 'success' || str.includes('berhasil') || str.includes('🎉') || str.includes('dikirimkan')) {
-        iconEl.style.background = 'rgba(16, 185, 129, 0.12)';
-        iconEl.style.color = '#10b981';
-        iconEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-      } else if (type === 'error' || str.includes('gagal') || str.includes('⚠️') || str.includes('error') || str.includes('salah')) {
-        iconEl.style.background = 'rgba(239, 68, 68, 0.12)';
-        iconEl.style.color = '#ef4444';
-        iconEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
-      } else {
-        iconEl.style.background = 'rgba(99, 102, 241, 0.12)';
-        iconEl.style.color = '#4f46e5';
-        iconEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
-      }
-
-      overlay.style.display = 'flex';
-
-      const closeHandler = () => {
-        overlay.style.display = 'none';
-        closeBtn.removeEventListener('click', closeHandler);
-      };
-      closeBtn.addEventListener('click', closeHandler);
-    };
-
-    window.alert = function(msg) {
-      window.showPanzzPayModal(msg);
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const authSection = document.getElementById('authSection');
-      const merchantDashboard = document.getElementById('merchantDashboard');
-      const superAdminShortcutCard = document.getElementById('superAdminShortcutCard');
-      const tabRegisterBtn = document.getElementById('tabRegisterBtn');
-      const tabLoginBtn = document.getElementById('tabLoginBtn');
-      const registerForm = document.getElementById('registerForm');
-      const loginForm = document.getElementById('loginForm');
-      const otpSection = document.getElementById('otpSection');
-      const otpEmailTarget = document.getElementById('otpEmailTarget');
-      const otpCodeInput = document.getElementById('otpCodeInput');
-      const btnVerifyOtp = document.getElementById('btnVerifyOtp');
-      const btnResendOtp = document.getElementById('btnResendOtp');
-      const merchantNameTitle = document.getElementById('merchantNameTitle');
-      const displayApiKey = document.getElementById('displayApiKey');
-      const displayWebhookUrl = document.getElementById('displayWebhookUrl');
-      const displayQrisPayload = document.getElementById('displayQrisPayload');
-      const badgeQrisStatus = document.getElementById('badgeQrisStatus');
-      const btnSaveQrisPayload = document.getElementById('btnSaveQrisPayload');
-      const btnUploadQrisImage = document.getElementById('btnUploadQrisImage');
-      const qrisFileInput = document.getElementById('qrisFileInput');
-      const btnLogout = document.getElementById('btnLogout');
-      const btnCopyApiKey = document.getElementById('btnCopyApiKey');
-      const btnCopyWebhookUrl = document.getElementById('btnCopyWebhookUrl');
-      const btnGoogleAuth = document.getElementById('btnGoogleAuth');
-      const googleAuthWrapper = document.getElementById('googleAuthWrapper');
-
-      let pendingEmail = '';
-      let dashboardPollTimer = null;
-      let verificationPollTimer = null;
-
-      const savedMerchant = localStorage.getItem('panzzpay_merchant');
-      if (savedMerchant) {
-        const parsed = JSON.parse(savedMerchant);
-        showDashboard(parsed);
-
-        // Fetch fresh profile in the background to sync local storage with Firestore
-        if (parsed.email) {
-          const queryParams = new URLSearchParams({
-            email: parsed.email,
-            merchant_id: parsed.id || '',
-            api_key: parsed.api_key || '',
-            webhook_token: parsed.webhook_token || '',
-            qris_payload: parsed.qris_payload || ''
-          });
-          fetch('/api/auth/check-status?' + queryParams.toString())
-            .then(r => r.json())
-            .then(data => {
-              if (data.ok && data.merchant) {
-                const localMerchant = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
-                if (!data.merchant.qris_payload && localMerchant.qris_payload) {
-                  data.merchant.qris_payload = localMerchant.qris_payload;
-                }
-                localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-                showDashboard(data.merchant);
-              }
-            }).catch(e => console.warn('Gagal memuat ulang data profil merchant:', e));
-        }
-      }
-
-      tabRegisterBtn.addEventListener('click', () => {
-        registerForm.style.display = 'block';
-        loginForm.style.display = 'none';
-        otpSection.style.display = 'none';
-        if (googleAuthWrapper) googleAuthWrapper.style.display = 'block';
-        tabRegisterBtn.classList.add('active');
-        tabLoginBtn.classList.remove('active');
-      });
-
-      tabLoginBtn.addEventListener('click', () => {
-        registerForm.style.display = 'none';
-        loginForm.style.display = 'block';
-        otpSection.style.display = 'none';
-        if (googleAuthWrapper) googleAuthWrapper.style.display = 'block';
-        tabLoginBtn.classList.add('active');
-        tabRegisterBtn.classList.remove('active');
-      });
-
-      // Initialize Firebase Web Auth Client dynamically from backend configuration
-      if (typeof firebase !== 'undefined') {
-        fetch('/api/auth/config')
-          .then(r => r.json())
-          .then(config => {
-            if (config.apiKey && !firebase.apps.length) {
-              try {
-                firebase.initializeApp({
-                  apiKey: config.apiKey,
-                  authDomain: config.authDomain,
-                  projectId: config.projectId
-                });
-                console.log("🔥 [FIREBASE WEB SDK INITIALIZED] Real Google Popup Auth active!");
-              } catch (e) {
-                console.warn('Firebase client init note:', e);
-              }
-            }
-          })
-          .catch(err => console.warn('Gagal memuat konfigurasi Firebase:', err));
-      }
-
-      const googleModalOverlay = document.getElementById('googleModalOverlay');
-      const btnCloseGoogleModal = document.getElementById('btnCloseGoogleModal');
-      const customGoogleEmailInput = document.getElementById('customGoogleEmailInput');
-      const btnSubmitCustomGoogle = document.getElementById('btnSubmitCustomGoogle');
-
-      function openGoogleChooserModal() {
-        if (googleModalOverlay) googleModalOverlay.style.display = 'flex';
-      }
-
-      function closeGoogleChooserModal() {
-        if (googleModalOverlay) googleModalOverlay.style.display = 'none';
-      }
-
-      if (btnCloseGoogleModal) {
-        btnCloseGoogleModal.addEventListener('click', closeGoogleChooserModal);
-      }
-
-      async function processGoogleLogin(email, name = '', picture = '', googleId = '') {
-        closeGoogleChooserModal();
-        const cleanEmail = email.trim().toLowerCase();
-        const displayName = name || (cleanEmail.split('@')[0].charAt(0).toUpperCase() + cleanEmail.split('@')[0].slice(1) + ' (Google)');
-
-        try {
-          const res = await fetch('/api/auth/google', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: cleanEmail,
-              name: displayName,
-              google_id: googleId || 'goog_' + Date.now(),
-              picture: picture || null
-            })
-          });
-          const data = await res.json();
-          if (data.ok && data.merchant) {
-            alert('🎉 Authentikasi Google Berhasil!\n\nSelamat Datang, ' + data.merchant.name);
-            localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-            showDashboard(data.merchant);
-          } else {
-            alert(data.message || 'Gagal autentikasi via Google');
-          }
-        } catch (err) {
-          alert('Error Google Auth: ' + err.message);
-        }
-      }
-
-      document.querySelectorAll('.google-account-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const email = btn.getAttribute('data-email');
-          const name = btn.getAttribute('data-name');
-          processGoogleLogin(email, name);
-        });
-      });
-
-      if (btnSubmitCustomGoogle && customGoogleEmailInput) {
-        btnSubmitCustomGoogle.addEventListener('click', () => {
-          const val = customGoogleEmailInput.value.trim();
-          if (!val || !val.includes('@')) {
-            alert('Masukkan alamat email Gmail yang valid!');
-            return;
-          }
-          processGoogleLogin(val);
-        });
-      }
-
-      if (btnGoogleAuth) {
-        btnGoogleAuth.addEventListener('click', async () => {
-          // 1. Attempt Firebase Auth Real Google Popup if configured
-          if (typeof firebase !== 'undefined' && firebase.auth) {
-            try {
-              const provider = new firebase.auth.GoogleAuthProvider();
-              provider.setCustomParameters({ prompt: 'select_account' });
-              const result = await firebase.auth().signInWithPopup(provider);
-              if (result && result.user) {
-                processGoogleLogin(
-                  result.user.email,
-                  result.user.displayName,
-                  result.user.photoURL,
-                  result.user.uid
-                );
-                return;
-              }
-            } catch (err) {
-              console.warn('Firebase Google Auth popup note (opening Google Chooser Modal):', err.message);
-            }
-          }
-
-          // 2. Open Native Google Account Chooser Modal
-          openGoogleChooserModal();
-        });
-      }
-
-      // Auto login if redirected from 1-Click Verification Link
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('verified') === 'true' && urlParams.get('email')) {
-        const verifiedEmail = urlParams.get('email');
-        fetch('/api/auth/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: verifiedEmail })
-        }).then(r => r.json()).then(data => {
-          if (data.ok && data.merchant) {
-            alert('🎉 Verifikasi Email Berhasil melalui Link! Akun Anda Aktif.');
-            localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-            showDashboard(data.merchant);
-          }
-        });
-      }
-
-      function startVerificationPolling(email) {
-        if (!email) return;
-        if (verificationPollTimer) clearInterval(verificationPollTimer);
-
-        verificationPollTimer = setInterval(async () => {
-          try {
-            const res = await fetch(`/api/auth/check-status?email=${encodeURIComponent(email)}`);
-            const data = await res.json();
-            if (data.ok && data.status === 'ACTIVE' && data.merchant) {
-              clearInterval(verificationPollTimer);
-              verificationPollTimer = null;
-
-              localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-              alert('🎉 Email Anda Berhasil Diverifikasi!\n\nSelamat datang di PanzzPay Gateway.');
-              showDashboard(data.merchant);
-            }
-          } catch (e) {
-            console.warn('Polling status note:', e.message);
-          }
-        }, 3000);
-      }
-
-      registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('regName').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-
-        try {
-          const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-          });
-          const data = await res.json();
-          if (data.ok && data.require_otp) {
-            pendingEmail = data.email;
-            otpEmailTarget.textContent = data.email;
-            otpSection.style.display = 'block';
-            registerForm.style.display = 'none';
-            if (googleAuthWrapper) googleAuthWrapper.style.display = 'none';
-            startVerificationPolling(pendingEmail);
-            if (window.showToast) {
-              showToast(data.message, 'info');
-            } else {
-              alert(data.message);
-            }
-          } else if (data.ok) {
-            localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-            showDashboard(data.merchant);
-          } else {
-            alert(data.message);
-          }
-        } catch (err) {
-          alert('Gagal daftar: ' + err.message);
-        }
-      });
-
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-
-        try {
-          const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-          const data = await res.json();
-          if (data.ok) {
-            localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-            showDashboard(data.merchant);
-          } else if (data.require_otp) {
-            pendingEmail = data.email;
-            otpEmailTarget.textContent = data.email;
-            otpSection.style.display = 'block';
-            loginForm.style.display = 'none';
-            if (googleAuthWrapper) googleAuthWrapper.style.display = 'none';
-            startVerificationPolling(pendingEmail);
-            if (window.showToast) {
-              showToast(data.message, 'info');
-            } else {
-              alert(data.message);
-            }
-          } else {
-            alert(data.message);
-          }
-        } catch (err) {
-          alert('Gagal login: ' + err.message);
-        }
-      });
-
-      if (btnVerifyOtp) {
-        btnVerifyOtp.addEventListener('click', async () => {
-          // Legacy OTP verification handler disabled in favor of 1-Click Email Activation Links
-        });
-      }
-
-      const btnDirectActivate = document.getElementById('btnDirectActivate');
-      if (btnDirectActivate) {
-        btnDirectActivate.addEventListener('click', async () => {
-          if (!pendingEmail) return;
-          try {
-            const res = await fetch('/api/auth/verify-otp', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: pendingEmail })
-            });
-            const data = await res.json();
-            if (data.ok && data.merchant) {
-              localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-              showDashboard(data.merchant);
-            } else {
-              alert(data.message || 'Gagal mengaktifkan akun.');
-            }
-          } catch (err) {
-            alert('Gagal mengaktifkan akun: ' + err.message);
-          }
-        });
-      }
-
-      btnResendOtp.addEventListener('click', async () => {
-        let emailToUse = pendingEmail || document.getElementById('regEmail').value || document.getElementById('loginEmail').value;
-        if (!emailToUse) {
-          emailToUse = prompt('Masukkan alamat email terdaftar Anda:');
-        }
-        if (!emailToUse) return;
-
-        try {
-          const res = await fetch('/api/auth/resend-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailToUse.trim() })
-          });
-          const data = await res.json();
-          alert(data.message);
-        } catch (err) {
-          alert('Gagal mengirim ulang link: ' + err.message);
-        }
-      });
-
-      btnLogout.addEventListener('click', () => {
-        localStorage.removeItem('panzzpay_merchant');
-        merchantDashboard.style.display = 'none';
-        superAdminShortcutCard.style.display = 'none';
-        authSection.style.display = 'block';
-        otpSection.style.display = 'none';
-        registerForm.style.display = 'block';
-        loginForm.style.display = 'none';
-        tabRegisterBtn.classList.add('active');
-        tabLoginBtn.classList.remove('active');
-      });
-
-      btnCopyApiKey.addEventListener('click', () => {
-        navigator.clipboard.writeText(displayApiKey.value);
-        alert('API Key berhasil disalin!');
-      });
-
-      btnCopyWebhookUrl.addEventListener('click', () => {
-        navigator.clipboard.writeText(displayWebhookUrl.value);
-        alert('Webhook Target URL berhasil disalin!');
-      });
-
-      if (btnUploadQrisImage && qrisFileInput) {
-        btnUploadQrisImage.addEventListener('click', () => qrisFileInput.click());
-        qrisFileInput.addEventListener('change', async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-
-          const reader = new FileReader();
-          reader.onload = async (evt) => {
-            const base64Data = evt.target.result;
-            try {
-              const res = await fetch('/api/qris/decode', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image_base64: base64Data })
-              });
-              const data = await res.json();
-              if (data.ok && data.payload) {
-                displayQrisPayload.value = data.payload;
-                alert('🎉 QRIS Berhasil Didecode dari Gambar!\n\nKlik "Simpan QRIS Toko" untuk mengaktifkannya.');
-              } else {
-                alert('Gagal mendecode QRIS dari gambar: ' + (data.message || 'Format tidak dikenali.'));
-              }
-            } catch (err) {
-              alert('Gagal mengupload gambar QRIS: ' + err.message);
-            }
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
-      if (btnSaveQrisPayload) {
-        btnSaveQrisPayload.addEventListener('click', async () => {
-          const payloadVal = displayQrisPayload.value.trim();
-          if (!payloadVal) {
-            alert('Masukkan payload QRIS statis atau upload gambar QRIS Anda terlebih dahulu!');
-            return;
-          }
-
-          try {
-            const currentMerchant = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
-            const apiKeyToSend = currentMerchant.api_key || displayApiKey.value || '';
-            const res = await fetch('/api/merchant/qris-payload', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': apiKeyToSend
-              },
-              body: JSON.stringify({
-                qris_payload: payloadVal,
-                api_key: apiKeyToSend,
-                email: currentMerchant.email || '',
-                merchant_id: currentMerchant.id || ''
-              })
-            });
-            const data = await res.json();
-            if (data.ok) {
-              currentMerchant.qris_payload = data.qris_payload;
-              localStorage.setItem('panzzpay_merchant', JSON.stringify(currentMerchant));
-              alert('🎉 QRIS Statis Toko Anda Berhasil Disimpan!');
-              if (badgeQrisStatus) {
-                badgeQrisStatus.textContent = 'QRIS Toko Aktif';
-                badgeQrisStatus.className = 'badge badge-paid';
-              }
-            } else {
-              alert(data.message || 'Gagal menyimpan QRIS.');
-            }
-          } catch (err) {
-            alert('Gagal menyimpan QRIS: ' + err.message);
-          }
-        });
-      }
-
-      function showDashboard(merchant) {
-        authSection.style.display = 'none';
-        merchantDashboard.style.display = 'block';
-        merchantNameTitle.textContent = 'Halo, ' + merchant.name;
-        displayApiKey.value = merchant.api_key;
-        displayWebhookUrl.value = window.location.origin + '/api/webhook/callback?token=' + merchant.webhook_token;
-
-        if (displayQrisPayload) {
-          displayQrisPayload.value = merchant.qris_payload || '';
-        }
-        if (badgeQrisStatus) {
-          if (merchant.qris_payload) {
-            badgeQrisStatus.textContent = 'QRIS Toko Aktif';
-            badgeQrisStatus.className = 'badge badge-paid';
-          } else {
-            badgeQrisStatus.textContent = 'Default PanzzPay';
-            badgeQrisStatus.className = 'badge badge-pending';
-          }
-        }
-
-        if (merchant.role === 'superadmin' || merchant.email === 'admin@panzzpay.com') {
-          superAdminShortcutCard.style.display = 'block';
-          localStorage.setItem('panzzpay_sa_auth', 'true');
-        } else {
-          superAdminShortcutCard.style.display = 'none';
-        }
-
-        loadMerchantData(merchant.api_key);
-
-        if (dashboardPollTimer) clearInterval(dashboardPollTimer);
-        dashboardPollTimer = setInterval(async () => {
-          if (merchantDashboard.style.display !== 'none') {
-            loadMerchantData(merchant.api_key);
-
-            // Sync merchant profile (QRIS Payload) from Firestore in the background
-            if (merchant.email) {
-              try {
-                // Read fresh merchant state from local storage to get latest QRIS payload
-                const localData = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
-                const queryParams = new URLSearchParams({
-                  email: merchant.email,
-                  merchant_id: localData.id || merchant.id || '',
-                  api_key: localData.api_key || merchant.api_key || '',
-                  webhook_token: localData.webhook_token || merchant.webhook_token || '',
-                  qris_payload: localData.qris_payload || merchant.qris_payload || ''
-                });
-                const res = await fetch('/api/auth/check-status?' + queryParams.toString());
-                const data = await res.json();
-                if (data.ok && data.merchant) {
-                  const localMerchant = JSON.parse(localStorage.getItem('panzzpay_merchant') || '{}');
-                  if (!data.merchant.qris_payload && localMerchant.qris_payload) {
-                    data.merchant.qris_payload = localMerchant.qris_payload;
-                  }
-                  localStorage.setItem('panzzpay_merchant', JSON.stringify(data.merchant));
-                  if (badgeQrisStatus) {
-                    if (data.merchant.qris_payload) {
-                      badgeQrisStatus.textContent = 'QRIS Toko Aktif';
-                      badgeQrisStatus.className = 'badge badge-paid';
-                    } else {
-                      badgeQrisStatus.textContent = 'Default PanzzPay';
-                      badgeQrisStatus.className = 'badge badge-pending';
-                    }
-                  }
-                }
-              } catch(e) {}
-            }
-          }
-        }, 5000);
-      }
-
-      async function loadMerchantData(apiKey) {
-        try {
-          const res = await fetch('/api/invoices', {
-            headers: { 'X-API-KEY': apiKey }
-          });
-          const data = await res.json();
-          if (data.ok) {
-            renderMerchantInvoices(data.invoices || [], apiKey);
-          }
-        } catch (e) {
-          console.error('Error loading merchant transactions:', e);
-        }
-      }
-
-      function renderMerchantInvoices(invoices, apiKey) {
-        const body = document.getElementById('merchantTableBody');
-        let omset = 0;
-        let paidCount = 0;
-        let pendingCount = 0;
-
-        if (Array.isArray(invoices)) {
-          invoices.forEach(inv => {
-            if (inv.status === 'PAID') {
-              omset += inv.total_amount || 0;
-              paidCount++;
-            } else if (inv.status === 'PENDING') {
-              pendingCount++;
-            }
-          });
-        }
-
-        document.getElementById('statOmset').textContent = 'Rp ' + omset.toLocaleString('id-ID');
-        document.getElementById('statPaid').textContent = paidCount;
-        document.getElementById('statPending').textContent = pendingCount;
-
-        if (!invoices || invoices.length === 0) {
-          body.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada transaksi.</td></tr>';
-          return;
-        }
-
-        body.innerHTML = invoices.map(inv => {
-          const badgeClass = inv.status === 'PAID' ? 'badge-paid' : inv.status === 'EXPIRED' ? 'badge-expired' : 'badge-pending';
-          const actionBtn = inv.status === 'PENDING'
-            ? '<button onclick="markAsPaid(\'' + inv.id + '\', \'' + apiKey + '\')" class="btn btn-emerald" style="min-height: 28px; padding: 0.2rem 0.6rem; font-size: 0.72rem;">Ubah Ke PAID</button>'
-            : '-';
-
-          return `
-            <tr>
-              <td><code style="font-family: 'Fira Code', monospace; font-weight: 700;">${inv.id}</code></td>
-              <td style="font-size: 0.78rem;">${new Date(inv.created_at).toLocaleTimeString('id-ID')}</td>
-              <td><span style="font-weight: 700;">Rp ${(inv.total_amount || 0).toLocaleString('id-ID')}</span></td>
-              <td><span class="badge ${badgeClass}">${inv.status}</span></td>
-              <td style="font-size: 0.8rem;">${inv.payment_source || '-'}</td>
-              <td>${actionBtn}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      window.markAsPaid = async (id, apiKey) => {
-        if (!confirm('Apakah Anda yakin ingin mengubah transaksi ' + id + ' menjadi LUNAS secara manual?')) return;
-        try {
-          const res = await fetch('/api/merchant/invoices/' + id + '/mark-paid', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-API-KEY': apiKey }
-          });
-          const data = await res.json();
-          if (data.ok) {
-            alert(data.message);
-            loadMerchantData(apiKey);
-          } else {
-            alert(data.message);
-          }
-        } catch (e) {
-          alert('Gagal: ' + e.message);
-        }
-      };
-
-    });
-  </script>
+  <script src="/portal-secure.js" defer></script>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -30,11 +30,18 @@ panzzpay-forwarder-app/
 3. Jalankan menu **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
 4. File `.apk` siap di-install di Smartphone Android Anda!
 
+Build `debug` memakai debug key lokal Android. Untuk build `release`, signing key tidak boleh
+disimpan di repository. Isi `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS`, dan `ANDROID_KEY_PASSWORD` melalui environment variable. GitHub Actions
+juga membutuhkan secret `ANDROID_KEYSTORE_BASE64` beserta tiga nilai signing lainnya.
+
 ---
 
 ## 📱 Fitur Utama Aplikasi PanzzPay Forwarder:
 
 - [x] **Akses Notifikasi Otomatis (`NotificationListenerService`)**: Membaca push notification SMS / App dari Bank & e-Wallet (DANA, ShopeePay, GoPay, OVO, m-BCA, BRImo, Livin by Mandiri, GoBiz).
-- [x] **Pengaturan Webhook URL**: Menyimpan URL target PanzzPay Anda (`http://domain-anda.com/api/webhook/callback`).
+- [x] **Provisioning Webhook Aman**: Menyimpan URL provisioning dari dashboard dalam format `https://domain-anda.com/api/webhook/callback#token=...`. Fragment token tidak dikirim sebagai query URL; aplikasi memindahkannya ke header `Authorization: Bearer` saat request.
+- [x] **Penyimpanan Token Terenkripsi**: Token webhook dienkripsi AES-GCM menggunakan key non-exportable dari Android Keystore dan backup aplikasi dinonaktifkan.
+- [x] **Idempotency Event**: Setiap notifikasi mengirim `X-Webhook-Event-Id` agar retry tidak menggandakan pembayaran.
 - [x] **Saklar On/Off Service State**: Layanan dapat diaktifkan atau dinonaktifkan sewaktu-waktu.
 - [x] **Tombol Tes Webhook Direct**: Mengirim notifikasi tiruan 10.338 untuk menguji koneksi ke PanzzPay.

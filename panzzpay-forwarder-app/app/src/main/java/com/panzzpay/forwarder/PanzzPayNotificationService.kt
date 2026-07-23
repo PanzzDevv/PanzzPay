@@ -9,6 +9,7 @@ import android.util.Log
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
 import java.util.Locale
 import kotlin.concurrent.thread
@@ -66,7 +67,7 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
 
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
         val isServiceEnabled = prefs.getBoolean("service_enabled", true)
-        val webhookUrl = prefs.getString("webhook_url", "https://panzzpay.vercel.app/api/webhook/callback") ?: ""
+        val webhookUrl = SecurePreferences.getWebhookUrl(this)
 
         if (!isServiceEnabled || webhookUrl.isEmpty()) {
             Log.d(TAG, "PanzzPay Service is disabled or Webhook URL is empty")
@@ -81,9 +82,9 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
                 text.contains("diterima", ignoreCase = true)
 
         if (isTargetApp && text.isNotEmpty()) {
-            Log.i(TAG, "Captured Payment Notification from $packageName: $title - $text")
+            Log.i(TAG, "Captured a candidate payment notification from $packageName")
             speakNotification(text)
-            sendNotificationToWebhook(webhookUrl, packageName, title, text)
+            sendNotificationToWebhook(webhookUrl, packageName, title, text, "${sbn.key}:${sbn.postTime}")
         }
     }
 
@@ -101,14 +102,23 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
         }
     }
 
-    private fun sendNotificationToWebhook(webhookUrl: String, packageName: String, title: String, text: String) {
+    private fun sendNotificationToWebhook(webhookUrl: String, packageName: String, title: String, text: String, eventId: String) {
         thread {
             try {
-                val url = URL(webhookUrl)
+                val provisioningUri = URI(webhookUrl)
+                val token = provisioningUri.fragment.orEmpty().split('&')
+                    .firstOrNull { it.startsWith("token=") }
+                    ?.substringAfter("token=")
+                    .orEmpty()
+                if (token.isBlank()) throw IllegalArgumentException("Webhook token tidak ditemukan pada URL provisioning")
+                val cleanUri = URI(provisioningUri.scheme, provisioningUri.authority, provisioningUri.path, null, null)
+                val url = cleanUri.toURL()
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/2.0")
+                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/3.0")
+                conn.setRequestProperty("Authorization", "Bearer $token")
+                conn.setRequestProperty("X-Webhook-Event-Id", eventId)
                 conn.doOutput = true
                 conn.connectTimeout = 10000
                 conn.readTimeout = 10000
@@ -119,6 +129,7 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
                     put("package_name", packageName)
                     put("timestamp", System.currentTimeMillis())
                     put("source", "PanzzPay Android App")
+                    put("event_id", eventId)
                 }
 
                 val writer = OutputStreamWriter(conn.outputStream)

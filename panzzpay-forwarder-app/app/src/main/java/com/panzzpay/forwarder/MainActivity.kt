@@ -2,6 +2,7 @@ package com.panzzpay.forwarder
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -17,13 +18,16 @@ import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
+import java.util.UUID
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,6 +68,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         setContentView(R.layout.activity_main)
 
         switchService = findViewById(R.id.switchService)
@@ -83,7 +88,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
-        val savedUrl = prefs.getString("webhook_url", "https://panzzpay.vercel.app/api/webhook/callback?token=YOUR_WEBHOOK_TOKEN")
+        val savedUrl = SecurePreferences.getWebhookUrl(this)
         val isEnabled = prefs.getBoolean("service_enabled", true)
         val isVoiceEnabled = prefs.getBoolean("voice_enabled", true)
 
@@ -108,8 +113,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val clipData = clipboard.primaryClip
             if (clipData != null && clipData.itemCount > 0) {
                 val pastedText = clipData.getItemAt(0).text.toString().trim()
-                if (pastedText.startsWith("http://") || pastedText.startsWith("https://")) {
+                if (isValidProvisioningUrl(pastedText)) {
                     etWebhookUrl.setText(pastedText)
+                    clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
                     appendLog("URL berhasil ditempel dari Clipboard")
                     Toast.makeText(this, "URL Webhook Berhasil Ditempel!", Toast.LENGTH_SHORT).show()
                 } else {
@@ -122,12 +128,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         btnSave.setOnClickListener {
             val newUrl = etWebhookUrl.text.toString().trim()
-            if (newUrl.isNotEmpty()) {
-                prefs.edit().putString("webhook_url", newUrl).apply()
-                appendLog("Target Webhook URL disimpan: $newUrl")
+            if (isValidProvisioningUrl(newUrl) && SecurePreferences.putWebhookUrl(this, newUrl)) {
+                appendLog("Target Webhook URL disimpan secara terenkripsi")
                 Toast.makeText(this, "Target Webhook URL Disimpan!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "URL tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Gunakan URL provisioning HTTPS lengkap dari dashboard", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -148,9 +153,17 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         appendLog("PanzzPay Listener Siap & Running")
 
         // Cek pembaruan aplikasi otomatis dari server PanzzPay
-        val targetUrl = savedUrl ?: "https://panzzpay.vercel.app"
-        UpdateManager.checkForUpdate(this, targetUrl)
+        UpdateManager.checkForUpdate(this)
     }
+
+    private fun isValidProvisioningUrl(value: String): Boolean = runCatching {
+        val uri = URI(value)
+        val token = uri.fragment.orEmpty().split('&')
+            .firstOrNull { it.startsWith("token=") }
+            ?.substringAfter("token=")
+            .orEmpty()
+        uri.scheme.equals("https", ignoreCase = true) && !uri.host.isNullOrBlank() && token.length >= 32
+    }.getOrDefault(false)
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
@@ -254,11 +267,21 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         appendLog("Mengirim tes notifikasi payment [$packageName] ke Webhook...")
         thread {
             try {
-                val url = URL(webhookUrl)
+                val provisioningUri = URI(webhookUrl)
+                val token = provisioningUri.fragment.orEmpty().split('&')
+                    .firstOrNull { it.startsWith("token=") }
+                    ?.substringAfter("token=")
+                    .orEmpty()
+                if (token.isBlank()) throw IllegalArgumentException("Webhook token tidak ditemukan pada URL provisioning")
+                val cleanUri = URI(provisioningUri.scheme, provisioningUri.authority, provisioningUri.path, null, null)
+                val url = cleanUri.toURL()
+                val eventId = "test-${UUID.randomUUID()}"
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/2.0")
+                conn.setRequestProperty("User-Agent", "PanzzPay-Android-Forwarder/3.0")
+                conn.setRequestProperty("Authorization", "Bearer $token")
+                conn.setRequestProperty("X-Webhook-Event-Id", eventId)
                 conn.doOutput = true
                 conn.connectTimeout = 8000
                 conn.readTimeout = 8000
@@ -269,6 +292,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     put("package_name", packageName)
                     put("source", "PanzzPay App Test Simulation")
                     put("timestamp", System.currentTimeMillis())
+                    put("event_id", eventId)
                 }
 
                 val writer = OutputStreamWriter(conn.outputStream)

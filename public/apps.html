@@ -150,22 +150,6 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             <span>Unduh File .APK (Gratis)</span>
           </a>
-          <script>
-            fetch('/api/app/check-update')
-              .then(res => res.json())
-              .then(data => {
-                if (data && data.ok && data.downloadUrl) {
-                  const btn = document.getElementById('btnDownloadApk');
-                  if (btn) {
-                    btn.href = data.downloadUrl;
-                    const span = btn.querySelector('span');
-                    if (span && data.versionName) {
-                      span.textContent = `Unduh File .APK (v${data.versionName} Terbaru)`;
-                    }
-                  }
-                }
-              }).catch(e => console.log('Check update error:', e));
-          </script>
         </div>
       </section>
 
@@ -249,6 +233,7 @@ res = requests.post(<span class="code-string">'https://panzzpay.vercel.app/api/q
     </div>
   </main>
 
+  <script src="/apps.js" defer></script>
   <script src="/app.js"></script>
 </body>
 </html>

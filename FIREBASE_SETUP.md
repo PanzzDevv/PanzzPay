@@ -33,6 +33,10 @@ Tambahkan environment variables berikut untuk Production, Preview, dan Developme
 - `FIREBASE_MESSAGING_SENDER_ID`
 - `FIREBASE_APP_ID`
 - `FIREBASE_REQUIRED=true`
+- `NODE_ENV=production`
+- `ALLOWED_ORIGINS=https://domain-website-anda`
+- `SUPER_ADMIN_UID`: UID akun admin yang sudah dibuat di Firebase Authentication.
+- `SUPER_ADMIN_EMAIL`: email akun admin yang sama.
 
 Isi konfigurasi Firebase Web App bisa juga disimpan sebagai JSON melalui `FIREBASE_WEB_CONFIG`.
 
@@ -49,4 +53,16 @@ Setelah server hidup, endpoint berikut harus merespons HTTP 200 dengan `"status"
 GET /api/health/firebase
 ```
 
-Jika `FIREBASE_REQUIRED=true`, kegagalan read/write cloud akan diteruskan sebagai error agar aplikasi tidak diam-diam menganggap data lokal sudah tersimpan di Firebase.
+Pada production/Vercel, Firebase otomatis bersifat wajib dan aplikasi gagal tertutup jika kredensial atau koneksi cloud bermasalah. `FIREBASE_REQUIRED=true` tetap disarankan agar intent konfigurasi eksplisit.
+
+## 5. Deploy Firestore security rules dan indexes
+
+Firebase client tidak diberi akses langsung ke koleksi pembayaran. Semua operasi data melewati backend Admin SDK.
+
+```powershell
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+Aktifkan provider **Email/Password** dan **Google** pada Firebase Authentication. Tambahkan domain produksi ke **Authorized domains**. Setelah akun admin dibuat, salin UID-nya ke `SUPER_ADMIN_UID`; backend akan menetapkan role `superadmin` saat startup.
+
+Kredensial API merchant disimpan sebagai hash. API key dan URL provisioning webhook hanya ditampilkan saat pendaftaran atau rotasi melalui dashboard—Firebase tidak dapat menampilkan ulang secret aslinya.

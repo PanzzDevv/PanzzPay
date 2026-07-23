@@ -1,978 +1,713 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
+import { z } from 'zod';
+import crypto from 'crypto';
 import path from 'path';
 import https from 'https';
 import querystring from 'querystring';
-import nodemailer from 'nodemailer';
 import { fileURLToPath } from 'url';
 import { db } from './firebase.js';
+import { requireIdentity, requireMerchant, requireSessionMerchant, requireSuperAdmin, currentMerchantResponse } from './middleware/auth.js';
+import { validate } from './middleware/validate.js';
+import { buildEventId, generateId, getBearerToken, hashSecret, isTrustedOrigin, publicMerchant, securityLog, stableStringify } from './lib/security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
+const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+const sessionCookieName = '__session';
+const sessionDurationMs = 5 * 24 * 60 * 60 * 1000;
+let databaseStartupError = null;
+const databaseReady = process.env.NODE_ENV === 'test'
+  ? Promise.resolve()
+  : db.init().catch(error => {
+      databaseStartupError = error;
+      securityLog('database_startup_failed', { code: error.code, message: error.message });
+    });
 
-app.use(cors());
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      scriptSrc: ["'self'", 'https://www.gstatic.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'https://api.qrserver.com'],
+      connectSrc: [
+        "'self'",
+        'https://identitytoolkit.googleapis.com',
+        'https://securetoken.googleapis.com',
+        'https://www.googleapis.com'
+      ],
+      frameSrc: ['https://accounts.google.com', 'https://*.firebaseapp.com'],
+      upgradeInsecureRequests: isProduction ? [] : null
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  hsts: isProduction ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
 app.use((req, res, next) => {
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-  next();
+  const origin = req.get('origin');
+  const localDevelopment = !isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
+  if (origin && !localDevelopment && !isTrustedOrigin(req, origin)) {
+    securityLog('cors_origin_rejected', { origin, path: req.path, ip: req.ip });
+    return res.status(403).json({ ok: false, message: 'Origin request tidak diizinkan' });
+  }
+  return next();
 });
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.text());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({
+  credentials: true,
+  origin: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Webhook-Token', 'X-Webhook-Event-Id']
+}));
+app.use(express.json({ limit: '4mb', type: ['application/json', 'application/*+json'] }));
+app.use(express.urlencoded({ extended: false, limit: '64kb' }));
+app.use(express.text({ type: 'text/plain', limit: '64kb' }));
 
-// -------------------------------------------------------------
-// FIREBASE AUTH & OPTIONAL NODEMAILER TRANSPORTER
-// -------------------------------------------------------------
-const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-const smtpUser = process.env.SMTP_USER || '';
-const smtpPass = process.env.SMTP_PASS || '';
+const apiLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: Number(process.env.API_RATE_LIMIT) || 120,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { ok: false, message: 'Terlalu banyak request. Coba lagi sebentar.' }
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: Number(process.env.AUTH_RATE_LIMIT) || 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { ok: false, message: 'Terlalu banyak percobaan autentikasi. Coba lagi nanti.' }
+});
+const webhookLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: Number(process.env.WEBHOOK_RATE_LIMIT) || 60,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { ok: false, message: 'Batas webhook terlampaui.' }
+});
 
-let transporter = null;
-if (smtpUser && smtpPass) {
-  transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: { user: smtpUser, pass: smtpPass }
-  });
-  console.log(`✉️ [SMTP CONNECTED] Custom SMTP initialized with user: ${smtpUser}`);
-} else {
-  console.log('🔥 [FIREBASE AUTH NATIVE EMAIL MODE] Using Firebase Auth built-in email engine (noreply@panzzpay.firebaseapp.com).');
+app.use('/api', apiLimiter);
+app.use('/api', async (req, res, next) => {
+  try {
+    await databaseReady;
+    if (databaseStartupError) {
+      if (req.path === '/health/firebase') {
+        return res.status(503).json({
+          ok: false,
+          status: 'unavailable',
+          projectId: db.projectId
+        });
+      }
+      throw Object.assign(new Error('Layanan database sementara tidak tersedia.'), { status: 503 });
+    }
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
+app.use((req, res, next) => {
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+  if (!String(req.headers.cookie || '').includes(`${sessionCookieName}=`)) return next();
+  const origin = req.get('origin');
+  if (origin && !isTrustedOrigin(req, origin)) {
+    securityLog('csrf_origin_rejected', { origin, path: req.path, ip: req.ip });
+    return res.status(403).json({ ok: false, message: 'Origin request tidak diizinkan' });
+  }
+  return next();
+});
+app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny', maxAge: isProduction ? '1h' : 0 }));
+
+const emailSchema = z.string().trim().toLowerCase().email().max(254);
+const passwordSchema = z.string().min(10, 'Password minimal 10 karakter').max(128)
+  .regex(/[a-z]/, 'Password wajib memiliki huruf kecil')
+  .regex(/[A-Z]/, 'Password wajib memiliki huruf besar')
+  .regex(/[0-9]/, 'Password wajib memiliki angka');
+const registerSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: emailSchema,
+  password: passwordSchema
+}).strict();
+const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(128) }).strict();
+const resendSchema = loginSchema;
+const statusSchema = z.enum(['ACTIVE', 'SUSPENDED']);
+const qrisGenerateSchema = z.object({
+  base_amount: z.coerce.number().int().min(100).max(999_999_999),
+  unique_code: z.coerce.number().int().min(0).max(999).optional().default(0),
+  auto_unique: z.boolean().optional().default(false)
+}).strict();
+const qrisPayloadSchema = z.object({ qris_payload: z.string().trim().min(20).max(4096) }).strict();
+const imageSchema = z.object({ image_base64: z.string().startsWith('data:image/').max(4_000_000) }).strict();
+
+function sessionCookieOptions() {
+  return {
+    maxAge: sessionDurationMs,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'strict',
+    path: '/'
+  };
 }
 
-const firebaseApiKey = db.getClientConfig().apiKey;
-
-async function sendVerificationEmail(targetEmail, name = 'Merchant', reqHost = 'http://localhost:3000') {
-  const verifyLink = `${reqHost}/api/auth/verify-link?email=${encodeURIComponent(targetEmail)}`;
-
-  // 1. Firebase Admin Auth Verification Link Generator if SDK is connected
-  try {
-    const fbResult = await db.generateFirebaseVerificationLink(targetEmail, reqHost);
-    if (fbResult && fbResult.ok && fbResult.link) {
-      console.log(`🔥 [FIREBASE AUTH LINK GENERATED] For ${targetEmail}: ${fbResult.link}`);
-      return { sent: true, link: fbResult.link };
-    }
-  } catch (e) {
-    console.warn('Firebase Auth link note:', e.message);
+async function firebaseIdentityRequest(endpoint, payload) {
+  const apiKey = db.getClientConfig().apiKey;
+  if (!apiKey) throw Object.assign(new Error('FIREBASE_API_KEY belum dikonfigurasi'), { status: 503 });
+  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/${endpoint}?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10_000)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const code = data.error?.message || 'FIREBASE_AUTH_ERROR';
+    throw Object.assign(new Error(code), { code, status: 401 });
   }
+  return data;
+}
 
-  // 2. Native Firebase Auth REST API (noreply@panzzpay.firebaseapp.com)
-  if (firebaseApiKey) {
-    try {
-      let idToken = null;
-      const signUpUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseApiKey}`;
-      const signUpRes = await fetch(signUpUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail, password: 'PanzzPayUser2026!', returnSecureToken: true })
-      });
-      const signUpData = await signUpRes.json();
-      if (signUpData.idToken) {
-        idToken = signUpData.idToken;
-      } else if (signUpData.error && signUpData.error.message.includes('EMAIL_EXISTS')) {
-        const signInUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`;
-        const signInRes = await fetch(signInUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: targetEmail, password: 'PanzzPayUser2026!', returnSecureToken: true })
-        });
-        const signInData = await signInRes.json();
-        idToken = signInData.idToken || null;
-      }
+async function sendNativeVerificationEmail(email, password) {
+  const signIn = await firebaseIdentityRequest('accounts:signInWithPassword', {
+    email,
+    password,
+    returnSecureToken: true
+  });
+  await firebaseIdentityRequest('accounts:sendOobCode', {
+    requestType: 'VERIFY_EMAIL',
+    idToken: signIn.idToken
+  });
+}
 
-      if (idToken) {
-        const oobUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`;
-        const oobRes = await fetch(oobUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            requestType: 'VERIFY_EMAIL',
-            idToken: idToken
-          })
-        });
-        const oobData = await oobRes.json();
-        if (oobRes.ok) {
-          console.log(`🔥 [FIREBASE AUTH EMAIL DELIVERED] Sent via noreply@panzzpay.firebaseapp.com to ${targetEmail}`);
-          return { sent: true, provider: 'firebase' };
-        } else {
-          console.warn('⚠️ Firebase sendOobCode note:', oobData.error?.message);
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ Firebase Auth Email error:', e.message);
-    }
-  }
+async function verifyFreshIdToken(idToken) {
+  const auth = await db.getAuthSDK();
+  if (!auth) throw Object.assign(new Error('Firebase Auth tidak tersedia'), { status: 503 });
+  const decoded = await auth.verifyIdToken(idToken, true);
+  const ageSeconds = Math.floor(Date.now() / 1000) - decoded.auth_time;
+  if (ageSeconds > 5 * 60) throw Object.assign(new Error('Login terlalu lama; silakan autentikasi ulang'), { status: 401 });
+  return decoded;
+}
 
-  // 3. Custom SMTP Transporter
-  if (transporter) {
-    const mailOptions = {
-      from: `"PanzzPay Gateway" <${smtpUser || 'noreply@panzzpay.firebaseapp.com'}>`,
-      to: targetEmail,
-      subject: `[PanzzPay] Aktivasi Akun Merchant Anda`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-          <h2 style="color: #4f46e5; margin-bottom: 8px;">PanzzPay Gateway</h2>
-          <p>Halo <strong>${name}</strong>,</p>
-          <p>Terima kasih telah mendaftar di PanzzPay Gateway. Silakan klik tombol di bawah ini untuk mengaktifkan akun Anda secara instan:</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${verifyLink}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 9999px; font-weight: bold; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);">
-              Aktivasi Akun Saya
-            </a>
-          </div>
-          <p style="font-size: 0.82rem; color: #64748b;">Jika tombol di atas tidak berfungsi, Anda juga dapat membuka link berikut pada browser Anda:</p>
-          <p style="font-size: 0.82rem; color: #4f46e5; word-break: break-all;"><a href="${verifyLink}">${verifyLink}</a></p>
-        </div>
-      `
-    };
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log(`✉️ [VERIFICATION EMAIL DELIVERED] Sent to ${targetEmail}`);
-      return { sent: true, provider: 'smtp' };
-    } catch (err) {
-      console.warn(`⚠️ SMTP send error:`, err.message);
-    }
-  }
+async function issueSession(res, idToken, decodedToken) {
+  const auth = await db.getAuthSDK();
+  if (!auth) throw Object.assign(new Error('Firebase Auth tidak tersedia'), { status: 503 });
+  const decoded = decodedToken || await verifyFreshIdToken(idToken);
+  const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: sessionDurationMs });
+  res.cookie(sessionCookieName, sessionCookie, sessionCookieOptions());
+  return decoded;
+}
 
-  // 4. Fallback dev mode (returns verifyLink so client can display it if SMTP/Firebase API key is missing!)
-  console.log(`🔥 [DEV MODE VERIFICATION LINK] For ${targetEmail}: ${verifyLink}`);
-  return { sent: true, link: verifyLink };
+function safeAuthMessage(error) {
+  const mapping = {
+    EMAIL_EXISTS: 'Email sudah terdaftar.',
+    INVALID_LOGIN_CREDENTIALS: 'Email atau password salah.',
+    EMAIL_NOT_FOUND: 'Email atau password salah.',
+    INVALID_PASSWORD: 'Email atau password salah.',
+    USER_DISABLED: 'Akun dinonaktifkan.',
+    TOO_MANY_ATTEMPTS_TRY_LATER: 'Terlalu banyak percobaan. Coba lagi nanti.'
+  };
+  return mapping[error.code] || 'Autentikasi gagal.';
 }
 
 function postToUpstreamGateway(endpointPath, postParams, retries = 2) {
   return new Promise((resolve, reject) => {
     const postData = querystring.stringify(postParams);
-    const executeReq = (attempt) => {
-      const options = {
+    const executeRequest = attempt => {
+      const request = https.request({
         hostname: 'restapi.amgeekz.my.id',
         port: 443,
         path: endpointPath,
         method: 'POST',
+        timeout: 10_000,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Content-Length': Buffer.byteLength(postData),
-          'User-Agent': 'PanzzPay-API/2.0',
-          'Connection': 'close'
+          'User-Agent': 'PanzzPay-API/3.0',
+          Connection: 'close'
         }
-      };
-
-      const req = https.request(options, (res) => {
+      }, response => {
         let responseBody = '';
-        res.on('data', chunk => responseBody += chunk);
-        res.on('end', () => {
-          try { resolve(JSON.parse(responseBody)); } catch (e) { resolve({ raw: responseBody }); }
+        response.on('data', chunk => {
+          responseBody += chunk;
+          if (responseBody.length > 2_000_000) request.destroy(new Error('Respons upstream terlalu besar'));
+        });
+        response.on('end', () => {
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            return reject(new Error(`Upstream merespons HTTP ${response.statusCode}`));
+          }
+          try {
+            return resolve(JSON.parse(responseBody));
+          } catch {
+            return reject(new Error('Respons upstream bukan JSON valid'));
+          }
         });
       });
-
-      req.on('error', (err) => {
-        if (attempt < retries) setTimeout(() => executeReq(attempt + 1), 300);
-        else reject(err);
+      request.on('timeout', () => request.destroy(new Error('Upstream timeout')));
+      request.on('error', error => {
+        if (attempt < retries) return setTimeout(() => executeRequest(attempt + 1), 250 * (attempt + 1));
+        return reject(error);
       });
-
-      req.write(postData);
-      req.end();
+      request.write(postData);
+      request.end();
     };
-    executeReq(0);
+    executeRequest(0);
   });
 }
 
 function extractAmountFromText(input) {
   if (!input) return null;
-
-  if (typeof input === 'object' && input.amount) {
-    const amt = parseInt(String(input.amount).replace(/[^\d]/g, ''), 10);
-    if (!isNaN(amt) && amt >= 100) return amt;
+  if (typeof input === 'object' && input.amount !== undefined) {
+    const amount = Number(String(input.amount).replace(/[^\d]/g, ''));
+    if (Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999) return amount;
   }
-
-  let str = '';
-  if (typeof input === 'object') {
-    str = (input.message || '') + ' ' + (input.title || '') + ' ' + (input.text || '');
-    if (!str.trim()) str = JSON.stringify(input);
-  } else {
-    str = String(input);
-  }
-
-  const rpMatches = str.match(/(?:rp\.?|IDR)\s*([\d\.,]+)/gi);
-  if (rpMatches && rpMatches.length > 0) {
-    for (const match of rpMatches) {
-      const cleanNum = match.replace(/[^\d]/g, '');
-      const num = parseInt(cleanNum, 10);
-      if (!isNaN(num) && num >= 100) return num;
-    }
-  }
-
-  const allMatches = str.match(/[\d\.,]+/g);
-  if (allMatches) {
-    for (const match of allMatches) {
-      const cleanNum = match.replace(/[^\d]/g, '');
-      const num = parseInt(cleanNum, 10);
-      if (!isNaN(num) && num >= 100 && num < 1000000000) return num;
-    }
-  }
-  return null;
+  const text = typeof input === 'object'
+    ? `${input.message || ''} ${input.title || ''} ${input.text || ''}`
+    : String(input);
+  const currencyMatch = text.match(/(?:rp\.?|idr)\s*([\d.,]+)/i);
+  if (!currencyMatch) return null;
+  const amount = Number(currencyMatch[1].replace(/[^\d]/g, ''));
+  return Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999 ? amount : null;
 }
 
-// -------------------------------------------------------------
-// 1. AUTHENTICATION & FIREBASE EMAIL VERIFICATION SYSTEM
-// -------------------------------------------------------------
-app.post('/api/auth/register', async (req, res) => {
+function paymentSource(payload) {
+  const text = stableStringify(payload);
+  if (/shopeepay/i.test(text)) return 'ShopeePay';
+  if (/dana/i.test(text)) return 'DANA';
+  if (/gopay/i.test(text)) return 'GoPay';
+  if (/ovo/i.test(text)) return 'OVO';
+  if (/bca/i.test(text)) return 'm-BCA';
+  if (/brimo|bri/i.test(text)) return 'BRImo';
+  if (/mandiri|livin/i.test(text)) return 'Livin by Mandiri';
+  return 'Transfer QRIS';
+}
+
+app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req, res, next) => {
+  let createdUser = null;
   try {
-    const { name, email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ ok: false, message: 'Email dan password wajib diisi' });
-    }
-
-    const cleanEmail = String(email).toLowerCase().trim();
-    const existing = await db.getMerchantByEmail(cleanEmail);
-
-    if (existing) {
-      if (existing.status === 'UNVERIFIED') {
-        const reqHost = `${req.protocol}://${req.get('host')}`;
-        const sendResult = await sendVerificationEmail(existing.email, existing.name, reqHost);
-
-        return res.json({
-          ok: true,
-          require_otp: true,
-          email: existing.email,
-          message: 'Akun Anda belum terverifikasi. Link aktivasi baru telah dikirimkan ke email Anda!'
-        });
-      }
-      return res.status(400).json({ ok: false, message: 'Email sudah terdaftar dan aktif. Silakan login.' });
-    }
-
-    const merchantId = 'MCH-' + Date.now().toString(36).toUpperCase();
-    const apiKey = 'pz_live_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-    const webhookToken = 'pz_wh_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-
-    const merchant = {
-      id: merchantId,
-      name: name || 'Developer PanzzPay',
-      email: cleanEmail,
-      password,
-      role: 'merchant',
-      status: 'UNVERIFIED',
-      api_key: apiKey,
-      webhook_token: webhookToken,
-      created_at: new Date().toISOString()
-    };
-
-    await db.saveMerchant(merchant);
-    const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
-
-    return res.json({
-      ok: true,
-      require_otp: true,
-      email: merchant.email,
-      message: 'Pendaftaran berhasil! Silakan cek kotak masuk (atau folder Spam) pada email Anda untuk mengaktifkan akun.'
+    const auth = await db.getAuthSDK();
+    if (!auth) return res.status(503).json({ ok: false, message: 'Firebase Auth belum tersedia' });
+    createdUser = await auth.createUser({
+      email: req.body.email,
+      password: req.body.password,
+      displayName: req.body.name,
+      emailVerified: false,
+      disabled: false
     });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-// RESEND VERIFICATION LINK
-app.post('/api/auth/resend-otp', async (req, res) => {
-  try {
-    let { email } = req.body;
-    if (!email) return res.status(400).json({ ok: false, message: 'Email wajib diisi' });
-
-    const cleanEmail = String(email).toLowerCase().trim();
-    const merchant = await db.getMerchantByEmail(cleanEmail);
-    if (!merchant) return res.status(404).json({ ok: false, message: `Email '${cleanEmail}' belum terdaftar. Silakan daftar terlebih dahulu.` });
-
-    const reqHost = `${req.protocol}://${req.get('host')}`;
-    await sendVerificationEmail(merchant.email, merchant.name, reqHost);
-
-    return res.json({
+    const { credentials } = await db.provisionMerchant({
+      uid: createdUser.uid,
+      email: createdUser.email,
+      email_verified: false,
+      firebase: { sign_in_provider: 'password' }
+    }, { name: req.body.name, provider: 'password' });
+    await sendNativeVerificationEmail(req.body.email, req.body.password);
+    securityLog('merchant_registered', { uid: createdUser.uid, email: createdUser.email, ip: req.ip });
+    return res.status(201).json({
       ok: true,
-      message: 'Link verifikasi baru telah dikirimkan ke email Anda! Silakan cek kotak masuk atau folder Spam.'
-    });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-// CHECK VERIFICATION STATUS FOR AUTO-LOGIN POLLING
-app.get('/api/auth/check-status', async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) return res.status(400).json({ ok: false, message: 'Email required' });
-
-    const cleanEmail = String(email).toLowerCase().trim();
-    let merchant = await db.getMerchantByEmail(cleanEmail);
-
-    if (merchant) {
-      // Sync client-side QRIS payload back to server if server is empty
-      if (!merchant.qris_payload && req.query.qris_payload) {
-        merchant.qris_payload = req.query.qris_payload;
-        await db.saveMerchant(merchant);
-      }
-    }
-
-    // Auto-recovery fallback using client's existing credentials during serverless cold start
-    if (!merchant && cleanEmail) {
-      merchant = {
-        id: req.query.merchant_id || ('MCH-' + Date.now().toString(36).toUpperCase()),
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        role: cleanEmail === 'admin@panzzpay.com' ? 'superadmin' : 'merchant',
-        status: 'ACTIVE',
-        api_key: req.query.api_key || ('pz_live_' + Math.random().toString(36).substring(2, 10)),
-        webhook_token: req.query.webhook_token || ('pz_wh_' + Math.random().toString(36).substring(2, 10)),
-        qris_payload: req.query.qris_payload || '',
-        created_at: new Date().toISOString()
-      };
-      await db.saveMerchant(merchant);
-    }
-
-    return res.json({
-      ok: true,
-      status: merchant.status,
-      merchant: merchant
-    });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-// VERIFY EMAIL ENDPOINT VIA OTP
-app.post('/api/auth/verify-otp', async (req, res) => {
-  try {
-    const { email, otp_code } = req.body;
-    if (!email) {
-      return res.status(400).json({ ok: false, message: 'Email wajib diisi' });
-    }
-
-    const result = await db.verifyMerchantOtp(email, otp_code);
-    if (!result.ok) {
-      return res.status(400).json(result);
-    }
-
-    return res.json({
-      ok: true,
-      message: result.message,
-      merchant: {
-        id: result.merchant.id,
-        name: result.merchant.name,
-        email: result.merchant.email,
-        role: result.merchant.role,
-        status: result.merchant.status,
-        api_key: result.merchant.api_key,
-        webhook_token: result.merchant.webhook_token
+      require_verification: true,
+      message: 'Pendaftaran berhasil. Periksa email untuk verifikasi sebelum login.',
+      credentials: {
+        api_key: credentials.apiKey,
+        webhook_url: `${req.protocol}://${req.get('host')}/api/webhook/callback#token=${credentials.webhookToken}`
       }
     });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
+  } catch (error) {
+    if (createdUser && error.code !== 'auth/email-already-exists') {
+      securityLog('registration_partial_failure', { uid: createdUser.uid, code: error.code });
+    }
+    return res.status(error.code === 'auth/email-already-exists' ? 409 : (error.status || 400))
+      .json({ ok: false, message: safeAuthMessage(error) });
   }
 });
 
-// 1-CLICK VERIFICATION LINK ENDPOINT (NO CODE ENTRY NEEDED)
-app.get('/api/auth/verify-link', async (req, res) => {
+app.post('/api/auth/login', authLimiter, validate(loginSchema), async (req, res) => {
   try {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).send('<div style="font-family:sans-serif;text-align:center;padding:40px;"><h2>⚠️ Parameter Email tidak valid</h2></div>');
+    const signIn = await firebaseIdentityRequest('accounts:signInWithPassword', {
+      email: req.body.email,
+      password: req.body.password,
+      returnSecureToken: true
+    });
+    const decoded = await verifyFreshIdToken(signIn.idToken);
+    if (!decoded.email_verified) {
+      return res.status(403).json({ ok: false, code: 'EMAIL_NOT_VERIFIED', message: 'Verifikasi email terlebih dahulu.' });
     }
-
-    const result = await db.verifyMerchantOtp(email, null);
-    if (result.ok) {
-      return res.redirect(`/portal.html?verified=true&email=${encodeURIComponent(email)}`);
-    } else {
-      return res.status(400).send(`<div style="font-family:sans-serif;text-align:center;padding:40px;"><h2>⚠️ ${result.message}</h2></div>`);
-    }
-  } catch (err) {
-    return res.status(500).send(`<div style="font-family:sans-serif;text-align:center;padding:40px;"><h2>⚠️ Error: ${err.message}</h2></div>`);
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ ok: false, message: 'Email dan password wajib diisi' });
-    }
-
-    const merchant = await db.getMerchantByEmail(email);
-    if (!merchant || merchant.password !== password) {
-      return res.status(401).json({ ok: false, message: 'Email atau password salah' });
-    }
-
-    if (merchant.status === 'UNVERIFIED') {
-      merchant.status = 'ACTIVE';
-      await db.saveMerchant(merchant);
-    }
-
-    if (merchant.status === 'UNVERIFIED') {
-      const reqHost = `${req.protocol}://${req.get('host')}`;
-      await sendVerificationEmail(merchant.email, merchant.name, reqHost);
-
-      return res.status(403).json({
-        ok: false,
-        require_otp: true,
-        email: merchant.email,
-        message: 'Akun Anda belum terverifikasi! Link verifikasi baru telah dikirimkan ke email Anda.'
-      });
-    }
-
+    const { merchant } = await db.provisionMerchant(decoded, { provider: 'password' });
     if (merchant.status === 'SUSPENDED') {
-      return res.status(403).json({ ok: false, message: 'Akun Anda dinonaktifkan/ditangguhkan oleh Super Admin.' });
+      return res.status(403).json({ ok: false, message: 'Akun ditangguhkan.' });
     }
-
-    return res.json({
-      ok: true,
-      message: 'Login berhasil!',
-      merchant: {
-        id: merchant.id,
-        name: merchant.name,
-        email: merchant.email,
-        role: merchant.role || 'merchant',
-        status: merchant.status || 'ACTIVE',
-        api_key: merchant.api_key,
-        webhook_token: merchant.webhook_token
-      }
-    });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
+    await issueSession(res, signIn.idToken, decoded);
+    securityLog('login_succeeded', { uid: decoded.uid, ip: req.ip });
+    return res.json({ ok: true, merchant: currentMerchantResponse(merchant) });
+  } catch (error) {
+    securityLog('login_failed', { email: req.body.email, ip: req.ip, code: error.code });
+    return res.status(error.status || 401).json({ ok: false, message: safeAuthMessage(error) });
   }
 });
 
-// GOOGLE AUTHENTICATION (SIGN UP & LOGIN) ENDPOINT
-app.post('/api/auth/google', async (req, res) => {
+app.post('/api/auth/google', authLimiter, requireIdentity({ allowSession: false }), async (req, res, next) => {
   try {
-    const { email, name, google_id, picture } = req.body;
-    if (!email) {
-      return res.status(400).json({ ok: false, message: 'Email Google wajib diisi' });
+    const idToken = getBearerToken(req.headers.authorization);
+    const decoded = await verifyFreshIdToken(idToken);
+    const { merchant, credentials } = await db.provisionMerchant(decoded, { provider: 'google.com' });
+    if (merchant.status === 'SUSPENDED') {
+      return res.status(403).json({ ok: false, message: 'Akun ditangguhkan.' });
     }
-
-    const cleanEmail = email.toLowerCase();
-    let merchant = await db.getMerchantByEmail(cleanEmail);
-
-    if (merchant) {
-      if (merchant.status === 'SUSPENDED') {
-        return res.status(403).json({ ok: false, message: 'Akun Anda dinonaktifkan/ditangguhkan oleh Super Admin.' });
-      }
-
-      if (merchant.status === 'UNVERIFIED') {
-        merchant.status = 'ACTIVE';
-        delete merchant.otp_code;
-        await db.saveMerchant(merchant);
-      }
-    } else {
-      const merchantId = 'MCH-' + Date.now().toString(36).toUpperCase();
-      const apiKey = 'pz_live_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-      const webhookToken = 'pz_wh_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-
-      merchant = {
-        id: merchantId,
-        name: name || (cleanEmail.split('@')[0] + ' (Google)'),
-        email: cleanEmail,
-        password: 'GOOGLE_AUTH_' + Math.random().toString(36).substring(2, 12),
-        role: 'merchant',
-        status: 'ACTIVE',
-        provider: 'google',
-        google_id: google_id || null,
-        picture: picture || null,
-        api_key: apiKey,
-        webhook_token: webhookToken,
-        created_at: new Date().toISOString()
-      };
-
-      await db.saveMerchant(merchant);
-    }
-
+    await issueSession(res, idToken, decoded);
     return res.json({
       ok: true,
-      message: 'Authentikasi Google berhasil!',
-      merchant: {
-        id: merchant.id,
-        name: merchant.name,
-        email: merchant.email,
-        role: merchant.role || 'merchant',
-        status: merchant.status || 'ACTIVE',
-        api_key: merchant.api_key,
-        webhook_token: merchant.webhook_token
-      }
+      merchant: currentMerchantResponse(merchant),
+      credentials: credentials ? {
+        api_key: credentials.apiKey,
+        webhook_url: `${req.protocol}://${req.get('host')}/api/webhook/callback#token=${credentials.webhookToken}`
+      } : undefined
     });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
+  } catch (error) {
+    return next(error);
   }
 });
 
-// GET FIREBASE CLIENT CONFIGURATION
+app.post('/api/auth/resend-verification', authLimiter, validate(resendSchema), async (req, res) => {
+  try {
+    await sendNativeVerificationEmail(req.body.email, req.body.password);
+  } catch (error) {
+    securityLog('verification_resend_failed', { email: req.body.email, ip: req.ip, code: error.code });
+  }
+  return res.json({ ok: true, message: 'Jika kredensial benar, email verifikasi telah dikirim ulang.' });
+});
+
+app.get('/api/auth/me', requireSessionMerchant, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  return res.json({ ok: true, merchant: currentMerchantResponse(req.merchant) });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie(sessionCookieName, sessionCookieOptions());
+  return res.json({ ok: true });
+});
+
+app.all(['/api/auth/check-status', '/api/auth/verify-otp', '/api/auth/verify-link', '/api/auth/resend-otp'], (req, res) => {
+  return res.status(410).json({ ok: false, message: 'Endpoint autentikasi lama sudah dinonaktifkan demi keamanan.' });
+});
+
 app.get('/api/auth/config', (req, res) => {
   const config = db.getClientConfig();
-  res.json({ ...config, enabled: Boolean(config.apiKey && config.projectId) });
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.json({ ...config, enabled: Boolean(config.apiKey && config.projectId) });
 });
 
 app.get('/api/health/firebase', async (req, res) => {
+  const health = await db.getHealth(true);
+  return res.status(health.ok ? 200 : 503).json({ ok: health.ok, status: health.status, projectId: health.projectId });
+});
+
+app.get('/api/superadmin/merchants', requireSuperAdmin, async (req, res, next) => {
   try {
-    const health = await db.getHealth(true);
-    return res.status(health.ok ? 200 : 503).json(health);
-  } catch (error) {
-    return res.status(503).json({
-      ok: false,
-      status: 'error',
-      projectId: db.projectId,
-      error: error.message
+    const [merchants, invoices] = await Promise.all([db.getAllMerchants(), db.getAllInvoices()]);
+    return res.json({
+      ok: true,
+      merchants: merchants.map(merchant => {
+        const merchantInvoices = invoices.filter(invoice => invoice.merchant_id === merchant.id);
+        return {
+          ...publicMerchant(merchant),
+          total_invoices: merchantInvoices.length,
+          total_omset: merchantInvoices.filter(invoice => invoice.status === 'PAID')
+            .reduce((sum, invoice) => sum + Number(invoice.total_amount || 0), 0)
+        };
+      })
     });
+  } catch (error) {
+    return next(error);
   }
 });
 
-// -------------------------------------------------------------
-// 2. SUPER ADMIN ENDPOINTS
-// -------------------------------------------------------------
-function requireSuperAdmin(req, res, next) {
-  const adminKey = req.headers['x-admin-key'] || req.query.admin_key || req.body.admin_key;
-  const expectedAdminKey = process.env.SUPER_ADMIN_API_KEY || 'pz_admin_master_key_99999';
-  if (adminKey !== expectedAdminKey) {
-    return res.status(403).json({ ok: false, message: 'Akses Ditolak. Membutuhkan Master Key Super Admin.' });
-  }
-  next();
-}
-
-app.get('/api/superadmin/merchants', requireSuperAdmin, async (req, res) => {
-  const merchants = await db.getAllMerchants();
-  const invoices = await db.getAllInvoices();
-
-  const result = merchants.map(m => {
-    const mInvoices = invoices.filter(inv => inv.merchant_id === m.id);
-    const omset = mInvoices.filter(inv => inv.status === 'PAID').reduce((sum, inv) => sum + inv.total_amount, 0);
-    return {
-      ...m,
-      total_invoices: mInvoices.length,
-      total_omset: omset
-    };
-  });
-
-  res.json({ ok: true, merchants: result });
-});
-
-app.post('/api/superadmin/merchants/:id/toggle-status', requireSuperAdmin, async (req, res) => {
-  const { status } = req.body;
-  const updated = await db.toggleMerchantStatus(req.params.id, status || 'SUSPENDED');
-  if (!updated) return res.status(404).json({ ok: false, message: 'Merchant tidak ditemukan' });
-  res.json({ ok: true, message: `Status merchant ${updated.name} diubah menjadi ${updated.status}`, merchant: updated });
-});
-
-app.get('/api/superadmin/stats', requireSuperAdmin, async (req, res) => {
-  const merchants = await db.getAllMerchants();
-  const invoices = await db.getAllInvoices();
-  const logs = await db.getAllWebhookLogs();
-
-  const totalOmset = invoices.filter(inv => inv.status === 'PAID').reduce((sum, inv) => sum + inv.total_amount, 0);
-
-  res.json({
-    ok: true,
-    stats: {
-      total_platform_omset: totalOmset,
-      total_merchants: merchants.filter(m => m.role !== 'superadmin').length,
-      total_invoices: invoices.length,
-      total_paid_invoices: invoices.filter(inv => inv.status === 'PAID').length,
-      total_webhook_logs: logs.length
-    }
-  });
-});
-
-// -------------------------------------------------------------
-// 3. GENERATE DYNAMIC QRIS (Multi-Tenant)
-// -------------------------------------------------------------
-app.post('/api/qris/generate', async (req, res) => {
-  try {
-    let { base_amount, unique_code, payload_static, amount, auto_unique, api_key } = req.body;
-    const apiKeyHeader = req.headers['x-api-key'] || api_key;
-
-    let merchant = null;
-    if (apiKeyHeader) {
-      merchant = await db.getMerchantByApiKey(apiKeyHeader);
-      if (merchant && merchant.status === 'SUSPENDED') {
-        return res.status(403).json({ ok: false, message: 'Akun merchant Anda dinonaktifkan oleh Super Admin.' });
-      }
-    }
-
-    base_amount = parseInt(base_amount || 0, 10);
-    unique_code = parseInt(unique_code || 0, 10);
-
-    if (auto_unique || (!unique_code && base_amount > 0)) {
-      unique_code = Math.floor(Math.random() * 899) + 100;
-    }
-
-    const merchantPayload = (merchant && merchant.qris_payload) ? merchant.qris_payload : null;
-    const defaultStaticPayload = '00020101021126570011ID.DANA.WWW011893600915300000000002150000000000000005204581253033605802ID5911PanzzPayDemo6007JAKARTA6304ABCD';
-    const activePayload = payload_static || merchantPayload || defaultStaticPayload;
-
-    const postParams = { qr: 'png', payload_static: activePayload };
-    if (base_amount > 0) postParams.base_amount = base_amount;
-    if (unique_code > 0) postParams.unique_code = unique_code;
-    if (amount > 0) postParams.amount = amount;
-
-    let data;
+app.post('/api/superadmin/merchants/:id/toggle-status', requireSuperAdmin,
+  validate(z.object({ status: statusSchema }).strict()), async (req, res, next) => {
     try {
-      data = await postToUpstreamGateway('/qris/dynamic', postParams);
-    } catch (netErr) {
-      const total = (base_amount + unique_code) || amount || 10000;
-      data = {
-        base_amount, unique_code, total,
-        payload: (payload_static || defaultStaticPayload) + total,
-        qr_png_data_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
-      };
+      if (req.params.id === req.merchant.id) return res.status(400).json({ ok: false, message: 'Admin tidak dapat menangguhkan dirinya sendiri.' });
+      const updated = await db.toggleMerchantStatus(req.params.id, req.body.status);
+      if (!updated) return res.status(404).json({ ok: false, message: 'Merchant tidak ditemukan' });
+      securityLog('merchant_status_changed', { adminUid: req.merchant.id, merchantId: updated.id, status: updated.status });
+      return res.json({ ok: true, merchant: publicMerchant(updated) });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+app.get('/api/superadmin/stats', requireSuperAdmin, async (req, res, next) => {
+  try {
+    const [merchants, invoices, logs] = await Promise.all([
+      db.getAllMerchants(), db.getAllInvoices(), db.getAllWebhookLogs()
+    ]);
+    return res.json({
+      ok: true,
+      stats: {
+        total_platform_omset: invoices.filter(invoice => invoice.status === 'PAID').reduce((sum, invoice) => sum + Number(invoice.total_amount || 0), 0),
+        total_merchants: merchants.filter(merchant => merchant.role !== 'superadmin').length,
+        total_invoices: invoices.length,
+        total_paid_invoices: invoices.filter(invoice => invoice.status === 'PAID').length,
+        total_webhook_logs: logs.length
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/qris/generate', requireMerchant, validate(qrisGenerateSchema), async (req, res, next) => {
+  try {
+    let { base_amount: baseAmount, unique_code: uniqueCode, auto_unique: autoUnique } = req.body;
+    if (autoUnique || !uniqueCode) {
+      let available = false;
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        uniqueCode = crypto.randomInt(100, 1000);
+        const collision = await db.getPendingInvoiceByAmount(req.merchant.id, baseAmount + uniqueCode);
+        if (!collision) {
+          available = true;
+          break;
+        }
+      }
+      if (!available) return res.status(409).json({ ok: false, message: 'Tidak dapat memperoleh kode unik pembayaran. Coba lagi.' });
+    } else {
+      const collision = await db.getPendingInvoiceByAmount(req.merchant.id, baseAmount + uniqueCode);
+      if (collision) return res.status(409).json({ ok: false, message: 'Nominal total sedang dipakai invoice pending lain.' });
+    }
+    if (baseAmount + uniqueCode > 999_999_999) {
+      return res.status(400).json({ ok: false, message: 'Nominal total melebihi batas maksimum.' });
+    }
+    const activePayload = req.merchant.qris_payload;
+    if (!activePayload) return res.status(400).json({ ok: false, message: 'Merchant belum mengatur payload QRIS statis.' });
+
+    const upstream = await postToUpstreamGateway('/qris/dynamic', {
+      qr: 'png',
+      payload_static: activePayload,
+      base_amount: baseAmount,
+      unique_code: uniqueCode
+    });
+    if (typeof upstream.payload !== 'string' || upstream.payload.length > 4096 ||
+        typeof upstream.qr_png_data_url !== 'string' || upstream.qr_png_data_url.length > 2_000_000 ||
+        !/^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=\r\n]+$/i.test(upstream.qr_png_data_url)) {
+      return res.status(502).json({ ok: false, message: 'Provider QRIS mengembalikan respons tidak lengkap.' });
     }
 
-    const invoiceId = 'INV-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
     const invoice = {
-      id: invoiceId,
-      merchant_id: merchant ? merchant.id : 'GLOBAL',
-      merchant_name: merchant ? merchant.name : 'PanzzPay Gateway',
-      base_amount: data.base_amount || base_amount,
-      unique_code: data.unique_code || unique_code,
-      total_amount: data.total || (base_amount + unique_code) || amount,
-      payload: data.payload,
-      qr_png_data_url: data.qr_png_data_url,
+      id: generateId('INV-'),
+      merchant_id: req.merchant.id,
+      merchant_name: req.merchant.name,
+      base_amount: baseAmount,
+      unique_code: uniqueCode,
+      total_amount: baseAmount + uniqueCode,
+      payload: upstream.payload,
+      qr_png_data_url: upstream.qr_png_data_url,
+      currency: 'IDR',
       status: 'PENDING',
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
+      expires_at: new Date(Date.now() + 15 * 60_000).toISOString()
     };
-
     await db.saveInvoice(invoice);
-
-    return res.json({ ok: true, invoice });
+    return res.status(201).json({ ok: true, invoice });
   } catch (error) {
-    return res.status(500).json({ ok: false, message: 'Server error: ' + error.message });
+    return next(error);
   }
 });
 
-// -------------------------------------------------------------
-// 4. INVOICES & WEBHOOK CALLBACKS
-// -------------------------------------------------------------
-app.get('/api/invoices', async (req, res) => {
+app.get('/api/invoices', requireMerchant, async (req, res, next) => {
   try {
-    const apiKeyHeader = req.headers['x-api-key'] || req.query.api_key;
-    let merchantId = null;
-    if (apiKeyHeader) {
-      const merchant = await db.getMerchantByApiKey(apiKeyHeader);
-      if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid' });
-      merchantId = merchant.id;
-    }
-
-    const list = await db.getInvoicesByMerchant(merchantId);
-    return res.json({ ok: true, invoices: list });
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const invoices = await db.getInvoicesByMerchant(req.merchant.id, { limit, cursor: req.query.cursor });
+    return res.json({ ok: true, invoices, next_cursor: invoices.length === limit ? invoices.at(-1)?.created_at : null });
   } catch (error) {
-    return res.status(500).json({ ok: false, message: error.message, invoices: [] });
+    return next(error);
   }
 });
 
-app.get('/api/invoices/:id', async (req, res) => {
+app.get('/api/invoices/:id', async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const invoice = await db.getInvoice(id);
-    if (!invoice) {
-      return res.status(404).json({ ok: false, message: 'Invoice tidak ditemukan' });
-    }
-    if (invoice.status === 'PENDING' && invoice.expires_at && new Date() > new Date(invoice.expires_at)) {
-      const expiredInvoice = await db.updateInvoiceStatus(invoice.id, 'EXPIRED');
-      return res.json({ ok: true, invoice: expiredInvoice });
-    }
-    return res.json({ ok: true, invoice });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-app.get('/api/webhook/logs', async (req, res) => {
-  try {
-    const apiKeyHeader = req.headers['x-api-key'] || req.query.api_key;
-    let merchantId = null;
-    if (apiKeyHeader) {
-      const merchant = await db.getMerchantByApiKey(apiKeyHeader);
-      if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid', logs: [] });
-      merchantId = merchant.id;
-    }
-    const logs = merchantId
-      ? await db.getWebhookLogsByMerchant(merchantId)
-      : await db.getAllWebhookLogs();
-    res.json({ ok: true, logs: logs || [] });
-  } catch (err) {
-    res.status(500).json({ ok: false, message: err.message, logs: [] });
-  }
-});
-
-app.post('/api/qris/decode', async (req, res) => {
-  try {
-    const { image_base64 } = req.body;
-    if (!image_base64) {
-      return res.status(400).json({ ok: false, message: 'File gambar base64 tidak ditemukan' });
-    }
-
-    try {
-      const formData = new FormData();
-      const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
-      const blob = new Blob([buffer], { type: 'image/png' });
-      formData.append('file', blob, 'qrcode.png');
-
-      const qrRes = await fetch('https://api.qrserver.com/v1/read-qr-code/', {
-        method: 'POST',
-        body: formData
-      });
-
-      const qrData = await qrRes.json();
-      if (Array.isArray(qrData) && qrData[0]?.symbol[0]?.data) {
-        const payload = qrData[0].symbol[0].data;
-        return res.json({ ok: true, payload, message: 'QR Code berhasil didecode!' });
-      }
-    } catch (apiErr) {
-      console.log('Online QR decode service fallback:', apiErr.message);
-    }
-
-    // Fallback payload if online decoder service is unavailable or couldn't parse image
-    return res.json({
-      ok: true,
-      payload: '00020101021126570011ID.DANA.WWW011893600915300000000002150000000000000005204581253033605802ID5911PanzzPayDemo6007JAKARTA6304ABCD',
-      message: 'QR Code berhasil diekstrak (Payload Statis PanzzPay)'
-    });
-
-  } catch (err) {
-    console.error('QR Decode error:', err);
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-app.post('/api/merchant/invoices/:id/mark-paid', async (req, res) => {
-  try {
-    const apiKeyHeader = req.headers['x-api-key'] || req.body.api_key;
-    const merchant = await db.getMerchantByApiKey(apiKeyHeader);
-    if (!merchant) return res.status(401).json({ ok: false, message: 'API Key tidak valid' });
-
     const invoice = await db.getInvoice(req.params.id);
     if (!invoice) return res.status(404).json({ ok: false, message: 'Invoice tidak ditemukan' });
-
-    const updated = await db.updateInvoiceStatus(invoice.id, 'PAID', {
-      paid_at: new Date().toISOString(),
-      payment_source: 'Manual Admin Override'
-    });
-
-    return res.json({ ok: true, message: `Invoice ${invoice.id} berhasil diubah ke PAID!`, invoice: updated });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-app.post('/api/merchant/qris-payload', async (req, res) => {
-  try {
-    const apiKeyHeader = req.headers['x-api-key'] || req.headers['X-API-KEY'] || req.body.api_key || req.query.api_key;
-    let { qris_payload, email, merchant_id } = req.body;
-
-    let merchant = null;
-    if (apiKeyHeader) {
-      merchant = await db.getMerchantByApiKey(apiKeyHeader);
+    let current = invoice;
+    if (invoice.status === 'PENDING' && invoice.expires_at && Date.now() > Date.parse(invoice.expires_at)) {
+      current = await db.updateInvoiceStatus(invoice.id, 'EXPIRED');
     }
-    if (!merchant && email) {
-      merchant = await db.getMerchantByEmail(email);
-    }
-    if (!merchant && merchant_id) {
-      merchant = await db.getMerchantById(merchant_id);
-    }
-
-    if (!merchant && (apiKeyHeader || email || merchant_id)) {
-      merchant = {
-        id: merchant_id || ('MCH-' + Date.now()),
-        name: email ? email.split('@')[0] : 'Merchant',
-        email: email || 'merchant@panzzpay.com',
-        api_key: apiKeyHeader || ('pz_live_' + Date.now()),
-        webhook_token: 'pz_wh_' + Date.now(),
-        qris_payload: qris_payload ? qris_payload.trim() : '',
-        status: 'ACTIVE',
-        created_at: new Date().toISOString()
-      };
-      await db.saveMerchant(merchant);
-    }
-
-    if (!merchant) return res.status(401).json({ ok: false, message: 'Autentikasi merchant tidak valid. Silakan login ulang.' });
-
-    if (!qris_payload || typeof qris_payload !== 'string') {
-      return res.status(400).json({ ok: false, message: 'Payload QRIS tidak boleh kosong' });
-    }
-
-    merchant.qris_payload = qris_payload.trim();
-    await db.saveMerchant(merchant);
-
     return res.json({
       ok: true,
-      message: 'QRIS Statis Toko Anda berhasil disimpan!',
-      qris_payload: merchant.qris_payload
-    });
-  } catch (err) {
-    return res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-app.post('/api/webhook/callback', async (req, res) => {
-  const token = req.query.token || req.headers['authorization'] || 'DEFAULT_TOKEN';
-  const body = req.body;
-  const rawText = typeof body === 'object' ? JSON.stringify(body) : String(body);
-  const extractedAmount = extractAmountFromText(body);
-
-  let merchant = await db.getMerchantByWebhookToken(token);
-  if (merchant && merchant.status === 'SUSPENDED') {
-    return res.status(403).json({ ok: false, message: 'Merchant account is suspended.' });
-  }
-
-  let source = 'Transfer QRIS';
-  if (/shopeepay/i.test(rawText)) source = 'ShopeePay';
-  else if (/dana/i.test(rawText)) source = 'DANA';
-  else if (/gopay/i.test(rawText)) source = 'GoPay';
-  else if (/ovo/i.test(rawText)) source = 'OVO';
-  else if (/bca/i.test(rawText)) source = 'm-BCA';
-  else if (/brimo|bri/i.test(rawText)) source = 'BRImo';
-  else if (/mandiri|livin/i.test(rawText)) source = 'Livin by Mandiri';
-
-  let matchedInvoice = null;
-  if (extractedAmount) {
-    const allInvoices = await db.getAllInvoices();
-    const activeInvoices = allInvoices.filter(inv => inv.status === 'PENDING');
-    for (const inv of activeInvoices) {
-      if (inv.total_amount === extractedAmount) {
-        matchedInvoice = await db.updateInvoiceStatus(inv.id, 'PAID', {
-          paid_at: new Date().toISOString(),
-          payment_source: source
-        });
-        break;
+      invoice: {
+        id: current.id,
+        base_amount: current.base_amount,
+        unique_code: current.unique_code,
+        total_amount: current.total_amount,
+        currency: current.currency || 'IDR',
+        status: current.status,
+        payment_source: current.payment_source || null,
+        created_at: current.created_at,
+        expires_at: current.expires_at,
+        paid_at: current.paid_at || null
       }
-    }
-
-    if (!matchedInvoice && merchant && extractedAmount >= 100) {
-      const autoInvId = 'INV-FWD-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
-      matchedInvoice = {
-        id: autoInvId,
-        merchant_id: merchant.id,
-        merchant_name: merchant.name,
-        base_amount: extractedAmount,
-        unique_code: 0,
-        total_amount: extractedAmount,
-        status: 'PAID',
-        payment_source: source + ' (Forwarder HP)',
-        created_at: new Date().toISOString(),
-        paid_at: new Date().toISOString()
-      };
-      await db.saveInvoice(matchedInvoice);
-      console.log(`✅ [AUTO INVOICE RECORDED] Created transaction ${autoInvId} for ${merchant.name} (Rp ${extractedAmount})`);
-    }
+    });
+  } catch (error) {
+    return next(error);
   }
-
-  const logEntry = {
-    id: 'LOG-' + Date.now(),
-    merchant_id: merchant ? merchant.id : 'GLOBAL',
-    received_at: new Date().toISOString(),
-    token, raw_payload: body,
-    extracted_amount: extractedAmount,
-    matched_invoice_id: matchedInvoice ? matchedInvoice.id : null,
-    source, status: matchedInvoice ? 'MATCHED' : 'UNMATCHED'
-  };
-
-  await db.saveWebhookLog(logEntry);
-
-  return res.json({
-    ok: true,
-    message: matchedInvoice ? `Pembayaran Rp ${extractedAmount.toLocaleString('id-ID')} Berhasil Divalidasi!` : 'Webhook diterima.',
-    log: logEntry,
-    matched_invoice: matchedInvoice
-  });
 });
 
-// -------------------------------------------------------------
-// APP AUTO-UPDATE ENDPOINT FOR NATIVE APK (AUTOMATED GITHUB RELEASES)
-// -------------------------------------------------------------
-app.get('/api/app/check-update', async (req, res) => {
-  const host = req.get('host') || `localhost:${PORT}`;
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-  const baseUrl = `${protocol}://${host}`;
-
+app.get('/api/webhook/logs', requireMerchant, async (req, res, next) => {
   try {
-    const ghRes = await fetch('https://api.github.com/repos/PanzzDevv/PanzzPay/releases/latest', {
-      headers: { 'User-Agent': 'PanzzPay-Server' }
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const logs = await db.getWebhookLogsByMerchant(req.merchant.id, { limit, cursor: req.query.cursor });
+    return res.json({ ok: true, logs, next_cursor: logs.length === limit ? logs.at(-1)?.received_at : null });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/qris/decode', requireSessionMerchant, validate(imageSchema), async (req, res, next) => {
+  try {
+    const base64Data = req.body.image_base64.replace(/^data:image\/[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    if (!buffer.length || buffer.length > 3_000_000) return res.status(400).json({ ok: false, message: 'Ukuran gambar QRIS tidak valid.' });
+    const formData = new FormData();
+    formData.append('file', new Blob([buffer], { type: 'image/png' }), 'qrcode.png');
+    const response = await fetch('https://api.qrserver.com/v1/read-qr-code/', {
+      method: 'POST', body: formData, signal: AbortSignal.timeout(10_000)
     });
+    if (!response.ok) return res.status(502).json({ ok: false, message: 'Layanan pembaca QR sedang tidak tersedia.' });
+    const result = await response.json();
+    const payload = result?.[0]?.symbol?.[0]?.data;
+    if (!payload || typeof payload !== 'string') return res.status(422).json({ ok: false, message: 'QRIS tidak dapat dibaca.' });
+    return res.json({ ok: true, payload });
+  } catch (error) {
+    return next(error);
+  }
+});
 
-    if (ghRes.ok) {
-      const release = await ghRes.json();
-      const tag = release.tag_name || 'v2.1.0';
-      const apkAsset = release.assets?.find(a => a.name.endsWith('.apk'));
-      const downloadUrl = apkAsset
-        ? apkAsset.browser_download_url
-        : 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk';
+app.post('/api/merchant/invoices/:id/mark-paid', requireSessionMerchant, async (req, res, next) => {
+  try {
+    const updated = await db.updateOwnedInvoiceStatus(req.params.id, req.merchant.id, 'PAID', {
+      paid_at: new Date().toISOString(),
+      payment_source: 'Manual Merchant Override'
+    });
+    if (!updated) return res.status(404).json({ ok: false, message: 'Invoice merchant tidak ditemukan' });
+    securityLog('invoice_manually_paid', { merchantId: req.merchant.id, invoiceId: updated.id, ip: req.ip });
+    return res.json({ ok: true, invoice: updated });
+  } catch (error) {
+    return next(error);
+  }
+});
 
-      // Parse version code e.g. "v2.1.4" -> 214
-      const numParts = tag.replace(/[^0-9.]/g, '').split('.').map(n => parseInt(n) || 0);
-      let calcCode = 210;
-      if (numParts.length >= 3) {
-        calcCode = numParts[0] * 100 + numParts[1] * 10 + numParts[2];
-      } else if (numParts.length === 2) {
-        calcCode = numParts[0] * 100 + numParts[1] * 10;
+app.post('/api/merchant/qris-payload', requireSessionMerchant, validate(qrisPayloadSchema), async (req, res, next) => {
+  try {
+    const merchant = await db.saveMerchant({ ...req.merchant, qris_payload: req.body.qris_payload });
+    return res.json({ ok: true, merchant: currentMerchantResponse(merchant) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/merchant/credentials/rotate', requireSessionMerchant, async (req, res, next) => {
+  try {
+    const result = await db.rotateMerchantCredentials(req.merchant.id);
+    securityLog('merchant_credentials_rotated', { merchantId: req.merchant.id, ip: req.ip });
+    return res.json({
+      ok: true,
+      message: 'Kredensial lama langsung tidak berlaku. Simpan kredensial baru sekarang.',
+      credentials: {
+        api_key: result.credentials.apiKey,
+        webhook_url: `${req.protocol}://${req.get('host')}/api/webhook/callback#token=${result.credentials.webhookToken}`
       }
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
 
+app.post('/api/webhook/callback', webhookLimiter, async (req, res, next) => {
+  try {
+    if (req.query.token) return res.status(400).json({ ok: false, message: 'Token pada URL tidak lagi diterima. Gunakan Authorization: Bearer.' });
+    const token = getBearerToken(req.headers.authorization) || req.get('x-webhook-token');
+    if (!token) return res.status(401).json({ ok: false, message: 'Webhook token diperlukan' });
+    const merchant = await db.getMerchantByWebhookToken(token);
+    if (!merchant || merchant.status !== 'ACTIVE') return res.status(401).json({ ok: false, message: 'Webhook token tidak valid' });
+
+    const amount = extractAmountFromText(req.body);
+    if (!amount) return res.status(422).json({ ok: false, message: 'Nominal pembayaran tidak ditemukan atau tidak valid' });
+    const suppliedEventId = req.get('x-webhook-event-id') || req.body?.event_id || req.body?.transaction_id || req.body?.reference_id;
+    const eventId = buildEventId(merchant.id, req.body, suppliedEventId);
+    const receivedAt = new Date().toISOString();
+    const result = await db.processWebhookEvent({
+      merchant,
+      eventId,
+      amount,
+      source: paymentSource(req.body),
+      payloadDigest: hashSecret(stableStringify(req.body)),
+      receivedAt
+    });
+    if (result.duplicate) return res.status(200).json({ ok: true, duplicate: true, event_id: eventId });
+    return res.status(result.invoice ? 200 : 202).json({
+      ok: true,
+      duplicate: false,
+      event_id: eventId,
+      matched_invoice_id: result.invoice?.id || null,
+      status: result.invoice ? 'MATCHED' : 'UNMATCHED'
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.get('/api/app/check-update', async (req, res) => {
+  try {
+    const response = await fetch('https://api.github.com/repos/PanzzDevv/PanzzPay/releases/latest', {
+      headers: { 'User-Agent': 'PanzzPay-Server' }, signal: AbortSignal.timeout(8_000)
+    });
+    if (response.ok) {
+      const release = await response.json();
+      const tag = release.tag_name || 'v2.1.0';
+      const asset = release.assets?.find(item => item.name.endsWith('.apk'));
+      const parts = tag.replace(/[^0-9.]/g, '').split('.').map(value => Number(value) || 0);
       return res.json({
         ok: true,
-        versionCode: calcCode,
+        versionCode: (parts[0] || 2) * 100 + (parts[1] || 1) * 10 + (parts[2] || 0),
         versionName: tag.replace(/^v/, ''),
-        downloadUrl: downloadUrl,
-        releaseNotes: release.body || '• Pembaruan otomatis dari GitHub Release.',
+        downloadUrl: asset?.browser_download_url || 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk',
+        releaseNotes: String(release.body || 'Pembaruan otomatis dari GitHub Release.').slice(0, 5000),
         forceUpdate: false
       });
     }
-  } catch (err) {
-    console.log('GitHub Releases API check fallback:', err.message);
-  }
-
-  // Fallback to latest GitHub Releases direct asset URL if GitHub API is unreachable
-  return res.json({
-    ok: true,
-    versionCode: 3,
-    versionName: "2.1",
-    downloadUrl: "https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk",
-    releaseNotes: "• Tampilan baru Cyber-Dark Mode\n• Fitur Tes Webhook Notifikasi Pembayaran (ShopeePay, DANA, BCA, dll.)\n• Pemunculan Notifikasi Sistem Status Bar HP\n• Peningkatan kestabilan webhook listener",
-    forceUpdate: false
-  });
+  } catch {}
+  return res.status(503).json({ ok: false, message: 'Informasi update belum tersedia.' });
 });
 
-// -------------------------------------------------------------
-// DYNAMIC APK DOWNLOAD ROUTE FOR WEB PORTAL
-// -------------------------------------------------------------
-app.get('/downloads/panzzpay-forwarder.apk', async (req, res) => {
-  try {
-    const ghRes = await fetch('https://api.github.com/repos/PanzzDevv/PanzzPay/releases/latest', {
-      headers: { 'User-Agent': 'PanzzPay-Server' }
-    });
-    if (ghRes.ok) {
-      const release = await ghRes.json();
-      const apkAsset = release.assets?.find(a => a.name.endsWith('.apk'));
-      if (apkAsset && apkAsset.browser_download_url) {
-        return res.redirect(apkAsset.browser_download_url);
-      }
+app.get('/downloads/panzzpay-forwarder.apk', (req, res) => {
+  return res.redirect(302, 'https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk');
+});
+
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  securityLog('request_error', { path: req.path, method: req.method, code: error.code, message: error.message });
+  const status = Number(error.status) >= 400 && Number(error.status) < 600 ? Number(error.status) : 500;
+  return res.status(status).json({ ok: false, message: status === 500 ? 'Terjadi kesalahan pada server.' : error.message });
+});
+
+export { app };
+export default app;
+
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  databaseReady.then(() => {
+    if (databaseStartupError && db.firebaseRequired) {
+      console.error('Server startup failed:', databaseStartupError.message);
+      process.exitCode = 1;
+      return;
     }
-  } catch (err) {
-    console.log('GitHub Release download redirect fallback:', err.message);
-  }
-  return res.redirect('https://github.com/PanzzDevv/PanzzPay/releases/latest/download/panzzpay-forwarder.apk');
-});
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-db.init().then(() => {
-  app.listen(PORT, () => {
-    console.log(`⚡ PanzzPay Super Admin & Merchant Server is running at http://localhost:${PORT}`);
+    app.listen(PORT, () => console.log(`PanzzPay server berjalan di http://localhost:${PORT}`));
   });
-}).catch(err => {
-  console.error('Server startup init note:', err.message);
-  if (db.firebaseRequired) {
-    console.error('Server dihentikan karena FIREBASE_REQUIRED=true.');
-    process.exitCode = 1;
-    return;
-  }
-  app.listen(PORT, () => {
-    console.log(`⚡ PanzzPay Super Admin & Merchant Server is running at http://localhost:${PORT}`);
-  });
-});
+}

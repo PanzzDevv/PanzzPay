@@ -106,6 +106,14 @@ class FakeAuth {
     throw error;
   }
 
+  async getUser(uid) {
+    const user = this.users.get(uid);
+    if (user) return structuredClone(user);
+    const error = new Error('User not found');
+    error.code = 'auth/user-not-found';
+    throw error;
+  }
+
   async createUser(data) {
     const user = { ...data, uid: data.uid || `uid-${this.users.size + 1}` };
     this.users.set(user.uid, user);
@@ -117,12 +125,18 @@ class FakeAuth {
     this.users.set(uid, user);
     return structuredClone(user);
   }
+
+  async setCustomUserClaims(uid, customClaims) {
+    const user = { ...this.users.get(uid), customClaims, uid };
+    this.users.set(uid, user);
+  }
 }
 
 test('merchant writes are mirrored to Firestore and Firebase Auth', async () => {
   const firestore = new FakeFirestore();
   const auth = new FakeAuth();
   const service = new FirebaseService({ firestore, auth, skipLocalBackup: true });
+  await auth.createUser({ uid: 'MCH-1', email: 'owner@example.com', emailVerified: true });
 
   await service.saveMerchant({
     id: 'MCH-1',
@@ -136,9 +150,12 @@ test('merchant writes are mirrored to Firestore and Firebase Auth', async () => 
 
   const stored = firestore.collections.get('merchants').get('MCH-1');
   assert.equal(stored.email, 'owner@example.com');
+  assert.equal(stored.api_key, undefined);
+  assert.match(stored.api_key_hash, /^[a-f0-9]{64}$/);
   assert.equal((await service.getMerchantByEmail('OWNER@example.com')).id, 'MCH-1');
   assert.equal(auth.users.get('MCH-1').emailVerified, true);
   assert.equal(auth.users.get('MCH-1').disabled, false);
+  assert.equal(auth.users.get('MCH-1').customClaims.role, 'merchant');
 });
 
 test('cloud data is authoritative for invoices and status updates', async () => {
@@ -182,6 +199,7 @@ test('merchant suspension is synchronized to Firebase Auth', async () => {
   const firestore = new FakeFirestore();
   const auth = new FakeAuth();
   const service = new FirebaseService({ firestore, auth, skipLocalBackup: true });
+  await auth.createUser({ uid: 'MCH-2', email: 'two@example.com', emailVerified: true });
   await service.saveMerchant({
     id: 'MCH-2',
     name: 'Merchant Two',
@@ -193,4 +211,33 @@ test('merchant suspension is synchronized to Firebase Auth', async () => {
   await service.toggleMerchantStatus('MCH-2', 'SUSPENDED');
   assert.equal(auth.users.get('MCH-2').disabled, true);
   assert.equal(firestore.collections.get('merchants').get('MCH-2').status, 'SUSPENDED');
+});
+
+test('webhook matching is merchant-scoped and idempotent', async () => {
+  const firestore = new FakeFirestore();
+  const service = new FirebaseService({ firestore, skipLocalBackup: true });
+  const merchant = { id: 'MCH-1', name: 'One', status: 'ACTIVE' };
+  await service.saveInvoice({ id: 'INV-OTHER', merchant_id: 'MCH-2', total_amount: 15000, status: 'PENDING' });
+  await service.saveInvoice({ id: 'INV-OWNED', merchant_id: 'MCH-1', total_amount: 15000, status: 'PENDING' });
+
+  const first = await service.processWebhookEvent({
+    merchant,
+    eventId: 'event-12345678',
+    amount: 15000,
+    source: 'DANA',
+    payloadDigest: 'digest',
+    receivedAt: '2026-07-23T03:00:00.000Z'
+  });
+  const duplicate = await service.processWebhookEvent({
+    merchant,
+    eventId: 'event-12345678',
+    amount: 15000,
+    source: 'DANA',
+    payloadDigest: 'digest',
+    receivedAt: '2026-07-23T03:00:01.000Z'
+  });
+
+  assert.equal(first.invoice.id, 'INV-OWNED');
+  assert.equal((await service.getInvoice('INV-OTHER')).status, 'PENDING');
+  assert.equal(duplicate.duplicate, true);
 });

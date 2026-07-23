@@ -1,7 +1,15 @@
 node_modules/
+.vercel/
+.gradle/
+**/build/
+*.keystore
+*.jks
+local.properties
 .DS_Store
 *.log
 firebase-config.json
 .env
 .env.*
 !.env.example
+
+.vercel

@@ -33,78 +33,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- GLOBAL AUTH SESSION STATE FOR DRAWER ---
-  function updateAuthUIState() {
+  async function updateAuthUIState() {
     const container = document.getElementById('drawerAuthContainer');
     if (!container) return;
+    container.replaceChildren();
+    let merchant = null;
+    try {
+      const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
+      if (response.ok) merchant = (await response.json()).merchant;
+    } catch {}
 
-    const savedMerchantRaw = localStorage.getItem('panzzpay_merchant');
-    if (savedMerchantRaw) {
-      try {
-        const merchant = JSON.parse(savedMerchantRaw);
-        if (merchant && (merchant.api_key || merchant.email)) {
-          container.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-              <!-- USER CARD -->
-              <div style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #dbeafe; border-radius: 16px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);">
-                <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1;">
-                  <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--brand-blue); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);">
-                    ${(merchant.name || merchant.email || 'M').charAt(0).toUpperCase()}
-                  </div>
-                  <div style="display: flex; flex-direction: column; min-width: 0;">
-                    <span style="font-weight: 800; color: var(--text-primary); font-size: 0.85rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                      ${merchant.name || 'Merchant PanzzPay'}
-                    </span>
-                    <span style="font-size: 0.72rem; color: var(--brand-blue); font-weight: 700;">
-                      ${merchant.role === 'SUPER_ADMIN' ? '⚡ SUPER ADMIN' : '✅ MERCHANT AKTIF'}
-                    </span>
-                  </div>
-                </div>
-
-                <button id="btnGlobalLogout" style="background: #fef2f2; border: 1px solid #fecaca; color: #ef4444; font-weight: 800; cursor: pointer; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 9999px; transition: all 0.2s ease; flex-shrink: 0;">
-                  Logout
-                </button>
-              </div>
-
-              <!-- DASHBOARD BUTTON -->
-              <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.92rem; min-height: 46px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span>BUKA DASHBOARD SAYA</span>
-              </a>
-
-              <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; font-weight: 500;">
-                PanzzPay Gateway API v2.0
-              </div>
-            </div>
-          `;
-
-          const btnLogout = document.getElementById('btnGlobalLogout');
-          if (btnLogout) {
-            btnLogout.addEventListener('click', () => {
-              localStorage.removeItem('panzzpay_merchant');
-              localStorage.removeItem('panzzpay_sa_auth');
-              updateAuthUIState();
-              if (window.location.pathname.includes('portal.html')) {
-                window.location.reload();
-              }
-            });
-          }
-          return;
-        }
-      } catch (e) {
-        console.error('Error parsing merchant session:', e);
-      }
+    const link = document.createElement('a');
+    link.href = '/portal.html';
+    link.className = 'btn btn-primary';
+    link.style.cssText = 'width:100%;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.5rem;';
+    link.textContent = merchant ? `Dashboard ${merchant.name}` : 'Daftar / Login';
+    container.appendChild(link);
+    if (merchant) {
+      const logout = document.createElement('button');
+      logout.className = 'btn btn-dark';
+      logout.textContent = 'Logout';
+      logout.style.width = '100%';
+      logout.addEventListener('click', async () => {
+        await fetch('/api/auth/logout', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' }, body: '{}'
+        });
+        await updateAuthUIState();
+        if (window.location.pathname.includes('portal.html')) window.location.reload();
+      });
+      container.appendChild(logout);
     }
-
-    // Default: Not Logged In State
-    container.innerHTML = `
-      <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-        <span>🔑 DAFTAR / LOGIN</span>
-      </a>
-      <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.8rem;">
-        PanzzPay Gateway API v2.0
-      </div>
-    `;
   }
 
   // Initialize Auth state
@@ -131,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const donorName = document.getElementById('donorName') ? document.getElementById('donorName').value : '';
 
       btnDonateSubmit.disabled = true;
-      btnDonateSubmit.innerHTML = '<span>Membuat QRIS Donasi...</span>';
+      btnDonateSubmit.textContent = 'Membuat QRIS Donasi...';
 
       try {
         const response = await fetch('/api/qris/generate', {
@@ -190,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Gagal terhubung ke server');
       } finally {
         btnDonateSubmit.disabled = false;
-        btnDonateSubmit.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg><span>Kirim Donasi via QRIS</span>';
+        btnDonateSubmit.textContent = 'Kirim Donasi via QRIS';
       }
     });
   }
@@ -265,12 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const toast = document.createElement('div');
     toast.className = 'toast-alert';
-    toast.innerHTML = `
-      <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 50%; padding: 0.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      </div>
-      <div style="flex: 1; font-size: 0.88rem; font-weight: 700; color: #f8fafc; line-height: 1.4;">${message}</div>
-    `;
+    const icon = document.createElement('span');
+    icon.textContent = '✓';
+    icon.setAttribute('aria-hidden', 'true');
+    const content = document.createElement('div');
+    content.style.flex = '1';
+    content.textContent = String(message);
+    toast.append(icon, content);
 
     container.appendChild(toast);
 
@@ -299,10 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function generateQRISAction(baseAmount, uniqueCode, autoUnique, payloadStatic) {
+  async function generateQRISAction(baseAmount, uniqueCode, autoUnique) {
     if (btnGenerate) {
       btnGenerate.disabled = true;
-      btnGenerate.innerHTML = '<span>Memproses QRIS...</span>';
+      btnGenerate.textContent = 'Memproses QRIS...';
     }
 
     try {
@@ -312,8 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({
           base_amount: baseAmount,
           unique_code: uniqueCode,
-          auto_unique: autoUnique,
-          payload_static: payloadStatic
+          auto_unique: autoUnique
         })
       });
 
@@ -356,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (btnGenerate) {
         btnGenerate.disabled = false;
-        btnGenerate.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><span>Generate Gambar QRIS</span>';
+        btnGenerate.textContent = 'Generate Gambar QRIS';
       }
     }
   }
@@ -367,9 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const baseAmount = document.getElementById('baseAmount').value;
       const uniqueCode = uniqueCodeInput ? uniqueCodeInput.value : '';
       const autoUnique = autoUniqueCheckbox ? autoUniqueCheckbox.checked : true;
-      const payloadStatic = document.getElementById('payloadStatic').value;
-
-      generateQRISAction(baseAmount, uniqueCode, autoUnique, payloadStatic);
+      generateQRISAction(baseAmount, uniqueCode, autoUnique);
     });
   }
 
@@ -484,18 +441,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (invRes.ok && invType.includes('application/json')) {
         const invData = await invRes.json();
         if (invData.ok && Array.isArray(invData.invoices) && invoiceTableBody) {
-          if (invData.invoices.length > 0) {
-            invoiceTableBody.innerHTML = invData.invoices.map(inv => `
-              <tr>
-                <td><strong>${inv.id}</strong></td>
-                <td>${new Date(inv.created_at).toLocaleTimeString('id-ID')}</td>
-                <td>Rp ${(inv.base_amount || 0).toLocaleString('id-ID')}</td>
-                <td style="color: var(--brand-blue); font-weight: 700;">${inv.unique_code}</td>
-                <td><strong style="color: var(--text-primary);">Rp ${(inv.total_amount || 0).toLocaleString('id-ID')}</strong></td>
-                <td><span class="badge badge-${(inv.status || 'PENDING').toLowerCase()}">${inv.status}</span></td>
-              </tr>
-            `).join('');
-          }
+          invoiceTableBody.replaceChildren();
+          invData.invoices.forEach(inv => {
+            const row = document.createElement('tr');
+            const values = [
+              String(inv.id || ''),
+              new Date(inv.created_at).toLocaleTimeString('id-ID'),
+              `Rp ${Number(inv.base_amount || 0).toLocaleString('id-ID')}`,
+              String(inv.unique_code || 0),
+              `Rp ${Number(inv.total_amount || 0).toLocaleString('id-ID')}`,
+              ['PENDING', 'PAID', 'EXPIRED'].includes(inv.status) ? inv.status : 'UNKNOWN'
+            ];
+            values.forEach(value => {
+              const cell = document.createElement('td');
+              cell.textContent = value;
+              row.appendChild(cell);
+            });
+            invoiceTableBody.appendChild(row);
+          });
         }
       }
 
@@ -505,16 +468,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (logRes.ok && logType.includes('application/json')) {
         const logData = await logRes.json();
         if (logData.ok && Array.isArray(logData.logs) && webhookLogBody) {
-          if (logData.logs.length > 0) {
-            webhookLogBody.innerHTML = logData.logs.map(log => `
-              <tr>
-                <td>${new Date(log.received_at).toLocaleTimeString('id-ID')}</td>
-                <td><code>${typeof log.raw_payload === 'object' ? JSON.stringify(log.raw_payload) : log.raw_payload}</code></td>
-                <td><strong style="color: var(--brand-blue);">Rp ${(log.extracted_amount || 0).toLocaleString('id-ID')}</strong></td>
-                <td><span class="badge badge-${log.status === 'MATCHED' ? 'paid' : 'expired'}">${log.status}</span></td>
-              </tr>
-            `).join('');
-          }
+          webhookLogBody.replaceChildren();
+          logData.logs.forEach(log => {
+            const row = document.createElement('tr');
+            const values = [
+              new Date(log.received_at).toLocaleTimeString('id-ID'),
+              String(log.source || 'Webhook'),
+              `Rp ${Number(log.extracted_amount || 0).toLocaleString('id-ID')}`,
+              log.status === 'MATCHED' ? 'MATCHED' : 'UNMATCHED'
+            ];
+            values.forEach(value => {
+              const cell = document.createElement('td');
+              cell.textContent = value;
+              row.appendChild(cell);
+            });
+            webhookLogBody.appendChild(row);
+          });
         }
       }
 

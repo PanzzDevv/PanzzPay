@@ -3,6 +3,13 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def releaseKeystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+def hasReleaseSigning = releaseKeystorePath && releaseStorePassword && releaseKeyAlias &&
+        releaseKeyPassword && file(releaseKeystorePath).exists()
+
 android {
     namespace 'com.panzzpay.forwarder'
     compileSdk 34
@@ -16,23 +23,25 @@ android {
     }
 
     signingConfigs {
-        release {
-            storeFile file('panzzpay-release.keystore')
-            storePassword 'panzzpay123'
-            keyAlias 'panzzpay'
-            keyPassword 'panzzpay123'
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug {
-            signingConfig signingConfigs.release
-        }
+        debug {}
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -40,6 +49,16 @@ android {
     }
     kotlinOptions {
         jvmTarget = '17'
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def requiresReleaseSigning = graph.allTasks.any { task ->
+        task.path.toLowerCase().contains('release') &&
+                (task.name.toLowerCase().contains('assemble') || task.name.toLowerCase().contains('bundle'))
+    }
+    if (requiresReleaseSigning && !hasReleaseSigning) {
+        throw new GradleException('Release signing requires ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD.')
     }
 }
 

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { generateSecret, hashSecret } from './lib/security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,7 +56,8 @@ export class FirebaseService {
     this.serviceAccount = null;
     this.configSource = 'none';
     this.isFirebaseConfigured = false;
-    this.firebaseRequired = parseBoolean(process.env.FIREBASE_REQUIRED, false);
+    const productionDefault = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+    this.firebaseRequired = parseBoolean(process.env.FIREBASE_REQUIRED, productionDefault);
     this.adminApp = null;
     this.firestoreInstance = options.firestore || null;
     this.authInstance = options.auth || null;
@@ -65,6 +67,7 @@ export class FirebaseService {
     this.inMemoryMerchants = new Map();
     this.inMemoryInvoices = new Map();
     this.inMemoryLogs = [];
+    this.processedWebhookEvents = new Map();
 
     if (this.firestoreInstance || this.authInstance) {
       this.isFirebaseConfigured = true;
@@ -164,7 +167,24 @@ export class FirebaseService {
 
       if (fs.existsSync(files.merchants)) {
         const merchants = JSON.parse(fs.readFileSync(files.merchants, 'utf8') || '[]');
-        merchants.forEach(merchant => this.inMemoryMerchants.set(merchant.id, merchant));
+        merchants.forEach(merchant => {
+          const sanitized = { ...merchant };
+          if (sanitized.api_key) {
+            sanitized.api_key_hash = hashSecret(sanitized.api_key);
+            sanitized.api_key_hint = `${String(sanitized.api_key).slice(0, 10)}…`;
+          }
+          if (sanitized.webhook_token) {
+            sanitized.webhook_token_hash = hashSecret(sanitized.webhook_token);
+            sanitized.webhook_token_hint = `${String(sanitized.webhook_token).slice(0, 10)}…`;
+          }
+          delete sanitized.api_key;
+          delete sanitized.webhook_token;
+          delete sanitized.password;
+          delete sanitized.password_hash;
+          delete sanitized.otp_code;
+          this.inMemoryMerchants.set(sanitized.id, sanitized);
+        });
+        this.saveLocalBackup('merchants');
       }
       if (fs.existsSync(files.invoices)) {
         const invoices = JSON.parse(fs.readFileSync(files.invoices, 'utf8') || '[]');
@@ -326,34 +346,31 @@ export class FirebaseService {
     };
   }
 
-  buildSuperAdmin() {
-    return {
-      id: 'SUPERADMIN-001',
-      name: 'PanzzPay Super Admin (Pemilik Platform)',
-      email: (process.env.SUPER_ADMIN_EMAIL || 'admin@panzzpay.com').toLowerCase(),
-      password: process.env.SUPER_ADMIN_PASSWORD || 'adminpanzzpay123',
-      role: 'superadmin',
-      api_key: process.env.SUPER_ADMIN_API_KEY || 'pz_admin_master_key_99999',
-      webhook_token: process.env.SUPER_ADMIN_WEBHOOK_TOKEN || 'pz_wh_admin_master_token_99999',
-      status: 'ACTIVE',
-      created_at: this.inMemoryMerchants.get('SUPERADMIN-001')?.created_at || new Date().toISOString()
-    };
-  }
-
   async init() {
     const connected = await this.probeConnection();
-    await this.seedSuperAdmin();
+    await this.seedConfiguredSuperAdmin();
     console.log(connected
       ? `[FIRESTORE READY] ${Object.values(COLLECTIONS).join(', ')}`
       : '[FIRESTORE FALLBACK] Cloud unavailable; local persistence remains active.');
     return this.getHealth(false);
   }
 
-  async seedSuperAdmin() {
-    const superAdmin = this.buildSuperAdmin();
-    this.inMemoryMerchants.set(superAdmin.id, superAdmin);
-    this.saveLocalBackup('merchants');
-    await this.syncToFirebase(COLLECTIONS.merchants, superAdmin.id, superAdmin);
+  async seedConfiguredSuperAdmin() {
+    const uid = String(process.env.SUPER_ADMIN_UID || '').trim();
+    const email = String(process.env.SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
+    if (!uid || !email) return;
+
+    const existing = await this.getMerchantById(uid);
+    await this.saveMerchant({
+      ...existing,
+      id: uid,
+      name: existing?.name || 'PanzzPay Super Admin',
+      email,
+      role: 'superadmin',
+      status: 'ACTIVE',
+      provider: existing?.provider || 'password',
+      created_at: existing?.created_at || new Date().toISOString()
+    });
   }
 
   async generateFirebaseVerificationLink(email, redirectHost = 'http://localhost:3000') {
@@ -378,29 +395,19 @@ export class FirebaseService {
     if (!auth) return false;
 
     try {
-      let user;
-      try {
-        user = await auth.getUserByEmail(merchant.email);
-      } catch (error) {
-        if (error.code !== 'auth/user-not-found') throw error;
-        const createData = {
-          uid: merchant.id,
-          email: merchant.email,
-          displayName: merchant.name || undefined,
-          emailVerified: merchant.status === 'ACTIVE',
-          disabled: merchant.status === 'SUSPENDED'
-        };
-        if (merchant.password && String(merchant.password).length >= 6) createData.password = merchant.password;
-        user = await auth.createUser(createData);
-      }
+      const user = await auth.getUser(merchant.id);
 
       await auth.updateUser(user.uid, {
         displayName: merchant.name || undefined,
-        emailVerified: merchant.status === 'ACTIVE',
         disabled: merchant.status === 'SUSPENDED'
+      });
+      await auth.setCustomUserClaims(user.uid, {
+        ...(user.customClaims || {}),
+        role: merchant.role || 'merchant'
       });
       return true;
     } catch (error) {
+      if (error.code === 'auth/user-not-found') return false;
       this.recordFirebaseError(`Auth sync for ${merchant.email}`, error);
       return false;
     }
@@ -416,7 +423,10 @@ export class FirebaseService {
     try {
       const firestore = await this.getFirestoreDB();
       if (!firestore) return false;
-      await firestore.collection(collectionName).doc(String(docId)).set(cleanFirestoreData(data), { merge: true });
+      await firestore.collection(collectionName).doc(String(docId)).set(
+        cleanFirestoreData(data),
+        { merge: collectionName !== COLLECTIONS.merchants }
+      );
       this.lastSuccessfulConnectionAt = new Date().toISOString();
       this.lastFirebaseError = null;
       if (collectionName === COLLECTIONS.merchants) await this.syncMerchantAuth(data);
@@ -462,12 +472,27 @@ export class FirebaseService {
 
   async saveMerchant(merchant) {
     if (!merchant?.id) throw new Error('Merchant id wajib diisi');
+    const now = new Date().toISOString();
     const normalized = {
       ...merchant,
       email: merchant.email ? String(merchant.email).toLowerCase().trim() : merchant.email,
       role: merchant.role || 'merchant',
-      status: merchant.status || 'UNVERIFIED'
+      status: merchant.status || 'UNVERIFIED',
+      updated_at: now
     };
+    if (normalized.api_key) {
+      normalized.api_key_hash = hashSecret(normalized.api_key);
+      normalized.api_key_hint = `${String(normalized.api_key).slice(0, 10)}…`;
+    }
+    if (normalized.webhook_token) {
+      normalized.webhook_token_hash = hashSecret(normalized.webhook_token);
+      normalized.webhook_token_hint = `${String(normalized.webhook_token).slice(0, 10)}…`;
+    }
+    delete normalized.api_key;
+    delete normalized.webhook_token;
+    delete normalized.password;
+    delete normalized.password_hash;
+    delete normalized.otp_code;
     this.inMemoryMerchants.set(normalized.id, normalized);
     this.saveLocalBackup('merchants');
     await this.syncToFirebase(COLLECTIONS.merchants, normalized.id, normalized);
@@ -491,10 +516,6 @@ export class FirebaseService {
       }
     }
 
-    if (!this.inMemoryMerchants.has('SUPERADMIN-001')) {
-      const superAdmin = this.buildSuperAdmin();
-      this.inMemoryMerchants.set(superAdmin.id, superAdmin);
-    }
     this.saveLocalBackup('merchants');
     return Array.from(this.inMemoryMerchants.values());
   }
@@ -506,7 +527,6 @@ export class FirebaseService {
       this.inMemoryMerchants.set(remote.id, remote);
       return remote;
     }
-    if (id === 'SUPERADMIN-001') return this.inMemoryMerchants.get(id) || this.buildSuperAdmin();
     return this.inMemoryMerchants.get(id) || null;
   }
 
@@ -525,29 +545,70 @@ export class FirebaseService {
     }) || null;
   }
 
-  getMerchantByApiKey(apiKey) {
-    return this.findMerchant('api_key', apiKey);
+  async getMerchantByApiKey(apiKey) {
+    if (!apiKey) return null;
+    const hashed = hashSecret(apiKey);
+    let merchant = await this.findMerchant('api_key_hash', hashed);
+    if (!merchant) {
+      merchant = await this.findMerchant('api_key', apiKey);
+      if (merchant) merchant = await this.saveMerchant({ ...merchant, api_key: apiKey });
+    }
+    return merchant;
   }
 
-  getMerchantByWebhookToken(token) {
-    return this.findMerchant('webhook_token', token);
+  async getMerchantByWebhookToken(token) {
+    if (!token) return null;
+    const hashed = hashSecret(token);
+    let merchant = await this.findMerchant('webhook_token_hash', hashed);
+    if (!merchant) {
+      merchant = await this.findMerchant('webhook_token', token);
+      if (merchant) merchant = await this.saveMerchant({ ...merchant, webhook_token: token });
+    }
+    return merchant;
   }
 
   getMerchantByEmail(email) {
     return this.findMerchant('email', email);
   }
 
-  async verifyMerchantOtp(email, otpCode) {
-    const merchant = await this.getMerchantByEmail(email);
-    if (!merchant) return { ok: false, message: 'Email tidak ditemukan.' };
-    if (merchant.status === 'ACTIVE') return { ok: true, message: 'Akun sudah terverifikasi.', merchant };
-    if (otpCode && merchant.otp_code && merchant.otp_code !== String(otpCode).trim()) {
-      return { ok: false, message: 'Kode verifikasi 6-digit salah.' };
-    }
-    merchant.status = 'ACTIVE';
-    merchant.otp_code = null;
-    const saved = await this.saveMerchant(merchant);
-    return { ok: true, message: 'Verifikasi email berhasil! Akun Anda sekarang aktif.', merchant: saved };
+  async provisionMerchant(identity, profile = {}) {
+    const existing = await this.getMerchantById(identity.uid);
+    const isConfiguredAdmin = identity.uid === process.env.SUPER_ADMIN_UID;
+    const credentials = existing ? null : {
+      apiKey: generateSecret('pz_live_'),
+      webhookToken: generateSecret('pz_wh_')
+    };
+    const merchant = await this.saveMerchant({
+      ...existing,
+      id: identity.uid,
+      name: profile.name || identity.name || existing?.name || String(identity.email || '').split('@')[0],
+      email: String(identity.email || existing?.email || '').toLowerCase(),
+      role: isConfiguredAdmin ? 'superadmin' : (existing?.role || 'merchant'),
+      status: existing?.status === 'SUSPENDED'
+        ? 'SUSPENDED'
+        : (identity.email_verified ? 'ACTIVE' : 'UNVERIFIED'),
+      provider: profile.provider || existing?.provider || identity.firebase?.sign_in_provider || 'password',
+      picture: identity.picture || existing?.picture || null,
+      api_key: credentials?.apiKey,
+      webhook_token: credentials?.webhookToken,
+      created_at: existing?.created_at || new Date().toISOString()
+    });
+    return { merchant, credentials };
+  }
+
+  async rotateMerchantCredentials(merchantId) {
+    const merchant = await this.getMerchantById(merchantId);
+    if (!merchant) return null;
+    const credentials = {
+      apiKey: generateSecret('pz_live_'),
+      webhookToken: generateSecret('pz_wh_')
+    };
+    const updated = await this.saveMerchant({
+      ...merchant,
+      api_key: credentials.apiKey,
+      webhook_token: credentials.webhookToken
+    });
+    return { merchant: updated, credentials };
   }
 
   async toggleMerchantStatus(merchantId, status) {
@@ -575,19 +636,22 @@ export class FirebaseService {
     return this.inMemoryInvoices.get(id) || null;
   }
 
-  async readInvoices(merchantId = null) {
+  async readInvoices(merchantId = null, options = {}) {
     if (!this.isFirebaseConfigured) return null;
     try {
       const firestore = await this.getFirestoreDB();
       if (!firestore) return null;
+      const pageSize = Math.min(Math.max(Number(options.limit) || 50, 1), 100);
       let query = firestore.collection(COLLECTIONS.invoices);
       if (merchantId) query = query.where('merchant_id', '==', merchantId);
 
       let snapshot;
       try {
-        snapshot = await query.orderBy('created_at', 'desc').limit(100).get();
+        query = query.orderBy('created_at', 'desc');
+        if (options.cursor && typeof query.startAfter === 'function') query = query.startAfter(options.cursor);
+        snapshot = await query.limit(pageSize).get();
       } catch (indexError) {
-        snapshot = await query.limit(100).get();
+        snapshot = await query.limit(pageSize).get();
       }
 
       const invoices = snapshot.docs.map(documentData)
@@ -613,8 +677,8 @@ export class FirebaseService {
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   }
 
-  async getInvoicesByMerchant(merchantId) {
-    const remote = await this.readInvoices(merchantId);
+  async getInvoicesByMerchant(merchantId, options = {}) {
+    const remote = await this.readInvoices(merchantId, options);
     if (remote) {
       remote.forEach(invoice => this.inMemoryInvoices.set(invoice.id, invoice));
       this.saveLocalBackup('invoices');
@@ -631,6 +695,107 @@ export class FirebaseService {
     return this.saveInvoice({ ...invoice, ...details, status });
   }
 
+  async updateOwnedInvoiceStatus(id, merchantId, status, details = {}) {
+    const invoice = await this.getInvoice(id);
+    if (!invoice || invoice.merchant_id !== merchantId) return null;
+    if (invoice.status !== 'PENDING' && status === 'PAID') return invoice;
+    return this.saveInvoice({ ...invoice, ...details, status });
+  }
+
+  async getPendingInvoiceByAmount(merchantId, totalAmount) {
+    const firestore = await this.getFirestoreDB();
+    if (firestore) {
+      try {
+        const snapshot = await firestore.collection(COLLECTIONS.invoices)
+          .where('merchant_id', '==', merchantId)
+          .where('status', '==', 'PENDING')
+          .where('total_amount', '==', totalAmount)
+          .limit(1)
+          .get();
+        return snapshot.empty ? null : documentData(snapshot.docs[0]);
+      } catch (error) {
+        this.recordFirebaseError('check pending invoice amount', error);
+        if (this.firebaseRequired) throw error;
+      }
+    }
+    return Array.from(this.inMemoryInvoices.values()).find(invoice =>
+      invoice.merchant_id === merchantId && invoice.status === 'PENDING' && invoice.total_amount === totalAmount
+    ) || null;
+  }
+
+  async processWebhookEvent({ merchant, eventId, amount, source, payloadDigest, receivedAt }) {
+    const logId = `LOG-${hashSecret(`${merchant.id}:${eventId}`)}`;
+    const firestore = await this.getFirestoreDB();
+
+    if (firestore && typeof firestore.runTransaction === 'function') {
+      return firestore.runTransaction(async transaction => {
+        const logRef = firestore.collection(COLLECTIONS.webhookLogs).doc(logId);
+        const existingLog = await transaction.get(logRef);
+        if (existingLog.exists) return { duplicate: true, log: documentData(existingLog), invoice: null };
+
+        const query = firestore.collection(COLLECTIONS.invoices)
+          .where('merchant_id', '==', merchant.id)
+          .where('status', '==', 'PENDING')
+          .where('total_amount', '==', amount)
+          .limit(1);
+        const invoiceSnapshot = await transaction.get(query);
+        const invoiceDocument = invoiceSnapshot.empty ? null : invoiceSnapshot.docs[0];
+        let invoice = null;
+        if (invoiceDocument) {
+          invoice = {
+            ...documentData(invoiceDocument),
+            status: 'PAID',
+            paid_at: receivedAt,
+            payment_source: source,
+            payment_event_id: eventId
+          };
+          transaction.set(invoiceDocument.ref, invoice, { merge: true });
+        }
+
+        const log = {
+          id: logId,
+          merchant_id: merchant.id,
+          event_id: eventId,
+          received_at: receivedAt,
+          payload_digest: payloadDigest,
+          extracted_amount: amount,
+          matched_invoice_id: invoice?.id || null,
+          source,
+          status: invoice ? 'MATCHED' : 'UNMATCHED'
+        };
+        transaction.create(logRef, log);
+        return { duplicate: false, log, invoice };
+      });
+    }
+
+    if (this.firebaseRequired) throw new Error('Firestore transaction tidak tersedia');
+    if (this.processedWebhookEvents.has(logId)) {
+      return { duplicate: true, log: this.processedWebhookEvents.get(logId), invoice: null };
+    }
+    const invoice = Array.from(this.inMemoryInvoices.values()).find(candidate =>
+      candidate.merchant_id === merchant.id && candidate.status === 'PENDING' && candidate.total_amount === amount
+    );
+    const updated = invoice ? await this.updateOwnedInvoiceStatus(invoice.id, merchant.id, 'PAID', {
+      paid_at: receivedAt,
+      payment_source: source,
+      payment_event_id: eventId
+    }) : null;
+    const log = {
+      id: logId,
+      merchant_id: merchant.id,
+      event_id: eventId,
+      received_at: receivedAt,
+      payload_digest: payloadDigest,
+      extracted_amount: amount,
+      matched_invoice_id: updated?.id || null,
+      source,
+      status: updated ? 'MATCHED' : 'UNMATCHED'
+    };
+    this.processedWebhookEvents.set(logId, log);
+    await this.saveWebhookLog(log);
+    return { duplicate: false, log, invoice: updated };
+  }
+
   async saveWebhookLog(logEntry) {
     if (!logEntry?.id) throw new Error('Webhook log id wajib diisi');
     this.inMemoryLogs = [logEntry, ...this.inMemoryLogs.filter(log => log.id !== logEntry.id)].slice(0, 200);
@@ -639,19 +804,22 @@ export class FirebaseService {
     return logEntry;
   }
 
-  async readWebhookLogs(merchantId = null) {
+  async readWebhookLogs(merchantId = null, options = {}) {
     if (!this.isFirebaseConfigured) return null;
     try {
       const firestore = await this.getFirestoreDB();
       if (!firestore) return null;
+      const pageSize = Math.min(Math.max(Number(options.limit) || 50, 1), 100);
       let query = firestore.collection(COLLECTIONS.webhookLogs);
       if (merchantId) query = query.where('merchant_id', '==', merchantId);
 
       let snapshot;
       try {
-        snapshot = await query.orderBy('received_at', 'desc').limit(200).get();
+        query = query.orderBy('received_at', 'desc');
+        if (options.cursor && typeof query.startAfter === 'function') query = query.startAfter(options.cursor);
+        snapshot = await query.limit(pageSize).get();
       } catch (indexError) {
-        snapshot = await query.limit(200).get();
+        snapshot = await query.limit(pageSize).get();
       }
 
       const logs = snapshot.docs.map(documentData)
@@ -676,9 +844,9 @@ export class FirebaseService {
     return this.inMemoryLogs;
   }
 
-  async getWebhookLogsByMerchant(merchantId) {
+  async getWebhookLogsByMerchant(merchantId, options = {}) {
     if (!merchantId) return this.getAllWebhookLogs();
-    const remote = await this.readWebhookLogs(merchantId);
+    const remote = await this.readWebhookLogs(merchantId, options);
     if (remote) return remote;
     return this.inMemoryLogs.filter(log => log.merchant_id === merchantId);
   }

@@ -10,6 +10,7 @@
  * 1. Dapatkan Bot Token dari Telegram @BotFather.
  * 2. Jalankan perintah di terminal:
  *    set BOT_TOKEN=token_bot_anda_dari_botfather
+ *    set PANZZPAY_API_KEY=api_key_merchant_dari_portal
  *    node test_telegram_bot.js
  * 
  * 3. Buka Bot Anda di Telegram, ketik /start atau /beli, dan pilih produk.
@@ -22,6 +23,7 @@
 import http from 'http';
 import https from 'https';
 import dns from 'dns';
+import crypto from 'crypto';
 
 try {
   dns.setDefaultResultOrder('ipv4first');
@@ -29,6 +31,7 @@ try {
 
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 const PANZZPAY_API_URL = process.env.PANZZPAY_URL || 'https://panzzpay.vercel.app';
+const PANZZPAY_API_KEY = process.env.PANZZPAY_API_KEY || '';
 
 if (!process.env.BOT_TOKEN || process.env.BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN') {
   console.log('\n⚠️ [PERHATIAN] Anda belum memasukkan TELEGRAM_BOT_TOKEN!');
@@ -36,6 +39,11 @@ if (!process.env.BOT_TOKEN || process.env.BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN
   console.log('Contoh menjalankan di PowerShell:');
   console.log('  $env:BOT_TOKEN="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"');
   console.log('  node test_telegram_bot.js\n');
+}
+
+if (!PANZZPAY_API_KEY) {
+  console.error('PANZZPAY_API_KEY wajib diisi dengan API key merchant dari Portal PanzzPay.');
+  process.exit(1);
 }
 
 const httpsAgent = new https.Agent({ family: 4, keepAlive: true });
@@ -222,7 +230,7 @@ async function processPaymentCreation(chatId, baseAmount) {
 
     const res = await fetch(`${PANZZPAY_API_URL}/api/qris/generate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': PANZZPAY_API_KEY },
       body: JSON.stringify({ base_amount: baseAmount, auto_unique: true })
     });
 
@@ -320,7 +328,7 @@ function startAutoPollingInvoice(chatId, messageId, invoiceId, totalAmount) {
 <b>Status:</b> 💚 <b>LUNAS & TERVERIFIKASI</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 🎁 <b>PRODUK ANDA:</b>
-<code>VIP-LIC-KEY-${Math.random().toString(36).substring(2, 10).toUpperCase()}</code>
+<code>VIP-LIC-KEY-${crypto.randomBytes(6).toString('hex').toUpperCase()}</code>
 
 <i>Terima kasih telah menggunakan PanzzPay Gateway!</i>
           `;

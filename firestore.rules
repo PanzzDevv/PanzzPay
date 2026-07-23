@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Semua akses data aplikasi berjalan melalui backend Firebase Admin.
+    // Firebase client hanya dipakai untuk Authentication.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

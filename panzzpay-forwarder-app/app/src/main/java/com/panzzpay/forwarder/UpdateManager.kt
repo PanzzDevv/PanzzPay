@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.provider.Settings
+import android.util.Base64
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -13,9 +16,10 @@ import androidx.core.content.FileProvider
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
+import java.util.Locale
 import kotlin.concurrent.thread
 
 data class UpdateInfo(
@@ -28,15 +32,11 @@ data class UpdateInfo(
 
 object UpdateManager {
 
-    fun checkForUpdate(activity: AppCompatActivity, webhookUrl: String) {
-        val baseUrl = try {
-            val url = URL(webhookUrl)
-            "${url.protocol}://${url.host}${if (url.port != -1) ":${url.port}" else ""}"
-        } catch (e: Exception) {
-            "https://panzzpay.vercel.app"
-        }
+    private const val OFFICIAL_UPDATE_BASE_URL = "https://panzzpay.vercel.app"
+    private const val MAX_APK_BYTES = 100L * 1024L * 1024L
 
-        val checkApiUrl = "$baseUrl/api/app/check-update"
+    fun checkForUpdate(activity: AppCompatActivity) {
+        val checkApiUrl = "$OFFICIAL_UPDATE_BASE_URL/api/app/check-update"
 
         thread {
             try {
@@ -58,7 +58,7 @@ object UpdateManager {
 
                         val currentVersionCode = getAppVersionCode(activity)
 
-                        if (serverVersionCode > currentVersionCode) {
+                        if (serverVersionCode > currentVersionCode && isAllowedDownloadUrl(downloadUrl)) {
                             val updateInfo = UpdateInfo(
                                 versionCode = serverVersionCode,
                                 versionName = versionName,
@@ -142,6 +142,7 @@ object UpdateManager {
 
         thread {
             try {
+                if (!isAllowedDownloadUrl(downloadUrl)) throw SecurityException("Host update tidak diizinkan")
                 var currentUrl = downloadUrl
                 var connection: HttpURLConnection
                 var status: Int
@@ -149,10 +150,11 @@ object UpdateManager {
 
                 do {
                     val url = URL(currentUrl)
+                    if (!isAllowedDownloadUrl(currentUrl)) throw SecurityException("Redirect update tidak diizinkan")
                     connection = url.openConnection() as HttpURLConnection
                     connection.connectTimeout = 15000
                     connection.readTimeout = 45000
-                    connection.instanceFollowRedirects = true
+                    connection.instanceFollowRedirects = false
                     connection.setRequestProperty("User-Agent", "PanzzPay-Android-Updater")
                     connection.connect()
 
@@ -160,7 +162,7 @@ object UpdateManager {
                     if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
                         val redirectedUrl = connection.getHeaderField("Location")
                         if (!redirectedUrl.isNullOrEmpty()) {
-                            currentUrl = redirectedUrl
+                            currentUrl = URL(url, redirectedUrl).toString()
                             connection.disconnect()
                             redirectCount++
                         } else {
@@ -171,31 +173,36 @@ object UpdateManager {
                     }
                 } while (redirectCount < 5)
 
-                val fileLength = connection.contentLength
+                if (status !in 200..299) throw IllegalStateException("Server update merespons HTTP $status")
+
+                val fileLength = connection.contentLengthLong
+                if (fileLength > MAX_APK_BYTES) throw SecurityException("Ukuran APK melebihi batas")
                 val apkFile = File(activity.getExternalFilesDir(null), "panzzpay-forwarder-update.apk")
 
-                val input: InputStream = connection.inputStream
-                val output = FileOutputStream(apkFile)
+                connection.inputStream.use { input ->
+                    FileOutputStream(apkFile).use { output ->
+                        val data = ByteArray(8192)
+                        var total = 0L
+                        var count: Int
 
-                val data = ByteArray(8192)
-                var total: Long = 0
-                var count: Int
-
-                while (input.read(data).also { count = it } != -1) {
-                    total += count.toLong()
-                    if (fileLength > 0) {
-                        val progress = (total * 100 / fileLength).toInt()
-                        activity.runOnUiThread {
-                            progressDialog.progress = progress
+                        while (input.read(data).also { count = it } != -1) {
+                            total += count.toLong()
+                            if (total > MAX_APK_BYTES) throw SecurityException("Ukuran APK melebihi batas")
+                            if (fileLength > 0) {
+                                val progress = (total * 100 / fileLength).toInt()
+                                activity.runOnUiThread { progressDialog.progress = progress }
+                            }
+                            output.write(data, 0, count)
                         }
+                        output.flush()
                     }
-                    output.write(data, 0, count)
                 }
-
-                output.flush()
-                output.close()
-                input.close()
                 connection.disconnect()
+
+                if (!hasMatchingSignature(activity, apkFile)) {
+                    apkFile.delete()
+                    throw SecurityException("Sertifikat APK update tidak cocok dengan aplikasi terpasang")
+                }
 
                 activity.runOnUiThread {
                     progressDialog.dismiss()
@@ -209,6 +216,41 @@ object UpdateManager {
                 }
             }
         }
+    }
+
+    private fun isAllowedDownloadUrl(value: String): Boolean = try {
+        val url = URL(value)
+        val host = url.host.lowercase(Locale.US)
+        url.protocol.equals("https", ignoreCase = true) &&
+                (host == "github.com" || host.endsWith(".githubusercontent.com"))
+    } catch (e: Exception) {
+        false
+    }
+
+    @Suppress("DEPRECATION")
+    private fun hasMatchingSignature(context: Context, apkFile: File): Boolean {
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            PackageManager.GET_SIGNING_CERTIFICATES
+        } else {
+            PackageManager.GET_SIGNATURES
+        }
+        val candidate = context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, flags) ?: return false
+        if (candidate.packageName != context.packageName) return false
+        val installed = context.packageManager.getPackageInfo(context.packageName, flags)
+        return signerDigests(candidate).isNotEmpty() && signerDigests(candidate) == signerDigests(installed)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun signerDigests(info: PackageInfo): Set<String> {
+        val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.signingInfo?.apkContentsSigners.orEmpty()
+        } else {
+            info.signatures.orEmpty()
+        }
+        return signatures.map { signature ->
+            val digest = MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
+            Base64.encodeToString(digest, Base64.NO_WRAP)
+        }.toSet()
     }
 
     fun promptInstallApk(activity: AppCompatActivity, apkFile: File) {

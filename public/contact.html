@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kontak Admin & Support - PanzzPay Gateway</title>
+  <link rel="icon" type="image/png" href="/assets/images/logo.png">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .contact-card {
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .contact-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+      border-color: var(--brand-blue);
+    }
+    .contact-icon-wrapper {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      flex-shrink: 0;
+    }
+    .wa-bg { background: rgba(37, 211, 102, 0.12); color: #16a34a; border: 1px solid rgba(37, 211, 102, 0.25); }
+    .tele-bg { background: rgba(0, 136, 204, 0.12); color: #0284c7; border: 1px solid rgba(0, 136, 204, 0.25); }
+    .channel-bg { background: rgba(99, 102, 241, 0.12); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.25); }
+
+    .btn-contact {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.925rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-wa {
+      background: #16a34a;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+    }
+    .btn-wa:hover {
+      background: #15803d;
+      box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35);
+      color: #ffffff;
+    }
+    .btn-tele {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
+    }
+    .btn-tele:hover {
+      background: #0369a1;
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35);
+      color: #ffffff;
+    }
+    .btn-channel {
+      background: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+    }
+    .btn-channel:hover {
+      background: #4338ca;
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+      color: #ffffff;
+    }
+    .btn-copy-outline {
+      background: var(--bg-main);
+      color: var(--text-primary);
+      border: 1px solid var(--bento-border);
+    }
+    .btn-copy-outline:hover {
+      background: #ffffff;
+      border-color: var(--brand-blue);
+      color: var(--brand-blue);
+    }
+
+    .toast-copy {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 0.85rem 1.4rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(1rem);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+    .toast-copy.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BENTO APP HEADER WITH HAMBURGER MENU -->
+  <header class="bento-header">
+    <div class="brand-title">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+      </svg>
+      <span>PanzzPay <span style="color: var(--brand-blue); font-weight: 500; font-size: 0.85em;">Gateway</span></span>
+    </div>
+
+    <div class="header-controls">
+      <div class="system-badge">
+        <span class="dot-pulse"></span>
+        <span>SUPPORT ONLINE</span>
+      </div>
+
+      <button id="btnHamburger" class="hamburger-btn" aria-label="Buka Menu Navigasi">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SLIDE-OUT NAV DRAWER OVERLAY -->
+  <div id="navDrawer" class="nav-drawer">
+    <div class="nav-drawer-backdrop" id="navBackdrop"></div>
+    <div class="nav-drawer-content">
+      <div class="drawer-header">
+        <div class="brand-title" style="font-size: 1.15rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>PanzzPay Menu</span>
+        </div>
+        <button id="btnCloseDrawer" class="close-btn" aria-label="Tutup Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="drawer-nav">
+        <a href="/" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Dashboard Utama</span>
+        </a>
+        <a href="/apps.html" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+          <span>Aplikasi & Ekosistem 📱</span>
+        </a>
+        <a href="/#generator-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>QRIS Generator</span>
+        </a>
+        <a href="/#api-docs-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          <span>Dokumentasi REST API</span>
+        </a>
+        <a href="/#simulator-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span>Simulator Webhook</span>
+        </a>
+        <a href="/#history-section" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span>Riwayat Transaksi</span>
+        </a>
+        <a href="/donasi.html" class="drawer-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <span>Halaman Donasi 💖</span>
+        </a>
+        <a href="/contact.html" class="drawer-item active" style="color: var(--brand-blue); font-weight: 800;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Kontak Admin 💬</span>
+        </a>
+      </nav>
+
+      <!-- DRAWER FOOTER -->
+      <div id="drawerAuthContainer" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--bento-border);">
+        <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+          <span>🔑 DAFTAR / LOGIN</span>
+        </a>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.8rem;">
+          PanzzPay Gateway API v2.0
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BENTO MAIN WRAPPER -->
+  <main class="bento-wrapper">
+    <div class="bento-grid">
+
+      <!-- HERO BENTO CARD -->
+      <section class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+        <div class="bento-header-sm" style="max-width: 720px;">
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.2); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.825rem; font-weight: 700; color: var(--brand-blue); margin-bottom: 1rem;">
+            <span class="dot-pulse" style="background: var(--brand-blue);"></span>
+            <span>PUSAT BANTUAN & SUPPORT ADMIN</span>
+          </div>
+          <h1 class="bento-title" style="font-size: clamp(1.6rem, 3.5vw, 2.2rem);">
+            <span>Hubungi Admin PanzzPay</span>
+          </h1>
+          <p class="bento-subtitle" style="font-size: 1rem; margin-top: 0.5rem;">
+            Punya pertanyaan seputar integrasi API, aktivasi merchant, kendala transaksi, atau butuh bantuan teknis? Tim admin siap membantu Anda melalui saluran resmi di bawah ini.
+          </p>
+        </div>
+      </section>
+
+      <!-- CONTACT CARDS GRID -->
+
+      <!-- 1. WHATSAPP ADMIN CARD (COL 4) -->
+      <section class="bento-card col-4 contact-card">
+        <div class="contact-icon-wrapper wa-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">WhatsApp Admin</h2>
+          <span class="badge badge-paid" style="background: rgba(22, 163, 74, 0.1); color: #16a34a; border: 1px solid rgba(22, 163, 74, 0.2);">Fast Response</span>
+        </div>
+
+        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; flex-grow: 1;">
+          Layanan cepat via Chat WhatsApp untuk konsultasi merchant, integrasi Webhook, serta konfirmasi saldo & transaksi.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" class="btn-contact btn-wa">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <span>Chat WhatsApp Admin</span>
+          </a>
+          <button onclick="copyToClipboard('+6281234567890', 'Nomor WhatsApp Admin berhasil disalin!')" class="btn-contact btn-copy-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Salin Nomor WA</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. TELEGRAM ADMIN PERSONAL CARD (COL 4) -->
+      <section class="bento-card col-4 contact-card">
+        <div class="contact-icon-wrapper tele-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">Telegram Admin</h2>
+          <span class="badge badge-paid" style="background: rgba(2, 132, 199, 0.1); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.2);">Personal Chat</span>
+        </div>
+
+        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; flex-grow: 1;">
+          Chat langsung 1-on-1 dengan Admin PanzzPay di Telegram untuk bantuan teknis dan pertanyaan lisensi aplikasi.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="https://t.me/PanzzPayAdmin" target="_blank" rel="noopener noreferrer" class="btn-contact btn-tele">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <span>Chat Admin di Telegram</span>
+          </a>
+          <button onclick="copyToClipboard('@PanzzPayAdmin', 'Username Telegram Admin berhasil disalin!')" class="btn-contact btn-copy-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Salin Username Tele</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 3. TELEGRAM CHANNEL CARD (COL 4) -->
+      <section class="bento-card col-4 contact-card">
+        <div class="contact-icon-wrapper channel-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">Channel Telegram</h2>
+          <span class="badge badge-paid" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.2);">Resmi & Info</span>
+        </div>
+
+        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; flex-grow: 1;">
+          Dapatkan info pembaruan versi APK PanzzPay, rilis fitur baru, berita maintenance, serta promo spesial pengguna.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="https://t.me/PanzzPayChannel" target="_blank" rel="noopener noreferrer" class="btn-contact btn-channel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <span>Gabung Channel Telegram</span>
+          </a>
+          <button onclick="copyToClipboard('https://t.me/PanzzPayChannel', 'Link Channel Telegram berhasil disalin!')" class="btn-contact btn-copy-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Salin Link Channel</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- INFORMASI PANDUAN & JAM OPERASIONAL (COL 12) -->
+      <section class="bento-card col-12">
+        <div class="bento-header-sm" style="margin-bottom: 1.25rem;">
+          <h2 class="bento-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span>Panduan Layanan & Support</span>
+          </h2>
+          <p class="bento-subtitle">Informasi penting saat menghubungi Admin PanzzPay</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+          <div style="background: var(--bg-main); border: 1px solid var(--bento-border); border-radius: var(--radius-inner); padding: 1.25rem;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="color: #16a34a;">⚡</span> Respon Cepat
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+              Waktu balasan rata-rata 1–15 menit pada jam aktif operasional (08:00 – 23:00 WIB). Pesan di luar jam kerja akan dibalas secepatnya.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-main); border: 1px solid var(--bento-border); border-radius: var(--radius-inner); padding: 1.25rem;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="color: var(--brand-blue);">🛡️</span> Keamanan Kontak
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+              Admin PanzzPay <strong>TIDAK PERNAH</strong> meminta Password, OTP, atau Private Key Firebase/Merchant Anda. Waspada terhadap pihak yang mengatasnamakan admin di luar kontak resmi di atas.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-main); border: 1px solid var(--bento-border); border-radius: var(--radius-inner); padding: 1.25rem;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="color: #4f46e5;">💻</span> Bantuan Integrasi API
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+              Jika mengalami kendala saat menghubungkan PanzzPay Forwarder APK ke server Webhook Anda, sertakan screenshot log console dan URL webhook saat chat admin.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastCopy" class="toast-copy">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toastCopyText">Teks berhasil disalin!</span>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    function copyToClipboard(text, message) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(message);
+        }).catch(err => {
+          fallbackCopyTextToClipboard(text, message);
+        });
+      } else {
+        fallbackCopyTextToClipboard(text, message);
+      }
+    }
+
+    function fallbackCopyTextToClipboard(text, message) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast(message);
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toastCopy');
+      const toastText = document.getElementById('toastCopyText');
+      if (!toast || !toastText) return;
+      toastText.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

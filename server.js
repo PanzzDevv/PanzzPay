@@ -275,7 +275,7 @@ function extractAmountFromText(input) {
   if (!input) return null;
   if (typeof input === 'object' && input.amount !== undefined) {
     const amount = Number(String(input.amount).replace(/[^\d]/g, ''));
-    if (Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999) return amount;
+    if (Number.isSafeInteger(amount) && amount >= 1 && amount <= 999_999_999) return amount;
   }
   const text = typeof input === 'object'
     ? `${input.message || ''} ${input.title || ''} ${input.text || ''}`
@@ -286,13 +286,13 @@ function extractAmountFromText(input) {
     // Remove decimal cents (e.g. ",00" at the end) then strip all non-digits
     const raw = currencyMatch[1].replace(/[.,]\d{2}$/, '').replace(/[^\d]/g, '');
     const amount = Number(raw);
-    if (Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999) return amount;
+    if (Number.isSafeInteger(amount) && amount >= 1 && amount <= 999_999_999) return amount;
   }
   // Fallback: find any standalone number >= 100 near payment keywords
   const fallbackMatch = text.match(/(?:sebesar|nominal|total|bayar|terima)\s*:?\s*(\d[\d.,]*)/i);
   if (fallbackMatch) {
     const amount = Number(fallbackMatch[1].replace(/[^\d]/g, ''));
-    if (Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999) return amount;
+    if (Number.isSafeInteger(amount) && amount >= 1 && amount <= 999_999_999) return amount;
   }
   return null;
 }

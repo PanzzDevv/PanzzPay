@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeInvoiceId = null;
   let pollInterval = null;
   let timerInterval = null;
+  let authenticatedMerchant = null;
 
   // --- HAMBURGER DRAWER MENU CONTROLS ---
   const btnHamburger = document.getElementById('btnHamburger');
@@ -39,9 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     container.replaceChildren();
     let merchant = null;
     try {
-      const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
-      if (response.ok) merchant = (await response.json()).merchant;
+      const response = await fetch('/api/auth/session', { credentials: 'same-origin' });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.authenticated) merchant = data.merchant;
+      }
     } catch {}
+    authenticatedMerchant = merchant;
+
+    const heroAuthLink = document.getElementById('heroAuthLink');
+    if (heroAuthLink) heroAuthLink.hidden = Boolean(merchant);
 
     const link = document.createElement('a');
     link.href = '/portal.html';
@@ -60,14 +68,16 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' }, body: '{}'
         });
         await updateAuthUIState();
+        renderHistorySignedOut();
         if (window.location.pathname.includes('portal.html')) window.location.reload();
       });
       container.appendChild(logout);
     }
+    return merchant;
   }
 
   // Initialize Auth state
-  updateAuthUIState();
+  const authReady = updateAuthUIState();
 
   // --- DONATION PRESETS LOGIC ---
   const presetBtns = document.querySelectorAll('.preset-btn');
@@ -114,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update UI Display
         document.getElementById('invoiceIdLabel').textContent = `DONASI - ${inv.id} (${donorName || 'Anonim'})`;
-        document.getElementById('qrImage').src = inv.qr_png_data_url || 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(inv.payload || 'DONATION');
+        setQrImage(inv.qr_png_data_url || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(inv.payload || 'DONATION'));
         document.getElementById('totalAmountLabel').textContent = `Rp ${inv.total_amount.toLocaleString('id-ID')}`;
         document.getElementById('baseAmountLabel').textContent = `Rp ${inv.base_amount.toLocaleString('id-ID')}`;
         document.getElementById('uniqueCodeLabel').textContent = `${inv.unique_code}`;
@@ -163,9 +173,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnCopyBaseUrl = document.getElementById('btnCopyBaseUrl');
   if (btnCopyBaseUrl) {
-    btnCopyBaseUrl.addEventListener('click', () => {
-      navigator.clipboard.writeText(currentBaseUrl);
-      showToast('Base URL berhasil disalin: ' + currentBaseUrl);
+    btnCopyBaseUrl.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(currentBaseUrl);
+        showToast('Base URL berhasil disalin: ' + currentBaseUrl);
+      } catch {
+        showToast('Base URL belum dapat disalin. Silakan salin manual.');
+      }
+    });
+  }
+
+  function setQrImage(source) {
+    const image = document.getElementById('qrImage');
+    const placeholder = document.getElementById('qrPlaceholder');
+    if (!image) return;
+    if (!source) {
+      image.hidden = true;
+      image.removeAttribute('src');
+      if (placeholder) placeholder.hidden = false;
+      return;
+    }
+    image.src = source;
+    image.hidden = false;
+    if (placeholder) placeholder.hidden = true;
+  }
+
+  const qrImage = document.getElementById('qrImage');
+  if (qrImage) {
+    qrImage.addEventListener('error', () => {
+      setQrImage('');
+      showToast('Gambar QRIS gagal dimuat. Silakan generate ulang.');
     });
   }
 
@@ -288,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update UI Display
       document.getElementById('invoiceIdLabel').textContent = inv.id;
-      document.getElementById('qrImage').src = inv.qr_png_data_url || 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(inv.payload || 'DEMO');
+      setQrImage(inv.qr_png_data_url || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(inv.payload || 'DEMO'));
       document.getElementById('totalAmountLabel').textContent = `Rp ${inv.total_amount.toLocaleString('id-ID')}`;
       document.getElementById('baseAmountLabel').textContent = `Rp ${inv.base_amount.toLocaleString('id-ID')}`;
       document.getElementById('uniqueCodeLabel').textContent = `${inv.unique_code}`;
@@ -433,7 +470,31 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRefreshHistory.addEventListener('click', loadHistoryData);
   }
 
+  function renderHistoryMessage(body, colspan, message) {
+    if (!body) return;
+    body.replaceChildren();
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = colspan;
+    cell.textContent = message;
+    cell.style.cssText = 'text-align:center;color:var(--text-muted);padding:1.5rem;';
+    row.appendChild(cell);
+    body.appendChild(row);
+  }
+
+  function renderHistorySignedOut() {
+    renderHistoryMessage(invoiceTableBody, 6, 'Masuk ke akun merchant untuk melihat transaksi.');
+    renderHistoryMessage(webhookLogBody, 4, 'Masuk ke akun merchant untuk melihat log webhook.');
+    if (btnRefreshHistory) btnRefreshHistory.disabled = true;
+  }
+
   async function loadHistoryData() {
+    if (!invoiceTableBody && !webhookLogBody) return;
+    if (!authenticatedMerchant) {
+      renderHistorySignedOut();
+      return;
+    }
+    if (btnRefreshHistory) btnRefreshHistory.disabled = false;
     try {
       // Invoices
       const invRes = await fetch('/api/invoices');
@@ -459,6 +520,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             invoiceTableBody.appendChild(row);
           });
+          if (!invData.invoices.length) {
+            renderHistoryMessage(invoiceTableBody, 6, 'Belum ada transaksi. Generate QRIS pertama Anda.');
+          }
         }
       }
 
@@ -484,6 +548,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             webhookLogBody.appendChild(row);
           });
+          if (!logData.logs.length) {
+            renderHistoryMessage(webhookLogBody, 4, 'Belum ada notifikasi webhook yang diterima.');
+          }
         }
       }
 
@@ -492,8 +559,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Initial load
-  loadHistoryData();
+  // Initial load only after the session check, avoiding expected 401s for anonymous visitors.
+  authReady.then(merchant => {
+    if (!invoiceTableBody && !webhookLogBody) return;
+    if (merchant) loadHistoryData();
+    else renderHistorySignedOut();
+  });
 
   // --- 4. QR DECODER (DRAG & DROP FILE) ---
   const dropZone = document.getElementById('dropZone');

@@ -28,6 +28,12 @@ test('protected merchant collections reject anonymous access', async () => {
   assert.equal(logs.status, 401);
 });
 
+test('anonymous session check is quiet and does not expose merchant data', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/session`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true, authenticated: false });
+});
+
 test('legacy verification bypass endpoints are disabled', async () => {
   const response = await fetch(`${baseUrl}/api/auth/verify-otp`, {
     method: 'POST',

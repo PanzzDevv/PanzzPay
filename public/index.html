@@ -63,7 +63,7 @@
         </a>
         <a href="/apps.html" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-          <span>Aplikasi & Ekosistem 📱</span>
+          <span>Aplikasi & Ekosistem</span>
         </a>
         <a href="#generator-section" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -83,7 +83,7 @@
         </a>
         <a href="/donasi.html" class="drawer-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          <span>Halaman Donasi 💖</span>
+          <span>Halaman Donasi</span>
         </a>
       </nav>
 
@@ -91,7 +91,7 @@
       <div id="drawerAuthContainer" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--bento-border);">
         <a href="/portal.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-          <span>🔑 DAFTAR / LOGIN</span>
+          <span>DAFTAR / LOGIN</span>
         </a>
         <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.8rem;">
           PanzzPay Gateway API v2.0
@@ -107,7 +107,7 @@
       <!-- ======================================================= -->
       <!-- BENTO CARD 1: HERO / SYSTEM STATUS (COL 12) -->
       <!-- ======================================================= -->
-      <section class="bento-card col-12" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+      <section class="bento-card col-12 hero-card">
         <div>
           <span class="bento-hero-badge">GATEWAY VERSI 2.0 ONLINE</span>
           <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.8px;">
@@ -118,24 +118,30 @@
           </p>
 
           <!-- MULTI-TENANT SAAS BADGES -->
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;">
-            <span class="badge badge-paid">⚡ REALTIME FIRESTORE SYNC</span>
-            <span class="badge badge-pending">🔑 MULTI-TENANT MERCHANT SUPPORT</span>
-            <span class="badge badge-paid">📱 NOTIFICATION FORWARDER APK</span>
+          <div class="feature-badges">
+            <span class="badge badge-paid">Realtime Firestore Sync</span>
+            <span class="badge badge-pending">Multi-tenant Merchant Support</span>
+            <span class="badge badge-paid">Notification Forwarder APK</span>
           </div>
         </div>
 
-        <div style="margin-top: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">SERVER BASE URL:</span>
-            <code id="apiBaseUrl" style="background: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--bento-border); color: var(--brand-blue); font-family: 'Fira Code', monospace; font-weight: 700; word-break: break-all;">https://panzzpay.vercel.app</code>
+        <div class="hero-actions">
+          <div class="base-url-block">
+            <span class="base-url-label">SERVER BASE URL:</span>
+            <div class="base-url-row">
+              <code id="apiBaseUrl" class="api-base-url">https://panzzpay.vercel.app</code>
+              <button id="btnCopyBaseUrl" class="copy-base-url-btn" type="button" aria-label="Salin server base URL">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Salin</span>
+              </button>
+            </div>
           </div>
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <div class="hero-links">
             <a href="/apps.html" class="btn btn-dark" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
-              <span>Katalog Aplikasi (.APK) 📱</span>
+              <span>Katalog Aplikasi (.APK)</span>
             </a>
-            <a href="/portal.html" class="btn btn-primary" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
-              <span>Daftar / Login 🔑</span>
+            <a id="heroAuthLink" href="/portal.html" class="btn btn-primary" style="min-height: 40px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none;" hidden>
+              <span>Daftar / Login</span>
             </a>
           </div>
         </div>
@@ -174,7 +180,7 @@
               <input type="number" id="uniqueCode" class="form-control" placeholder="Otomatis acak sistem" disabled>
             </div>
 
-            <p class="bento-subtitle">QRIS statis diambil dari profil merchant terautentikasi. Atur atau ganti payload melalui <a href="/portal.html">Portal Merchant</a>.</p>
+            <p class="bento-subtitle qris-helper-text">QRIS statis diambil dari profil merchant terautentikasi. Atur atau ganti payload melalui <a href="/portal.html">Portal Merchant</a>.</p>
 
             <button type="submit" id="btnGenerate" class="btn btn-primary" style="width: 100%;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -189,7 +195,7 @@
       <!-- ======================================================= -->
       <section class="bento-card col-6" id="qrResultCard">
         <div>
-          <div class="bento-header-sm" style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div class="bento-header-sm qr-result-header">
             <div>
               <h2 class="bento-title">Tampilan Hasil QRIS</h2>
               <p class="bento-subtitle">Generate QRIS di sebelah kiri untuk melihat tampilan</p>
@@ -199,7 +205,11 @@
 
           <div class="qr-display-box">
             <div class="qr-img-frame">
-              <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021126570011ID.DANA.WWW011893600915300000000002150000000000000005204581253033605802ID5911PanzzPayDemo6007JAKARTA6304ABCD" alt="QRIS Code Display">
+              <div id="qrPlaceholder" class="qr-placeholder">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3"></path></svg>
+                <span>QRIS akan tampil di sini</span>
+              </div>
+              <img id="qrImage" alt="Kode QRIS untuk pembayaran" hidden>
             </div>
 
             <div class="amount-title" id="totalAmountLabel">Rp 0</div>
@@ -348,15 +358,16 @@
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-inner); padding: 1.25rem;">
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                 <span class="badge badge-paid">POST</span>
-                <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/webhook/callback?token=pz_wh_xxx</code>
+                <code style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary);">/api/webhook/callback</code>
               </div>
               <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
                 Menerima lemparan notifikasi HP dan mencocokkan status invoice ke PAID.
               </p>
               <div class="code-box">
                 <pre><code style="color: #38bdf8;">curl -X POST \
-  "https://panzzpay.vercel.app/api/webhook/callback?token=pz_wh_xxx" \
+  "https://panzzpay.vercel.app/api/webhook/callback" \
   -H "Content-Type: application/json" \
+  -H "X-Webhook-Token: pz_wh_xxx" \
   -d '{"message": "Pembayaran masuk Rp 10.338"}'</code></pre>
               </div>
             </div>

@@ -173,8 +173,9 @@
 
   async function restoreSession() {
     try {
-      const data = await request('/api/auth/me');
-      showDashboard(data.merchant);
+      const data = await request('/api/auth/session');
+      if (data.authenticated && data.merchant) showDashboard(data.merchant);
+      else showAuth();
     } catch {
       showAuth();
     }
@@ -212,13 +213,19 @@
 
     byId('loginForm')?.addEventListener('submit', async event => {
       event.preventDefault();
+      pendingEmail = byId('loginEmail').value.trim();
+      pendingPassword = byId('loginPassword').value;
       try {
         const data = await request('/api/auth/login', {
           method: 'POST',
-          body: JSON.stringify({ email: byId('loginEmail').value.trim(), password: byId('loginPassword').value })
+          body: JSON.stringify({ email: pendingEmail, password: pendingPassword })
         });
         showDashboard(data.merchant);
       } catch (error) {
+        if (error.data?.code === 'EMAIL_NOT_VERIFIED') {
+          byId('otpEmailTarget').textContent = pendingEmail;
+          byId('otpSection').style.display = 'block';
+        }
         notify(error.message, error.data?.code === 'EMAIL_NOT_VERIFIED' ? 'Verifikasi Diperlukan' : 'Login Gagal');
       }
     });

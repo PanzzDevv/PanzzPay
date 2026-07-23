@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 import { db } from './firebase.js';
 import { requireIdentity, requireMerchant, requireSessionMerchant, requireSuperAdmin, currentMerchantResponse } from './middleware/auth.js';
 import { validate } from './middleware/validate.js';
-import { buildEventId, generateId, getBearerToken, hashSecret, isTrustedOrigin, publicMerchant, securityLog, stableStringify } from './lib/security.js';
+import { buildEventId, generateId, getBearerToken, hashSecret, isTrustedOrigin, parseCookies, publicMerchant, securityLog, stableStringify } from './lib/security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -159,6 +159,11 @@ function sessionCookieOptions() {
     sameSite: 'strict',
     path: '/'
   };
+}
+
+function clearSessionCookie(res) {
+  const { maxAge, ...options } = sessionCookieOptions();
+  res.clearCookie(sessionCookieName, options);
 }
 
 async function firebaseIdentityRequest(endpoint, payload) {
@@ -339,11 +344,13 @@ app.post('/api/auth/login', authLimiter, validate(loginSchema), async (req, res)
     });
     const decoded = await verifyFreshIdToken(signIn.idToken);
     if (!decoded.email_verified) {
+      securityLog('login_blocked', { uid: decoded.uid, ip: req.ip, reason: 'EMAIL_NOT_VERIFIED' });
       return res.status(403).json({ ok: false, code: 'EMAIL_NOT_VERIFIED', message: 'Verifikasi email terlebih dahulu.' });
     }
     const { merchant } = await db.provisionMerchant(decoded, { provider: 'password' });
     if (merchant.status === 'SUSPENDED') {
-      return res.status(403).json({ ok: false, message: 'Akun ditangguhkan.' });
+      securityLog('login_blocked', { uid: decoded.uid, ip: req.ip, reason: 'ACCOUNT_SUSPENDED' });
+      return res.status(403).json({ ok: false, code: 'ACCOUNT_SUSPENDED', message: 'Akun ditangguhkan.' });
     }
     await issueSession(res, signIn.idToken, decoded);
     securityLog('login_succeeded', { uid: decoded.uid, ip: req.ip });
@@ -351,6 +358,36 @@ app.post('/api/auth/login', authLimiter, validate(loginSchema), async (req, res)
   } catch (error) {
     securityLog('login_failed', { email: req.body.email, ip: req.ip, code: error.code });
     return res.status(error.status || 401).json({ ok: false, message: safeAuthMessage(error) });
+  }
+});
+
+app.get('/api/auth/session', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const sessionCookie = parseCookies(req.headers.cookie)[sessionCookieName];
+  if (!sessionCookie) return res.json({ ok: true, authenticated: false });
+
+  try {
+    const auth = await db.getAuthSDK();
+    if (!auth) throw Object.assign(new Error('Firebase Auth tidak tersedia'), { status: 503 });
+    const decoded = await auth.verifySessionCookie(sessionCookie, true);
+    if (!decoded.email_verified) {
+      clearSessionCookie(res);
+      return res.json({ ok: true, authenticated: false });
+    }
+    const merchant = await db.getMerchantById(decoded.uid);
+    if (!merchant || merchant.status !== 'ACTIVE') {
+      clearSessionCookie(res);
+      return res.json({ ok: true, authenticated: false });
+    }
+    return res.json({
+      ok: true,
+      authenticated: true,
+      merchant: currentMerchantResponse(merchant)
+    });
+  } catch (error) {
+    clearSessionCookie(res);
+    securityLog('session_restore_failed', { ip: req.ip, code: error.code });
+    return res.json({ ok: true, authenticated: false });
   }
 });
 
@@ -391,7 +428,7 @@ app.get('/api/auth/me', requireSessionMerchant, (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie(sessionCookieName, sessionCookieOptions());
+  clearSessionCookie(res);
   return res.json({ ok: true });
 });
 

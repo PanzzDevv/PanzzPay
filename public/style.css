@@ -318,6 +318,103 @@ header.bento-header {
   margin-top: 0.2rem;
 }
 
+.hero-card {
+  background: #ffffff;
+}
+
+.feature-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.hero-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.base-url-block {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.base-url-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.base-url-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.api-base-url {
+  min-width: 0;
+  background: #ffffff;
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--bento-border);
+  color: var(--brand-blue);
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.copy-base-url-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copy-base-url-btn:hover {
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
+}
+
+.copy-base-url-btn:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.2);
+  outline-offset: 2px;
+}
+
+.hero-links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.qris-helper-text {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  line-height: 1.65;
+}
+
+.qr-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 /* -------------------------------------------------------------
    CLEAN SOLID ROYAL BLUE BUTTON DESIGN (Matching User Image)
    ------------------------------------------------------------- */
@@ -558,7 +655,7 @@ header.bento-header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem;
   background: #f8fafc;
   border: 1.5px solid #e2e8f0;
   border-radius: var(--radius-inner);
@@ -568,26 +665,46 @@ header.bento-header {
 
 .qr-img-frame {
   background: #ffffff;
-  padding: 1rem;
+  padding: 0.875rem;
   border: 1px solid #cbd5e1;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 240px;
+  max-width: 272px;
   width: 100%;
+  aspect-ratio: 1 / 1;
   margin: 0 auto 1rem auto;
 }
 
 .qr-img-frame img, #qrImage {
   width: 100%;
-  max-width: 200px;
-  height: auto;
+  height: 100%;
   aspect-ratio: 1 / 1;
   object-fit: contain;
   display: block;
-  border-radius: 8px;
+  border-radius: 10px;
+}
+
+.qr-placeholder {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+#qrImage[hidden],
+.qr-placeholder[hidden],
+#heroAuthLink[hidden] {
+  display: none !important;
 }
 
 .amount-title {
@@ -653,6 +770,29 @@ header.bento-header {
     white-space: normal !important;
     word-break: break-word;
     text-align: center;
+  }
+  .hero-actions,
+  .hero-links,
+  .base-url-block {
+    width: 100%;
+  }
+  .base-url-row {
+    width: 100%;
+  }
+  .api-base-url {
+    flex: 1;
+  }
+  .copy-base-url-btn {
+    flex: 0 0 auto;
+  }
+  .qr-result-header {
+    align-items: center;
+  }
+  .qr-display-box {
+    padding: 1rem;
+  }
+  .qr-img-frame {
+    max-width: 248px;
   }
 }
 

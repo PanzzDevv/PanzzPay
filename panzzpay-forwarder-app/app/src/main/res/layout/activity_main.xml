@@ -83,67 +83,6 @@
                 android:textColor="@color/text_secondary" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_bento_card"
-            android:orientation="vertical"
-            android:padding="18dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/automation_title"
-                android:textAppearance="@style/TextAppearance.PanzzPay.SectionTitle" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/automation_subtitle"
-                android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="12dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/listener_title"
-                        android:textAppearance="@style/TextAppearance.PanzzPay.ItemTitle" />
-
-                    <TextView
-                        android:id="@+id/tvServiceStatusSub"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:text="@string/listener_description"
-                        android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
-                </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchService"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:checked="true"
-                    android:contentDescription="@string/listener_title"
-                    android:showText="false"
-                    android:textOff="@string/switch_off"
-                    android:textOn="@string/switch_on" />
-            </LinearLayout>
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

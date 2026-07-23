@@ -37,7 +37,6 @@ import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    private lateinit var switchService: MaterialSwitch
     private lateinit var etWebhookUrl: EditText
     private lateinit var btnPasteUrl: Button
     private lateinit var btnSave: Button
@@ -73,7 +72,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        switchService = findViewById(R.id.switchService)
         etWebhookUrl = findViewById(R.id.etWebhookUrl)
         btnPasteUrl = findViewById(R.id.btnPasteUrl)
         btnSave = findViewById(R.id.btnSave)
@@ -90,18 +88,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             appendLog("TTS tidak tersedia: ${e.message}")
         }
 
-        val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
         val savedUrl = SecurePreferences.getWebhookUrl(this)
-        val isEnabled = prefs.getBoolean("service_enabled", true)
 
         etWebhookUrl.setText(savedUrl)
-        switchService.isChecked = isEnabled
-
-        switchService.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("service_enabled", isChecked).apply()
-            appendLog(if (isChecked) "Layanan Forwarder diaktifkan" else "Layanan Forwarder dinonaktifkan")
-            Toast.makeText(this, if (isChecked) "Layanan Forwarder Aktif" else "Layanan Nonaktif", Toast.LENGTH_SHORT).show()
-        }
 
         btnPasteUrl.setOnClickListener {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

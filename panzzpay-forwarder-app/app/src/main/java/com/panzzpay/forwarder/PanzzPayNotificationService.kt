@@ -60,44 +60,53 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
         
         if (sbn == null) return
 
-        val packageName = sbn.packageName
-        val extras = sbn.notification.extras
-        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
-        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        val packageName = sbn.packageName.orEmpty()
+        val extras = sbn.notification?.extras ?: return
 
-        val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
-        val isServiceEnabled = prefs.getBoolean("service_enabled", true)
+        val title = (extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString()
+            ?: extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+            ?: "").trim()
+
+        val textCandidates = listOfNotNull(
+            extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString(),
+            extras.getCharSequence(Notification.EXTRA_TEXT)?.toString(),
+            extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString(),
+            extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)?.joinToString(" "),
+            sbn.notification?.tickerText?.toString()
+        ).map { it.trim() }.filter { it.isNotEmpty() }
+
+        val text = textCandidates.distinct().joinToString(" ")
+
         val webhookUrl = SecurePreferences.getWebhookUrl(this)
 
-        if (!isServiceEnabled || webhookUrl.isEmpty()) {
-            Log.d(TAG, "PanzzPay Service is disabled or Webhook URL is empty")
+        if (webhookUrl.isEmpty()) {
+            Log.d(TAG, "PanzzPay Webhook URL is empty")
             return
         }
 
         // Check if package is in target list
-        val isTargetApp = TARGET_PACKAGES.contains(packageName)
+        val isTargetApp = TARGET_PACKAGES.any { target ->
+            packageName.equals(target, ignoreCase = true) || packageName.contains(target, ignoreCase = true)
+        }
 
-        // If not a target app, check text for payment-related keywords
-        val hasPaymentKeyword = if (!isTargetApp) {
-            val combined = "$title $text".lowercase()
-            val paymentKeywords = listOf(
-                "rp", "rp.", "idr",                          // Currency indicators
-                "pembayaran", "transfer", "transaksi",        // Transaction types
-                "diterima", "berhasil", "masuk", "sukses",    // Success indicators  
-                "saldo", "topup", "top up", "top-up",         // Balance keywords
-                "dana", "gopay", "ovo", "shopeepay",          // E-wallet names
-                "bca", "bri", "mandiri", "bsi", "seabank",   // Bank names
-                "qris", "merchant"                            // Payment method
-            )
-            paymentKeywords.any { combined.contains(it) }
-        } else false
+        // Check text for payment-related keywords
+        val combined = "$title $text".lowercase()
+        val paymentKeywords = listOf(
+            "rp", "idr", "pembayaran", "transfer", "transaksi",
+            "diterima", "berhasil", "masuk", "sukses", "saldo",
+            "topup", "top up", "top-up", "dana", "gopay", "ovo",
+            "shopeepay", "bca", "bri", "mandiri", "bsi", "seabank",
+            "qris", "merchant"
+        )
+        val hasPaymentKeyword = paymentKeywords.any { combined.contains(it) }
 
         val shouldProcess = isTargetApp || hasPaymentKeyword
 
-        if (shouldProcess && text.isNotEmpty()) {
-            Log.i(TAG, "Payment notification captured from $packageName | Title: $title")
-            speakNotification(text)
-            sendNotificationToWebhook(webhookUrl, packageName, title, text, "${sbn.key}:${sbn.postTime}")
+        val messageToSend = if (text.isNotEmpty()) text else title
+        if (shouldProcess && messageToSend.isNotEmpty()) {
+            Log.i(TAG, "Payment notification captured from $packageName | Title: $title | Msg: $messageToSend")
+            speakNotification(messageToSend)
+            sendNotificationToWebhook(webhookUrl, packageName, title, messageToSend, "${sbn.key}:${sbn.postTime}")
         }
     }
 

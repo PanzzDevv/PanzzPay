@@ -205,14 +205,6 @@
     byId('displayQrisPayload').value = profile.qris_payload || '';
     byId('badgeQrisStatus').textContent = profile.qris_configured ? 'QRIS Toko Aktif' : 'QRIS Belum Diatur';
     byId('badgeQrisStatus').className = `badge ${profile.qris_configured ? 'badge-paid' : 'badge-pending'}`;
-    if (byId('displayTelegramBotToken')) byId('displayTelegramBotToken').value = profile.telegram_bot_token || '';
-    if (byId('displayTelegramChatId')) byId('displayTelegramChatId').value = profile.telegram_chat_id || '';
-    if (byId('checkTelegramEnabled')) byId('checkTelegramEnabled').checked = profile.telegram_enabled !== false;
-    const isTelegramActive = profile.telegram_enabled !== false && Boolean(profile.telegram_chat_id);
-    if (byId('badgeTelegramStatus')) {
-      byId('badgeTelegramStatus').textContent = isTelegramActive ? 'Bot Telegram Aktif' : 'Belum Aktif';
-      byId('badgeTelegramStatus').className = `badge ${isTelegramActive ? 'badge-paid' : 'badge-pending'}`;
-    }
     byId('superAdminShortcutCard').style.display = profile.role === 'superadmin' ? 'block' : 'none';
     applyCredentials(credentials);
     loadMerchantData();
@@ -344,33 +336,6 @@
         notify('QRIS merchant berhasil disimpan.');
       } catch (error) {
         notify(error.message, 'Gagal Menyimpan QRIS');
-      }
-    });
-
-    byId('btnSaveTelegramConfig')?.addEventListener('click', async () => {
-      try {
-        const data = await request('/api/merchant/telegram-config', {
-          method: 'POST',
-          body: JSON.stringify({
-            telegram_bot_token: byId('displayTelegramBotToken').value.trim(),
-            telegram_chat_id: byId('displayTelegramChatId').value.trim(),
-            telegram_enabled: byId('checkTelegramEnabled').checked
-          })
-        });
-        merchant = data.merchant;
-        showDashboard(merchant, oneTimeCredentials);
-        notify('Pengaturan Bot Telegram berhasil disimpan.', 'Telegram Disimpan');
-      } catch (error) {
-        notify(error.message, 'Gagal Menyimpan Telegram');
-      }
-    });
-
-    byId('btnTestTelegram')?.addEventListener('click', async () => {
-      try {
-        const data = await request('/api/merchant/telegram-test', { method: 'POST', body: '{}' });
-        notify(data.message, 'Tes Telegram Berhasil');
-      } catch (error) {
-        notify(error.message, 'Gagal Tes Telegram');
       }
     });
 

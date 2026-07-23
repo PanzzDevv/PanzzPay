@@ -759,7 +759,7 @@ export class FirebaseService {
         const invoiceSnapshot = await transaction.get(query);
         const invoiceDocument = invoiceSnapshot.docs.find(document => {
           const invoice = document.data();
-          return invoice.status === 'PENDING' && invoice.total_amount === amount;
+          return invoice.status === 'PENDING' && (invoice.total_amount === amount || invoice.base_amount === amount);
         }) || null;
         let invoice = null;
         if (invoiceDocument) {
@@ -794,7 +794,7 @@ export class FirebaseService {
       return { duplicate: true, log: this.processedWebhookEvents.get(logId), invoice: null };
     }
     const invoice = Array.from(this.inMemoryInvoices.values()).find(candidate =>
-      candidate.merchant_id === merchant.id && candidate.status === 'PENDING' && candidate.total_amount === amount
+      candidate.merchant_id === merchant.id && candidate.status === 'PENDING' && (candidate.total_amount === amount || candidate.base_amount === amount)
     );
     const updated = invoice ? await this.updateOwnedInvoiceStatus(invoice.id, merchant.id, 'PAID', {
       paid_at: receivedAt,

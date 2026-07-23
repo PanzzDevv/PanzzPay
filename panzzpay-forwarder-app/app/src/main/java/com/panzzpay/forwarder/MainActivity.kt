@@ -38,7 +38,6 @@ import kotlin.concurrent.thread
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var switchService: MaterialSwitch
-    private lateinit var switchVoice: MaterialSwitch
     private lateinit var etWebhookUrl: EditText
     private lateinit var btnPasteUrl: Button
     private lateinit var btnSave: Button
@@ -73,7 +72,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         setContentView(R.layout.activity_main)
 
         switchService = findViewById(R.id.switchService)
-        switchVoice = findViewById(R.id.switchVoice)
         etWebhookUrl = findViewById(R.id.etWebhookUrl)
         btnPasteUrl = findViewById(R.id.btnPasteUrl)
         btnSave = findViewById(R.id.btnSave)
@@ -93,22 +91,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val prefs = getSharedPreferences("PanzzPayPrefs", Context.MODE_PRIVATE)
         val savedUrl = SecurePreferences.getWebhookUrl(this)
         val isEnabled = prefs.getBoolean("service_enabled", true)
-        val isVoiceEnabled = prefs.getBoolean("voice_enabled", false)
 
         etWebhookUrl.setText(savedUrl)
         switchService.isChecked = isEnabled
-        switchVoice.isChecked = isVoiceEnabled
 
         switchService.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("service_enabled", isChecked).apply()
             appendLog(if (isChecked) "Layanan Forwarder diaktifkan" else "Layanan Forwarder dinonaktifkan")
             Toast.makeText(this, if (isChecked) "Layanan Forwarder Aktif" else "Layanan Nonaktif", Toast.LENGTH_SHORT).show()
-        }
-
-        switchVoice.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("voice_enabled", isChecked).apply()
-            appendLog(if (isChecked) "Suara notifikasi (TTS) diaktifkan" else "Suara notifikasi (TTS) dinonaktifkan")
-            Toast.makeText(this, if (isChecked) "Suara Uang Masuk Aktif" else "Suara Nonaktif", Toast.LENGTH_SHORT).show()
         }
 
         btnPasteUrl.setOnClickListener {
@@ -245,15 +235,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                 // 2. Kirim payload JSON ke Webhook server PanzzPay
                 sendTestPayload(webhookUrl, provider.packageName, title, message)
-
-                // 3. Ucapkan suara uang masuk jika fitur voice aktif
-                if (switchVoice.isChecked && isTtsReady) {
-                    try {
-                        tts?.speak("Pembayaran PanzzPay masuk! $message", TextToSpeech.QUEUE_FLUSH, null, "TestTTSId")
-                    } catch (e: Exception) {
-                        // ignore TTS errors during test
-                    }
-                }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()

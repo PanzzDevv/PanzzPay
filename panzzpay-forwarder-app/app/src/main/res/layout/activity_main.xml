@@ -143,50 +143,6 @@
                     android:textOff="@string/switch_off"
                     android:textOn="@string/switch_on" />
             </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="14dp"
-                android:background="@color/border_color" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="12dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/voice_title"
-                        android:textAppearance="@style/TextAppearance.PanzzPay.ItemTitle" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:text="@string/voice_description"
-                        android:textAppearance="@style/TextAppearance.PanzzPay.Body" />
-                </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchVoice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:checked="true"
-                    android:contentDescription="@string/voice_title"
-                    android:showText="false"
-                    android:textOff="@string/switch_off"
-                    android:textOn="@string/switch_on" />
-            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout

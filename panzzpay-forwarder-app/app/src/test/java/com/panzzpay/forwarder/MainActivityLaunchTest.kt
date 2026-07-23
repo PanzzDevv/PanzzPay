@@ -21,11 +21,8 @@ class MainActivityLaunchTest {
 
         assertNotNull(activity.findViewById<TextView>(R.id.tvPermissionStatus))
         val serviceSwitch = activity.findViewById<MaterialSwitch>(R.id.switchService)
-        val voiceSwitch = activity.findViewById<MaterialSwitch>(R.id.switchVoice)
         assertEquals(activity.getString(R.string.switch_on), serviceSwitch.textOn)
         assertEquals(activity.getString(R.string.switch_off), serviceSwitch.textOff)
-        assertEquals(activity.getString(R.string.switch_on), voiceSwitch.textOn)
-        assertEquals(activity.getString(R.string.switch_off), voiceSwitch.textOff)
         val versionName = activity.packageManager
             .getPackageInfo(activity.packageName, 0)
             .versionName

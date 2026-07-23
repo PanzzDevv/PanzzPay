@@ -68,7 +68,7 @@ jobs:
         run: cp panzzpay-forwarder-app/app/build/outputs/apk/release/app-release.apk panzzpay-forwarder.apk
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: PanzzPay-Forwarder-APK
           path: panzzpay-forwarder.apk

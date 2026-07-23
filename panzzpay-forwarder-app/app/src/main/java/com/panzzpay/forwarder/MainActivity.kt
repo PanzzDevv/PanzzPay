@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private val providerOptions = listOf(
         PaymentProviderOption("ShopeePay", "com.shopeepay.id", "ShopeePay: Transfer Masuk", "Pembayaran QRIS Rp %s dari ShopeePay diterima"),
-        PaymentProviderOption("DANA", "id.dana", "DANA: Isi Saldo Berhasil", "Kamu dapat saldo Rp %s dari DANA QRIS Merchant"),
+        PaymentProviderOption("DANA / DANA Bisnis", "id.dana", "DANA: Pembayaran Masuk", "Pembayaran Rp %s dari DANA berhasil diterima"),
         PaymentProviderOption("GoPay / Gojek", "com.gojek.app", "GoPay Payment Received", "Transfer masuk Rp %s dari GoPay berhasil diterima"),
         PaymentProviderOption("OVO", "com.ovo", "OVO Cash Masuk", "Topup OVO Cash Rp %s berhasil dilakukan"),
         PaymentProviderOption("m-BCA", "com.bca", "m-BCA: Transfer Masuk", "m-Transfer Rp %s dari QRIS Merchant telah masuk"),

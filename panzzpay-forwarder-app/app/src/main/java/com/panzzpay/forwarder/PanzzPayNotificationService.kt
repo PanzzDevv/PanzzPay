@@ -24,7 +24,7 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
         
         // Target Banking & E-Wallet Package Names
         val TARGET_PACKAGES = setOf(
-            "id.dana",                   // DANA
+            "id.dana",                   // DANA / DANA Bisnis
             "com.shopeepay.id",          // ShopeePay
             "com.shopee.id",             // Shopee App
             "com.gojek.app",             // GoPay / Gojek
@@ -74,15 +74,28 @@ class PanzzPayNotificationService : NotificationListenerService(), TextToSpeech.
             return
         }
 
-        // Check if package is in target list or matches payment notification text
-        val isTargetApp = TARGET_PACKAGES.contains(packageName) || 
-                title.contains("pembayaran", ignoreCase = true) ||
-                title.contains("transfer", ignoreCase = true) ||
-                text.contains("rp", ignoreCase = true) ||
-                text.contains("diterima", ignoreCase = true)
+        // Check if package is in target list
+        val isTargetApp = TARGET_PACKAGES.contains(packageName)
 
-        if (isTargetApp && text.isNotEmpty()) {
-            Log.i(TAG, "Captured a candidate payment notification from $packageName")
+        // If not a target app, check text for payment-related keywords
+        val hasPaymentKeyword = if (!isTargetApp) {
+            val combined = "$title $text".lowercase()
+            val paymentKeywords = listOf(
+                "rp", "rp.", "idr",                          // Currency indicators
+                "pembayaran", "transfer", "transaksi",        // Transaction types
+                "diterima", "berhasil", "masuk", "sukses",    // Success indicators  
+                "saldo", "topup", "top up", "top-up",         // Balance keywords
+                "dana", "gopay", "ovo", "shopeepay",          // E-wallet names
+                "bca", "bri", "mandiri", "bsi", "seabank",   // Bank names
+                "qris", "merchant"                            // Payment method
+            )
+            paymentKeywords.any { combined.contains(it) }
+        } else false
+
+        val shouldProcess = isTargetApp || hasPaymentKeyword
+
+        if (shouldProcess && text.isNotEmpty()) {
+            Log.i(TAG, "Payment notification captured from $packageName | Title: $title")
             speakNotification(text)
             sendNotificationToWebhook(webhookUrl, packageName, title, text, "${sbn.key}:${sbn.postTime}")
         }

@@ -280,21 +280,35 @@ function extractAmountFromText(input) {
   const text = typeof input === 'object'
     ? `${input.message || ''} ${input.title || ''} ${input.text || ''}`
     : String(input);
-  const currencyMatch = text.match(/(?:rp\.?|idr)\s*([\d.,]+)/i);
-  if (!currencyMatch) return null;
-  const amount = Number(currencyMatch[1].replace(/[^\d]/g, ''));
-  return Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999 ? amount : null;
+  // Match various Rp/IDR formats: "Rp50.000", "Rp 50.000,00", "+Rp50,000", "Rp. 50000", "IDR 50000"
+  const currencyMatch = text.match(/[+]?\s*(?:rp\.?\s*|idr\s*)([\d.,]+)/i);
+  if (currencyMatch) {
+    // Remove decimal cents (e.g. ",00" at the end) then strip all non-digits
+    const raw = currencyMatch[1].replace(/[.,]\d{2}$/, '').replace(/[^\d]/g, '');
+    const amount = Number(raw);
+    if (Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999) return amount;
+  }
+  // Fallback: find any standalone number >= 100 near payment keywords
+  const fallbackMatch = text.match(/(?:sebesar|nominal|total|bayar|terima)\s*:?\s*(\d[\d.,]*)/i);
+  if (fallbackMatch) {
+    const amount = Number(fallbackMatch[1].replace(/[^\d]/g, ''));
+    if (Number.isSafeInteger(amount) && amount >= 100 && amount <= 999_999_999) return amount;
+  }
+  return null;
 }
 
 function paymentSource(payload) {
   const text = stableStringify(payload);
   if (/shopeepay/i.test(text)) return 'ShopeePay';
+  if (/dana\s*bisnis/i.test(text)) return 'DANA Bisnis';
   if (/dana/i.test(text)) return 'DANA';
   if (/gopay/i.test(text)) return 'GoPay';
   if (/ovo/i.test(text)) return 'OVO';
   if (/bca/i.test(text)) return 'm-BCA';
   if (/brimo|bri/i.test(text)) return 'BRImo';
   if (/mandiri|livin/i.test(text)) return 'Livin by Mandiri';
+  if (/bsi/i.test(text)) return 'BSI Mobile';
+  if (/seabank/i.test(text)) return 'SeaBank';
   return 'Transfer QRIS';
 }
 

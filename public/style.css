@@ -190,6 +190,12 @@ header.bento-header {
   margin-bottom: 1.5rem;
 }
 
+#drawerAuthContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .close-btn {
   display: inline-flex;
   align-items: center;
